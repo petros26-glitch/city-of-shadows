@@ -32,7 +32,7 @@ function notify(message) {
 }
 
 function showScreen(screen) {
-  [homeScreen, creatorScreen, savedScreen].forEach((item) => item.classList.add("hidden"));
+  [homeScreen, creatorScreen, savedScreen, $("#city-screen")].forEach((item) => item.classList.add("hidden"));
   screen.classList.remove("hidden");
   if (screen === creatorScreen) {
     requestAnimationFrame(() => resizePreview());
