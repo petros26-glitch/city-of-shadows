@@ -132,8 +132,6 @@ export function createCityGame(container, controls, characterData, onExit) {
   sprintButton.addEventListener("pointerup",sprintOff);
   sprintButton.addEventListener("pointercancel",sprintOff);
   sprintButton.addEventListener("pointerleave",sprintOff);
-  const exitButton=controls.querySelector(".exit-city-button");
-  exitButton.addEventListener("click",onExit);
   const stage=renderer.domElement;
   stage.addEventListener("pointerdown",e=>{if(e.pointerType==="mouse"){dragging=true;lastX=e.clientX;}});
   window.addEventListener("pointerup",()=>dragging=false);
