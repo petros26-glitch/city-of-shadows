@@ -151,11 +151,36 @@
           <p id="saved-details" class="saved-details"></p>
         </div>
       </div>
-      <p class="coming-soon">THE STREETS ARE WAITING. THE FIRST PLAYABLE CHAPTER IS IN DEVELOPMENT.</p>
+      <p class="coming-soon">YOUR FIRST NEIGHBOURHOOD IS READY. STEP OUT AND EXPLORE.</p>
       <div class="home-actions">
+        <button id="enter-city-button" class="button button-primary">ENTER THE CITY <span>→</span></button>
         <button id="edit-character-button" class="button button-primary">EDIT CHARACTER</button>
         <button id="saved-home-button" class="button button-secondary">MAIN MENU</button>
       </div>
+    </section>
+
+    <section id="city-screen" class="screen city-screen hidden">
+      <div class="city-heading">
+        <div>
+          <p class="eyebrow"><span></span> CHAPTER 01 / THE STREETS</p>
+          <h2>WELCOME TO THE <em>NEIGHBOURHOOD.</em></h2>
+        </div>
+        <button id="leave-city-button" class="text-button">← MAIN MENU</button>
+      </div>
+      <div id="city-stage" class="city-stage" aria-label="Playable 3D neighbourhood"></div>
+      <div class="city-hud">
+        <div class="city-status">EXPLORE THE NEIGHBOURHOOD</div>
+        <div class="city-help">PC: WASD / ARROWS TO MOVE · SHIFT TO RUN · DRAG TO LOOK</div>
+        <div class="city-controls" id="city-controls">
+          <div class="joystick" aria-label="Movement joystick"><div class="joystick-knob"></div></div>
+          <div class="mobile-actions">
+            <button class="look-left" aria-label="Look left">↶</button>
+            <button class="sprint-button">RUN</button>
+            <button class="look-right" aria-label="Look right">↷</button>
+          </div>
+        </div>
+      </div>
+      <p class="city-disclaimer">EARLY PLAYABLE BUILD · CREATED BY DSQUARE</p>
     </section>
   </main>
 
