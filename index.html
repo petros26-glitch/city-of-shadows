@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#09090d">
+  <meta name="description" content="CITY OF SHADOWS — a 3D African open-world gangster survival game created by Dsquare.">
+  <title>CITY OF SHADOWS — Created by Dsquare</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./css/style.css">
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js"
+      }
+    }
+  </script>
+  <script type="module" src="./js/main.js"></script>
+</head>
+<body>
+  <div class="ambient ambient-one"></div>
+  <div class="ambient ambient-two"></div>
+
+  <header class="topbar">
+    <a class="brand" href="./" aria-label="CITY OF SHADOWS home">
+      <span class="brand-mark">C<span>O</span>S</span>
+      <span class="brand-name">CITY OF <b>SHADOWS</b></span>
+    </a>
+    <span class="creator-tag">A DSQUARE GAME</span>
+  </header>
+
+  <main>
+    <section id="home-screen" class="screen home-screen">
+      <div class="home-copy">
+        <p class="eyebrow"><span></span> A WORLD THAT NEVER FORGETS</p>
+        <h1>CITY OF<br><em>SHADOWS</em></h1>
+        <p class="home-description">A city. A thousand secrets. One fight for power.</p>
+        <p class="home-note">Your story begins with nothing.</p>
+        <div class="home-actions">
+          <button id="new-game-button" class="button button-primary">CREATE YOUR CHARACTER <span>→</span></button>
+          <button id="continue-button" class="button button-secondary" disabled>CONTINUE</button>
+        </div>
+      </div>
+      <div class="home-art" aria-hidden="true">
+        <div class="sun-glow"></div>
+        <div class="skyline skyline-back">
+          <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+        </div>
+        <div class="skyline skyline-front">
+          <i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+        </div>
+        <div class="street-line"></div>
+        <div class="art-caption">THE CITY IS YOURS TO SURVIVE.</div>
+      </div>
+      <footer class="home-footer">
+        <span>AN ORIGINAL GAME PROJECT</span>
+        <strong>CREATED BY DSQUARE</strong>
+        <span class="version">FOUNDATION BUILD 0.1</span>
+      </footer>
+    </section>
+
+    <section id="creator-screen" class="screen creator-screen hidden">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow"><span></span> YOUR LIFE. YOUR CHOICES.</p>
+          <h2>CHARACTER <em>CREATOR</em></h2>
+          <p class="section-subtitle">Create the person whose story will shape the city.</p>
+        </div>
+        <button id="back-home-button" class="text-button">← MAIN MENU</button>
+      </div>
+
+      <div class="creator-layout">
+        <section class="preview-panel panel">
+          <div class="preview-topline">
+            <span>CHARACTER PREVIEW</span>
+            <span class="live-dot">LIVE</span>
+          </div>
+          <div id="character-stage" class="character-stage">
+            <div class="stage-grid"></div>
+            <div id="three-preview" class="three-preview" aria-label="Interactive 3D character preview"></div>
+            <div class="stage-hint">DRAG TO ROTATE</div>
+          </div>
+          <div class="view-controls" aria-label="Character view controls">
+            <button class="view-button active" data-view="front">FRONT</button>
+            <button class="view-button" data-view="back">BACK</button>
+            <button class="view-button" data-view="left">LEFT</button>
+            <button class="view-button" data-view="right">RIGHT</button>
+          </div>
+          <p id="preview-status" class="preview-status">Loading 3D preview…</p>
+        </section>
+
+        <section class="custom-panel panel">
+          <div class="form-heading">
+            <span>01 / IDENTITY</span>
+            <span class="step-line"></span>
+          </div>
+          <label class="field-label" for="character-name">CHARACTER NAME</label>
+          <input id="character-name" class="text-input" type="text" maxlength="18" placeholder="Enter a name" autocomplete="off">
+
+          <div class="field-label">GENDER</div>
+          <div class="choice-row">
+            <button class="choice-button selected" data-gender="male">MALE</button>
+            <button class="choice-button" data-gender="female">FEMALE</button>
+          </div>
+
+          <div class="field-label field-label-spaced">AGE <strong id="age-value">20</strong></div>
+          <input id="age-input" class="range-input" type="range" min="18" max="25" value="20">
+          <div class="range-ends"><span>18 YEARS</span><span>25 YEARS</span></div>
+
+          <div class="form-heading form-heading-spaced">
+            <span>02 / APPEARANCE</span>
+            <span class="step-line"></span>
+          </div>
+          <div class="field-label">SKIN TONE</div>
+          <div class="swatch-row" aria-label="Skin tone">
+            <button class="swatch selected" data-skin="#6f402d" style="--swatch:#6f402d" aria-label="Deep brown"></button>
+            <button class="swatch" data-skin="#965d40" style="--swatch:#965d40" aria-label="Brown"></button>
+            <button class="swatch" data-skin="#bd805d" style="--swatch:#bd805d" aria-label="Warm tan"></button>
+            <button class="swatch" data-skin="#d49b78" style="--swatch:#d49b78" aria-label="Light tan"></button>
+          </div>
+
+          <div class="field-label field-label-spaced">HAIRSTYLE</div>
+          <div class="choice-row">
+            <button class="choice-button selected" data-hair="short">SHORT</button>
+            <button class="choice-button" data-hair="afro">AFRO</button>
+            <button class="choice-button" data-hair="shaved">SHAVED</button>
+          </div>
+
+          <div class="form-heading form-heading-spaced">
+            <span>03 / STARTING LOOK</span>
+            <span class="step-line"></span>
+          </div>
+          <p class="starting-look">Every new arrival starts with simple street clothes. More outfits can be earned as your story progresses.</p>
+
+          <button id="save-character-button" class="button button-primary save-button">SAVE CHARACTER <span>→</span></button>
+          <p class="save-note">Your character is saved on this device.</p>
+        </section>
+      </div>
+    </section>
+
+    <section id="saved-screen" class="screen saved-screen hidden">
+      <p class="eyebrow"><span></span> YOUR JOURNEY STARTS HERE</p>
+      <h2>WELCOME TO THE <em>CITY.</em></h2>
+      <div class="saved-card panel">
+        <div class="saved-avatar">COS</div>
+        <div>
+          <p class="saved-label">YOUR CHARACTER</p>
+          <h3 id="saved-name">PLAYER</h3>
+          <p id="saved-details" class="saved-details"></p>
+        </div>
+      </div>
+      <p class="coming-soon">THE STREETS ARE WAITING. THE FIRST PLAYABLE CHAPTER IS IN DEVELOPMENT.</p>
+      <div class="home-actions">
+        <button id="edit-character-button" class="button button-primary">EDIT CHARACTER</button>
+        <button id="saved-home-button" class="button button-secondary">MAIN MENU</button>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="./js/ui.js" defer></script>
+</body>
+</html>
