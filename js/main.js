@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { createCityGame } from "./city.js";
+import { createCityGame } from "./city.js?v=2";
 
 const STORAGE_KEY = "cos-player-character-v1";
 const state = {
@@ -232,19 +232,31 @@ function bindEvents() {
   $("#saved-home-button").addEventListener("click", () => showScreen(homeScreen));
   $("#enter-city-button").addEventListener("click", () => {
     const saved = loadSavedCharacter();
-    if (!saved) { notify("Create and save your character first."); return; }
-    showScreen($("#city-screen"));
+    if (!saved) {
+      notify("Create and save your character first.");
+      return;
+    }
+
+    const cityScreen = $("#city-screen");
+    const cityStage = $("#city-stage");
+    showScreen(cityScreen);
+    cityStage.textContent = "LOADING YOUR NEIGHBOURHOOD…";
+
     requestAnimationFrame(() => {
-      if (destroyCity) destroyCity();
+      if (destroyCity) {
+        destroyCity();
+        destroyCity = null;
+      }
       try {
-        destroyCity = createCityGame($("#city-stage"), $("#city-controls"), saved, () => {
+        destroyCity = createCityGame(cityStage, $("#city-controls"), saved, () => {
           if (destroyCity) destroyCity();
           destroyCity = null;
           showScreen(homeScreen);
         });
       } catch (error) {
         console.error("City could not start:", error);
-        notify("The neighbourhood could not start. Try refreshing the page.");
+        cityStage.textContent = "THE CITY COULD NOT LOAD. PLEASE REFRESH AND TRY AGAIN.";
+        notify("City loading error: " + (error?.message || "unknown error"));
       }
     });
   });
