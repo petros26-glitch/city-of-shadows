@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { createCityGame } from "./city.js";
 
 const STORAGE_KEY = "cos-player-character-v1";
 const state = {
@@ -21,6 +22,7 @@ let currentRotation = 0;
 let cameraTarget = 0;
 let dragStart = null;
 let previewReady = false;
+let destroyCity = null;
 
 function notify(message) {
   toast.textContent = message;
@@ -228,6 +230,29 @@ function bindEvents() {
 
   $("#back-home-button").addEventListener("click", () => showScreen(homeScreen));
   $("#saved-home-button").addEventListener("click", () => showScreen(homeScreen));
+  $("#enter-city-button").addEventListener("click", () => {
+    const saved = loadSavedCharacter();
+    if (!saved) { notify("Create and save your character first."); return; }
+    showScreen($("#city-screen"));
+    requestAnimationFrame(() => {
+      if (destroyCity) destroyCity();
+      try {
+        destroyCity = createCityGame($("#city-stage"), $("#city-controls"), saved, () => {
+          if (destroyCity) destroyCity();
+          destroyCity = null;
+          showScreen(homeScreen);
+        });
+      } catch (error) {
+        console.error("City could not start:", error);
+        notify("The neighbourhood could not start. Try refreshing the page.");
+      }
+    });
+  });
+  $("#leave-city-button").addEventListener("click", () => {
+    if (destroyCity) destroyCity();
+    destroyCity = null;
+    showScreen(homeScreen);
+  });
   $("#edit-character-button").addEventListener("click", () => {
     fillForm(loadSavedCharacter() || state);
     showScreen(creatorScreen);
