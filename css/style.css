@@ -182,3 +182,60 @@ h2 { font-size: clamp(48px, 6vw, 76px); }
   .mobile-actions button { min-width:42px; height:42px; }
   .city-heading .text-button { padding-top:5px; }
 }
+
+
+/* Landscape-first playable city layout */
+@media (orientation: landscape) and (max-height: 600px) {
+  .city-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 20;
+    width: 100%;
+    max-width: none;
+    height: 100dvh;
+    min-height: 0;
+    margin: 0;
+    padding: 10px 16px 6px;
+    display: flex;
+    flex-direction: column;
+    background: #09090d;
+  }
+  .city-heading { flex: 0 0 auto; margin: 0 0 8px; align-items: center; }
+  .city-heading .eyebrow { margin-bottom: 5px; font-size: 8px; }
+  .city-heading h2 { font-size: clamp(25px, 4.5vw, 40px); }
+  .city-stage { flex: 1 1 auto; width: 100%; height: auto; min-height: 0; }
+  .city-hud { flex: 0 0 auto; min-height: 42px; padding: 7px 10px; }
+  .city-controls { position: absolute; left: 18px; right: 18px; bottom: 62px; margin: 0; padding: 0; align-items: end; }
+  .joystick { width: 88px; height: 88px; }
+  .joystick-knob { width: 36px; height: 36px; }
+  .mobile-actions { gap: 10px; }
+  .mobile-actions button { min-width: 54px; height: 50px; }
+  .city-disclaimer { flex: 0 0 auto; margin: 4px 0 0; font-size: 7px; }
+}
+@media (orientation: portrait) and (max-width: 800px) {
+  .city-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 20;
+    width: 100%;
+    height: 100dvh;
+    margin: 0;
+    padding: 20px;
+    display: grid;
+    place-items: center;
+    background: #09090d;
+  }
+  .city-screen > * { visibility: hidden; }
+  .city-screen::before {
+    content: "CITY OF SHADOWS\\A\\A PLEASE ROTATE YOUR PHONE\\A TO PLAY IN LANDSCAPE";
+    white-space: pre-line;
+    visibility: visible;
+    text-align: center;
+    color: #f3f0ec;
+    font: 800 clamp(22px, 7vw, 34px)/1.5 "Barlow Condensed", Impact, sans-serif;
+    letter-spacing: 1.5px;
+    border: 1px solid rgba(199,155,85,.45);
+    padding: 32px 24px;
+    background: #171319;
+  }
+}
