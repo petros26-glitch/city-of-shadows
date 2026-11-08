@@ -205,7 +205,7 @@ h2 { font-size: clamp(48px, 6vw, 76px); }
   .city-heading h2 { font-size: clamp(25px, 4.5vw, 40px); }
   .city-stage { flex: 1 1 auto; width: 100%; height: auto; min-height: 0; }
   .city-hud { flex: 0 0 auto; min-height: 42px; padding: 7px 10px; }
-  .city-controls { position: absolute; left: 18px; right: 18px; bottom: 62px; margin: 0; padding: 0; align-items: end; }
+  .city-controls { display: flex; position: absolute; left: 18px; right: 18px; bottom: 62px; margin: 0; padding: 0; align-items: end; }
   .joystick { width: 88px; height: 88px; }
   .joystick-knob { width: 36px; height: 36px; }
   .mobile-actions { gap: 10px; }
