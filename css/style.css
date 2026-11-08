@@ -144,3 +144,41 @@ h2 { font-size: clamp(48px, 6vw, 76px); }
   .view-controls { gap: 4px; }
   .view-button { letter-spacing: .8px; }
 }
+
+
+.city-screen { padding: 38px 0 28px; }
+.city-heading { display:flex; align-items:end; justify-content:space-between; gap:18px; margin-bottom:18px; }
+.city-heading h2 { max-width:760px; font-size:clamp(38px,5vw,64px); }
+.city-stage { width:100%; height:min(66vh,650px); min-height:360px; overflow:hidden; position:relative; border:1px solid rgba(199,155,85,.28); background:#171923; }
+.city-stage canvas { width:100%; height:100%; display:block; touch-action:none; }
+.city-hud { display:flex; align-items:center; justify-content:space-between; gap:15px; padding:13px 15px; background:rgba(19,19,25,.96); border:1px solid var(--line); border-top:0; }
+.city-status { color:var(--gold); font-size:10px; font-weight:800; letter-spacing:1.3px; }
+.city-help { color:#aaa2a2; font-size:9px; letter-spacing:.5px; text-align:center; }
+.city-controls { display:none; }
+.city-disclaimer { color:#777176; text-align:right; font-size:8px; letter-spacing:1.4px; }
+.joystick { width:112px; height:112px; border-radius:50%; border:1px solid rgba(255,255,255,.3); background:rgba(10,10,14,.48); display:grid; place-items:center; touch-action:none; }
+.joystick-knob { width:43px; height:43px; border-radius:50%; background:rgba(199,155,85,.8); border:2px solid rgba(255,255,255,.55); pointer-events:none; }
+.mobile-actions { display:flex; align-items:center; gap:9px; }
+.mobile-actions button { min-width:48px; height:46px; border:1px solid rgba(255,255,255,.28); background:rgba(10,10,14,.72); color:white; font-size:11px; font-weight:800; touch-action:none; }
+.mobile-actions .sprint-button { background:rgba(189,38,48,.85); border-color:var(--red-bright); }
+.mobile-actions .sprint-button.pressed { background:#f04a51; transform:scale(.96); }
+@media (max-width:800px) {
+  .city-screen { padding-top:28px; }
+  .city-heading { align-items:start; }
+  .city-heading h2 { font-size:clamp(34px,9vw,52px); }
+  .city-stage { height:58vh; min-height:330px; }
+  .city-hud { display:block; padding:12px; }
+  .city-help { text-align:left; margin-top:7px; line-height:1.5; }
+  .city-controls { display:flex; justify-content:space-between; align-items:end; margin-top:-125px; position:relative; z-index:2; padding:0 10px 12px; pointer-events:none; }
+  .joystick, .mobile-actions, .mobile-actions button { pointer-events:auto; }
+  .city-disclaimer { margin-top:12px; }
+}
+@media (max-width:480px) {
+  .city-screen { width:calc(100% - 20px); }
+  .city-stage { height:55vh; min-height:310px; }
+  .joystick { width:96px; height:96px; }
+  .joystick-knob { width:38px; height:38px; }
+  .mobile-actions { gap:6px; }
+  .mobile-actions button { min-width:42px; height:42px; }
+  .city-heading .text-button { padding-top:5px; }
+}
