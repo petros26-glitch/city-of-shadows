@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { createCityGame } from "./city.js?v=14";
+import { createCityGame } from "./city.js?v=15";
 
 const STORAGE_KEY = "cos-player-character-v1";
 const state = {
@@ -31,7 +31,8 @@ let inventory = {};
 
 function loadShopData() {
   try {
-    wallet = Number(localStorage.getItem(WALLET_KEY));
+    const savedWallet = localStorage.getItem(WALLET_KEY);
+    wallet = savedWallet === null ? 500 : Number(savedWallet);
     if (!Number.isFinite(wallet) || wallet < 0) wallet = 500;
     inventory = JSON.parse(localStorage.getItem(INVENTORY_KEY) || "{}") || {};
   } catch { wallet = 500; inventory = {}; }
