@@ -105,7 +105,7 @@ export function createCityGame(container, controls, characterData, onExit) {
   opponentHead.position.y = 2.05; opponent.add(opponentHead);
   const opponentLegs = new THREE.Mesh(new THREE.BoxGeometry(0.44,0.75,0.3), pants);
   opponentLegs.position.y = 0.48; opponent.add(opponentLegs);
-  opponent.position.set(0,0,-1.8);
+  opponent.position.set(0,0,6.5);
   scene.add(opponent);
   let opponentHealth = 100;
   let attackCooldown = 0;
@@ -184,7 +184,7 @@ export function createCityGame(container, controls, characterData, onExit) {
     attackCooldown = 0.55;
     const distance = player.position.distanceTo(opponent.position);
     const readout = controls.querySelector("#combat-readout");
-    if (opponentHealth > 0 && distance < 3.1) {
+    if (opponentHealth > 0 && distance < 3.6) {
       opponentHealth = Math.max(0, opponentHealth - 25);
       opponentFlash = 0.16;
       opponentTorso.material.color.set("#f3c0a5");
@@ -192,7 +192,7 @@ export function createCityGame(container, controls, characterData, onExit) {
         ? "HIT CONFIRMED · OPPONENT HEALTH " + opponentHealth + "%"
         : "OPPONENT DEFEATED · TRAINING COMPLETE";
     } else {
-      readout.textContent = "PUNCH MISSED · MOVE CLOSER TO THE OPPONENT";
+      readout.textContent = "PUNCH MISSED · MOVE CLOSER TO THE RED-SHIRT OPPONENT";
     }
     attackButton.classList.remove("pressed");
   }
