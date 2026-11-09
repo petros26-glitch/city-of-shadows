@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { createCityGame } from "./city.js?v=15";
+import { createCityGame } from "./city.js?v=16";
 
 const STORAGE_KEY = "cos-player-character-v1";
 const state = {
@@ -260,7 +260,6 @@ function setView(view) {
 }
 
 function bindEvents() {
-  $("#shop-open-button").addEventListener("click", openShop);
   $("#shop-close-button").addEventListener("click", closeShop);
   $("#shop-panel").addEventListener("click", event => { if (event.target.id === "shop-panel") closeShop(); });
   document.querySelectorAll(".shop-buy-button").forEach(button => button.addEventListener("click", () => buyShopItem(button)));
@@ -310,7 +309,7 @@ function bindEvents() {
           if (destroyCity) destroyCity();
           destroyCity = null;
           showScreen(homeScreen);
-        });
+        }, openShop);
       } catch (error) {
         console.error("City could not start:", error);
         cityStage.textContent = "THE CITY COULD NOT LOAD. PLEASE REFRESH AND TRY AGAIN.";
