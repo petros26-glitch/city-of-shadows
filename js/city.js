@@ -405,6 +405,7 @@ export function createCityGame(container, controls, characterData, onExit, onSho
 
   const keyDown = e => {
     const key = e.key.toLowerCase();
+    if (key === "e" && !e.repeat) { e.preventDefault(); if (drivingVehicle) exitVehicle(); else enterNearestVehicle(); }
     if (["w","a","s","d","arrowup","arrowdown","arrowleft","arrowright","shift","m"].includes(key)) {
       keys.add(key);
       if (key.startsWith("arrow") || key === " ") e.preventDefault();
