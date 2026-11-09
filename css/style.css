@@ -185,7 +185,7 @@ h2 { font-size: clamp(48px, 6vw, 76px); }
 
 
 /* Landscape-first playable city layout */
-@media (orientation: landscape) and (max-height: 600px) {
+@media (orientation: landscape) and (max-width: 1000px) {
   .city-screen {
     position: fixed;
     inset: 0;
