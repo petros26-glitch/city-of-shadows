@@ -23,6 +23,9 @@ export function createCityGame(container, controls, characterData, onExit) {
   const buildingMats = ["#62534d", "#76645a", "#4e5358", "#746d61", "#514b50"].map(c => new THREE.MeshStandardMaterial({ color: c, roughness: 0.95 }));
   const windowMat = new THREE.MeshStandardMaterial({ color: "#d6a76b", emissive: "#6b4324", emissiveIntensity: 0.35 });
   const greenMat = new THREE.MeshStandardMaterial({ color: "#344b36" });
+  const shopWallMat = new THREE.MeshStandardMaterial({ color: "#3b3433", roughness: 0.9 });
+  const shopTrimMat = new THREE.MeshStandardMaterial({ color: "#c79b55", metalness: 0.25, roughness: 0.55 });
+  const shopGlassMat = new THREE.MeshStandardMaterial({ color: "#263e49", emissive: "#10212a", metalness: 0.35, roughness: 0.25 });
 
   function block(geometry, material, x, y, z, parent = scene) {
     const mesh = new THREE.Mesh(geometry, material);
@@ -85,6 +88,25 @@ export function createCityGame(container, controls, characterData, onExit) {
     block(new THREE.BoxGeometry(0.8,0.12,0.2), lineMat, x+0.3, 4.2, z);
     environmentColliders.push({ x, z, radius: 0.48 });
   }
+
+
+  // A clearly marked corner store beside the main road, visible from the starting area.
+  const shopBuilding = block(new THREE.BoxGeometry(5.4,4.2,5.2), shopWallMat, 13.2,2.1,-3.2);
+  block(new THREE.BoxGeometry(5.7,0.28,5.5), shopTrimMat, 13.2,4.28,-3.2);
+  block(new THREE.BoxGeometry(1.25,2.35,0.12), shopGlassMat, 11.65,1.2,-0.52);
+  block(new THREE.BoxGeometry(1.4,1.15,0.12), shopGlassMat, 14.25,2.15,-0.52);
+  block(new THREE.BoxGeometry(4.7,0.78,0.22), shopTrimMat, 13.2,3.35,-0.48);
+  const shopSignCanvas = document.createElement("canvas");
+  shopSignCanvas.width = 512; shopSignCanvas.height = 128;
+  const shopSignContext = shopSignCanvas.getContext("2d");
+  shopSignContext.fillStyle = "#171116"; shopSignContext.fillRect(0,0,512,128);
+  shopSignContext.fillStyle = "#f5d59a"; shopSignContext.font = "bold 64px Arial";
+  shopSignContext.textAlign = "center"; shopSignContext.textBaseline = "middle";
+  shopSignContext.fillText("24/7 SHOP",256,66);
+  const shopSignTexture = new THREE.CanvasTexture(shopSignCanvas);
+  const shopSign = new THREE.Mesh(new THREE.PlaneGeometry(4.45,0.7),new THREE.MeshBasicMaterial({map:shopSignTexture}));
+  shopSign.position.set(13.2,3.35,-0.34); scene.add(shopSign);
+  block(new THREE.BoxGeometry(5.8,0.12,0.9), pavementMat,13.2,0.08,0.15);
 
   const skin = new THREE.MeshStandardMaterial({ color: characterData?.skin || "#6f402d" });
   const shirt = new THREE.MeshStandardMaterial({ color: characterData?.gender === "female" ? "#55242c" : "#292a31" });
@@ -428,8 +450,11 @@ export function createCityGame(container, controls, characterData, onExit) {
     // Punches and kicks use separate, readable limb animations.
     playerAttackTime = Math.max(0, playerAttackTime - dt);
     if (playerAttackTime > 0) {
-      const punch = Math.sin((1 - playerAttackTime / 0.34) * Math.PI);
-      playerParts.arms[playerAttackSide].rotation.x = -1.9 * punch;
+      const punchProgress = 1 - playerAttackTime / 0.34;
+      const punch = Math.sin(punchProgress * Math.PI);
+      const punchExtension = punchProgress < 0.28 ? punchProgress / 0.28 : punchProgress > 0.72 ? (1-punchProgress)/0.28 : 1;
+      playerParts.arms[playerAttackSide].rotation.x = -0.25 - 1.95 * Math.max(0,punchExtension);
+      player.rotation.y += (playerAttackSide === 0 ? -1 : 1) * punch * 0.12;
       playerParts.arms[playerAttackSide].rotation.z =
         (playerAttackSide === 0 ? 1 : -1) * 0.2 * punch;
     } else {
@@ -438,8 +463,11 @@ export function createCityGame(container, controls, characterData, onExit) {
     }
     playerKickTime = Math.max(0, playerKickTime - dt);
     if (playerKickTime > 0) {
-      const kickMotion = Math.sin((1 - playerKickTime / 0.48) * Math.PI);
-      playerParts.legs[playerAttackSide].rotation.x = -1.65 * kickMotion;
+      const kickProgress = 1 - playerKickTime / 0.48;
+      const kickMotion = Math.sin(kickProgress * Math.PI);
+      playerParts.legs[playerAttackSide].rotation.x = -0.18 - 1.85 * kickMotion;
+      playerParts.arms[0].rotation.x = 0.55 * kickMotion;
+      playerParts.arms[1].rotation.x = 0.55 * kickMotion;
     }
     if (blockHeld) {
       playerParts.arms[0].rotation.x = -1.05;
@@ -497,9 +525,14 @@ export function createCityGame(container, controls, characterData, onExit) {
     }
     if (opponentHitReaction > 0) {
       opponentHitReaction = Math.max(0, opponentHitReaction - dt);
-      const recoil = Math.sin((opponentHitReaction / 0.3) * Math.PI) * 0.18;
-      opponent.position.x -= Math.sin(opponent.rotation.y) * recoil * dt * 8;
-      opponent.position.z -= Math.cos(opponent.rotation.y) * recoil * dt * 8;
+      const recoil = Math.sin((opponentHitReaction / 0.3) * Math.PI);
+      opponent.position.x -= Math.sin(opponent.rotation.y) * recoil * dt * 2.2;
+      opponent.position.z -= Math.cos(opponent.rotation.y) * recoil * dt * 2.2;
+      opponent.rotation.x = -0.16 * recoil;
+      opponentParts.arms[0].rotation.x = 0.75 * recoil;
+      opponentParts.arms[1].rotation.x = 0.75 * recoil;
+      opponentParts.legs[0].rotation.x = -0.25 * recoil;
+      opponentParts.legs[1].rotation.x = -0.25 * recoil;
     }
     const desired=new THREE.Vector3(player.position.x+Math.sin(cameraAngle)*7,4.1,player.position.z+Math.cos(cameraAngle)*7);
     camera.position.lerp(desired,0.12);
@@ -509,6 +542,13 @@ export function createCityGame(container, controls, characterData, onExit) {
       if (opponentFlash <= 0) opponentTorso.material.color.set(opponentHealth > 0 ? "#8e3438" : "#333333");
     }
     // Keep the defeated opponent visible at 0%; it stays down for this session.
+    if (opponentHealth <= 0) {
+      opponent.rotation.x = -0.72;
+      opponentParts.legs[0].rotation.x = 1.15;
+      opponentParts.legs[1].rotation.x = 1.15;
+      opponentParts.arms[0].rotation.x = -0.8;
+      opponentParts.arms[1].rotation.x = -0.8;
+    }
     opponent.visible = true;
     renderer.render(scene,camera);
     const status=controls.querySelector(".city-status");
