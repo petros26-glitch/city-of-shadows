@@ -33,15 +33,35 @@ let equipment = { top: "", pants: "", shoes: "" };
 let needs = { hunger: 100, hydration: 100, energy: 100 };
 
 
-function loadShopData() {
+function readStoredJSON(key, fallback) {
   try {
-    const savedWallet = localStorage.getItem(WALLET_KEY);
-    wallet = savedWallet === null ? 500 : Number(savedWallet);
-    if (!Number.isFinite(wallet) || wallet < 0) wallet = 500;
-    inventory = JSON.parse(localStorage.getItem(INVENTORY_KEY) || "{}") || {};
-    equipment = JSON.parse(localStorage.getItem(EQUIPMENT_KEY) || '{"top":"","pants":"","shoes":""}') || { top:"", pants:"", shoes:"" };
-    needs = JSON.parse(localStorage.getItem(NEEDS_KEY) || '{"hunger":100,"hydration":100,"energy":100}') || { hunger:100, hydration:100, energy:100 };
-  } catch { wallet = 500; inventory = {}; equipment = { top:"", pants:"", shoes:"" }; needs = { hunger:100, hydration:100, energy:100 }; }
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : fallback;
+  } catch { return fallback; }
+}
+function loadShopData() {
+  const rawWallet = localStorage.getItem(WALLET_KEY);
+  const savedWallet = Number(rawWallet);
+  wallet = rawWallet === null ? 500 : (Number.isFinite(savedWallet) && savedWallet >= 0 ? savedWallet : 500);
+  const storedInventory = readStoredJSON(INVENTORY_KEY, {});
+  inventory = {};
+  if (storedInventory && typeof storedInventory === "object" && !Array.isArray(storedInventory)) {
+    for (const [item, count] of Object.entries(storedInventory)) {
+      if (["meal","water","hoodie","jacket","jeans","sneakers"].includes(item) && Number.isFinite(Number(count)) && Number(count) > 0) inventory[item] = Math.floor(Number(count));
+    }
+  }
+  const storedEquipment = readStoredJSON(EQUIPMENT_KEY, {});
+  equipment = {
+    top: ["hoodie","jacket"].includes(storedEquipment?.top) ? storedEquipment.top : "",
+    pants: storedEquipment?.pants === "jeans" ? "jeans" : "",
+    shoes: storedEquipment?.shoes === "sneakers" ? "sneakers" : ""
+  };
+  const storedNeeds = readStoredJSON(NEEDS_KEY, {});
+  needs = {
+    hunger: Number.isFinite(Number(storedNeeds?.hunger)) ? Math.min(100,Math.max(0,Number(storedNeeds.hunger))) : 100,
+    hydration: Number.isFinite(Number(storedNeeds?.hydration)) ? Math.min(100,Math.max(0,Number(storedNeeds.hydration))) : 100,
+    energy: Number.isFinite(Number(storedNeeds?.energy)) ? Math.min(100,Math.max(0,Number(storedNeeds.energy))) : 100
+  };
 }
 function renderShop() {
   $("#shop-cash").textContent = "₦" + wallet.toLocaleString("en-NG");
@@ -157,12 +177,15 @@ function showScreen(screen) {
 }
 
 function loadSavedCharacter() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
+  const data = readStoredJSON(STORAGE_KEY, null);
+  if (!data || typeof data !== "object" || typeof data.name !== "string" || !data.name.trim()) return null;
+  return {
+    name: data.name.trim().slice(0,18),
+    gender: data.gender === "female" ? "female" : "male",
+    age: Number.isFinite(Number(data.age)) ? Math.min(25,Math.max(18,Math.round(Number(data.age)))) : 20,
+    skin: ["#6f402d","#965d40","#bd805d","#d49b78"].includes(data.skin) ? data.skin : "#6f402d",
+    hair: ["short","afro","shaved"].includes(data.hair) ? data.hair : "short"
+  };
 }
 
 function updateContinueButton() {
@@ -177,15 +200,23 @@ function setActive(selector, attribute, value) {
 
 function readForm() {
   state.name = $("#character-name").value.trim();
-  state.age = Number($("#age-input").value);
+  state.age = Math.min(25, Math.max(18, Number($("#age-input").value) || 20));
+  state.name = state.name.slice(0,18);
   return { ...state };
 }
 
 function fillForm(data) {
-  Object.assign(state, data);
-  $("#character-name").value = state.name || "";
-  $("#age-input").value = state.age || 20;
-  $("#age-value").textContent = String(state.age || 20);
+  const safe = data && typeof data === "object" ? data : {};
+  Object.assign(state, {
+    name: typeof safe.name === "string" ? safe.name.slice(0,18) : "",
+    gender: safe.gender === "female" ? "female" : "male",
+    age: Number.isFinite(Number(safe.age)) ? Math.min(25,Math.max(18,Math.round(Number(safe.age)))) : 20,
+    skin: ["#6f402d","#965d40","#bd805d","#d49b78"].includes(safe.skin) ? safe.skin : "#6f402d",
+    hair: ["short","afro","shaved"].includes(safe.hair) ? safe.hair : "short"
+  });
+  $("#character-name").value = state.name;
+  $("#age-input").value = state.age;
+  $("#age-value").textContent = String(state.age);
   setActive("[data-gender]", "data-gender", state.gender);
   setActive("[data-hair]", "data-hair", state.hair);
   setActive("[data-skin]", "data-skin", state.skin);
