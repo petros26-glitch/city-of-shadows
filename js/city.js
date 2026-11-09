@@ -272,6 +272,8 @@ export function createCityGame(container, controls, characterData, onExit, onSho
   let playerHealth = 100;
   const survival = { hunger: characterData?.needs?.hunger ?? 100, hydration: characterData?.needs?.hydration ?? 100, energy: characterData?.needs?.energy ?? 100 };
   let needsClock = 0;
+  const initialNeedsHud = document.querySelector("#needs-hud");
+  if (initialNeedsHud) initialNeedsHud.textContent = `HUNGER ${Math.round(survival.hunger)}%  ·  WATER ${Math.round(survival.hydration)}%  ·  ENERGY ${Math.round(survival.energy)}%`;
   let attackCooldown = 0;
   let opponentAttackCooldown = 0;
   let dodgeTime = 0;
