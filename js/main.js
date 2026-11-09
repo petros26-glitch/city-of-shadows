@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { createCityGame } from "./city.js?v=19";
+import { createCityGame } from "./city.js?v=20";
 
 const STORAGE_KEY = "cos-player-character-v1";
 const state = {
@@ -29,7 +29,7 @@ const EQUIPMENT_KEY = "cos-player-equipment-v1";
 const NEEDS_KEY = "cos-player-needs-v1";
 let wallet = 500;
 let inventory = {};
-let equipment = { top: "", shoes: "" };
+let equipment = { top: "", pants: "", shoes: "" };
 let needs = { hunger: 100, hydration: 100, energy: 100 };
 
 
@@ -39,9 +39,9 @@ function loadShopData() {
     wallet = savedWallet === null ? 500 : Number(savedWallet);
     if (!Number.isFinite(wallet) || wallet < 0) wallet = 500;
     inventory = JSON.parse(localStorage.getItem(INVENTORY_KEY) || "{}") || {};
-    equipment = JSON.parse(localStorage.getItem(EQUIPMENT_KEY) || '{"top":"","shoes":""}') || { top:"", shoes:"" };
+    equipment = JSON.parse(localStorage.getItem(EQUIPMENT_KEY) || '{"top":"","pants":"","shoes":""}') || { top:"", pants:"", shoes:"" };
     needs = JSON.parse(localStorage.getItem(NEEDS_KEY) || '{"hunger":100,"hydration":100,"energy":100}') || { hunger:100, hydration:100, energy:100 };
-  } catch { wallet = 500; inventory = {}; equipment = { top:"", shoes:"" }; needs = { hunger:100, hydration:100, energy:100 }; }
+  } catch { wallet = 500; inventory = {}; equipment = { top:"", pants:"", shoes:"" }; needs = { hunger:100, hydration:100, energy:100 }; }
 }
 function renderShop() {
   $("#shop-cash").textContent = "₦" + wallet.toLocaleString("en-NG");
@@ -51,7 +51,7 @@ function renderShop() {
     : "No items yet";
 }
 function itemName(item) {
-  return ({ meal:"Street Meal", water:"Bottled Water", hoodie:"Street Hoodie", sneakers:"Fresh Sneakers" })[item] || item;
+  return ({ meal:"Street Meal", water:"Bottled Water", hoodie:"Street Hoodie", jacket:"Denim Jacket", jeans:"Blue Jeans", sneakers:"Fresh Sneakers" })[item] || item;
 }
 function savePlayerData() {
   localStorage.setItem(WALLET_KEY, String(wallet));
@@ -71,6 +71,7 @@ function renderInventory() {
   const rows = Object.entries(inventory).filter(([,count]) => count > 0);
   $("#wardrobe-current").textContent = "EQUIPPED · " +
     (equipment.top ? itemName(equipment.top) : "STARTER TOP") + " · " +
+    (equipment.pants ? itemName(equipment.pants) : "STARTER TROUSERS") + " · " +
     (equipment.shoes ? itemName(equipment.shoes) : "STARTER SHOES");
   $("#inventory-list").replaceChildren();
   if (!rows.length) {
@@ -87,12 +88,12 @@ function renderInventory() {
     const name = document.createElement("strong");
     name.textContent = itemName(item);
     const quantity = document.createElement("span");
-    quantity.textContent = "Owned · " + count + (equipment.top === item || equipment.shoes === item ? " · EQUIPPED" : "");
+    quantity.textContent = "Owned · " + count + (Object.values(equipment).includes(item) ? " · EQUIPPED" : "");
     info.append(name, quantity);
     const action = document.createElement("button");
     action.className = "inventory-action";
     const consumable = item === "meal" || item === "water";
-    action.textContent = consumable ? "USE" : (equipment.top === item || equipment.shoes === item ? "REMOVE" : "WEAR");
+    action.textContent = consumable ? "USE" : (Object.values(equipment).includes(item) ? "REMOVE" : "WEAR");
     action.addEventListener("click", () => {
       if (consumable) {
         inventory[item] = Math.max(0, (inventory[item] || 0) - 1);
@@ -100,7 +101,7 @@ function renderInventory() {
         if (item === "water") needs.hydration = Math.min(100, needs.hydration + 40);
         $("#inventory-message").textContent = itemName(item) + " used. Your needs have been restored.";
       } else {
-        const slot = item === "hoodie" ? "top" : item === "sneakers" ? "shoes" : "";
+        const slot = ["hoodie","jacket"].includes(item) ? "top" : item === "jeans" ? "pants" : item === "sneakers" ? "shoes" : "";
         if (!slot) return;
         equipment[slot] = equipment[slot] === item ? "" : item;
         window.dispatchEvent(new CustomEvent("cos-equipment-changed", { detail: { ...equipment } }));
