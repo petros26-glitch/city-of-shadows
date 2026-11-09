@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { createCityGame } from "./city.js?v=20";
+import { createCityGame } from "./city.js?v=21";
 
 const STORAGE_KEY = "cos-player-character-v1";
 const state = {
@@ -99,6 +99,10 @@ function renderInventory() {
         inventory[item] = Math.max(0, (inventory[item] || 0) - 1);
         if (item === "meal") needs.hunger = Math.min(100, needs.hunger + 35);
         if (item === "water") needs.hydration = Math.min(100, needs.hydration + 40);
+        if (item === "meal") needs.energy = Math.min(100, needs.energy + 8);
+        savePlayerData();
+        const needsHud = $("#needs-hud");
+        if (needsHud) needsHud.textContent = `HUNGER ${Math.round(needs.hunger)}%  ·  WATER ${Math.round(needs.hydration)}%  ·  ENERGY ${Math.round(needs.energy)}%`;
         $("#inventory-message").textContent = itemName(item) + " used. Your needs have been restored.";
       } else {
         const slot = ["hoodie","jacket"].includes(item) ? "top" : item === "jeans" ? "pants" : item === "sneakers" ? "shoes" : "";
@@ -406,7 +410,10 @@ function bindEvents() {
           if (destroyCity) destroyCity();
           destroyCity = null;
           showScreen(homeScreen);
-        }, openShop, openInventory);
+        }, openShop, openInventory, updatedNeeds => {
+          needs = { ...updatedNeeds };
+          savePlayerData();
+        });
       } catch (error) {
         console.error("City could not start:", error);
         cityStage.textContent = "THE CITY COULD NOT LOAD. PLEASE REFRESH AND TRY AGAIN.";
