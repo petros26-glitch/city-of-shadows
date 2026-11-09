@@ -398,3 +398,45 @@ h2 { font-size: clamp(48px, 6vw, 76px); }
   .mobile-actions .dodge-button { left: 44px; bottom: 0; }
   .mobile-actions .block-button { left: 0; top: 44px; }
 }
+
+
+/* Five circular action controls stay together on the right; joystick stays alone on the left. */
+.city-stage { position: relative; overflow: hidden; }
+.door-interact-prompt {
+  position: absolute; z-index: 8; transform: translate(-50%, -115%);
+  border: 1px solid rgba(255,220,160,.9); border-radius: 999px;
+  padding: 10px 15px; color: #fff; background: linear-gradient(110deg,#9f202a,#d13a40);
+  box-shadow: 0 5px 20px rgba(0,0,0,.5); font-size: 10px; font-weight: 900;
+  letter-spacing: 1px; white-space: nowrap; cursor: pointer; touch-action: manipulation;
+}
+.door-interact-prompt[hidden] { display: none !important; }
+@media (max-width:800px) {
+  .movement-controls { flex-direction: row; }
+  .movement-controls .joystick { flex: 0 0 96px; }
+  .movement-controls .sprint-button { display: none !important; }
+  .mobile-actions { width:164px; height:164px; flex:0 0 164px; }
+  .mobile-actions .action-button { position:absolute; width:56px; height:56px; min-width:56px; border-radius:50%; display:grid; place-items:center; padding:0; font-size:24px; }
+  .mobile-actions .attack-button { left:54px; top:0; }
+  .mobile-actions .kick-button { right:0; top:54px; }
+  .mobile-actions .run-action-button { right:0; bottom:0; }
+  .mobile-actions .dodge-button { left:0; bottom:0; }
+  .mobile-actions .block-button { left:0; top:54px; }
+}
+@media (max-width:480px) {
+  .mobile-actions { width:144px; height:144px; flex-basis:144px; }
+  .mobile-actions .action-button { width:49px; height:49px; min-width:49px; font-size:21px; }
+  .mobile-actions .attack-button { left:47px; top:0; }
+  .mobile-actions .kick-button { right:0; top:47px; }
+  .mobile-actions .run-action-button { right:0; bottom:0; }
+  .mobile-actions .dodge-button { left:0; bottom:0; }
+  .mobile-actions .block-button { left:0; top:47px; }
+}
+@media (orientation:landscape) and (max-width:1000px) {
+  .mobile-actions { width:136px; height:136px; flex-basis:136px; }
+  .mobile-actions .action-button { width:46px; height:46px; min-width:46px; }
+  .mobile-actions .attack-button { left:45px; top:0; }
+  .mobile-actions .kick-button { right:0; top:45px; }
+  .mobile-actions .run-action-button { right:0; bottom:0; }
+  .mobile-actions .dodge-button { left:0; bottom:0; }
+  .mobile-actions .block-button { left:0; top:45px; }
+}
