@@ -107,6 +107,7 @@ export function createCityGame(container, controls, characterData, onExit) {
   const shopSign = new THREE.Mesh(new THREE.PlaneGeometry(4.45,0.7),new THREE.MeshBasicMaterial({map:shopSignTexture}));
   shopSign.position.set(13.2,3.35,-0.34); scene.add(shopSign);
   block(new THREE.BoxGeometry(5.8,0.12,0.9), pavementMat,13.2,0.08,0.15);
+  buildingColliders.push({ minX:10.5, maxX:15.9, minZ:-5.85, maxZ:-0.72 });
 
   const skin = new THREE.MeshStandardMaterial({ color: characterData?.skin || "#6f402d" });
   const shirt = new THREE.MeshStandardMaterial({ color: characterData?.gender === "female" ? "#55242c" : "#292a31" });
@@ -454,7 +455,6 @@ export function createCityGame(container, controls, characterData, onExit) {
       const punch = Math.sin(punchProgress * Math.PI);
       const punchExtension = punchProgress < 0.28 ? punchProgress / 0.28 : punchProgress > 0.72 ? (1-punchProgress)/0.28 : 1;
       playerParts.arms[playerAttackSide].rotation.x = -0.25 - 1.95 * Math.max(0,punchExtension);
-      player.rotation.y += (playerAttackSide === 0 ? -1 : 1) * punch * 0.12;
       playerParts.arms[playerAttackSide].rotation.z =
         (playerAttackSide === 0 ? 1 : -1) * 0.2 * punch;
     } else {
@@ -528,7 +528,7 @@ export function createCityGame(container, controls, characterData, onExit) {
       const recoil = Math.sin((opponentHitReaction / 0.3) * Math.PI);
       opponent.position.x -= Math.sin(opponent.rotation.y) * recoil * dt * 2.2;
       opponent.position.z -= Math.cos(opponent.rotation.y) * recoil * dt * 2.2;
-      opponent.rotation.x = -0.16 * recoil;
+      opponent.rotation.x = opponentHealth <= 0 ? -0.72 : -0.16 * recoil;
       opponentParts.arms[0].rotation.x = 0.75 * recoil;
       opponentParts.arms[1].rotation.x = 0.75 * recoil;
       opponentParts.legs[0].rotation.x = -0.25 * recoil;
