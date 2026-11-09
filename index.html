@@ -17,7 +17,7 @@
       }
     }
   </script>
-  <script type="module" src="./js/main.js?v=16"></script>
+  <script type="module" src="./js/main.js?v=17"></script>
 </head>
 <body>
   <div class="ambient ambient-one"></div>
@@ -172,13 +172,15 @@
         <div class="city-status-row"><div class="city-status">EXPLORE THE NEIGHBOURHOOD</div><button id="shop-open-button" class="shop-open-button">OPEN SHOP</button></div>
         <div class="city-help">PC: WASD / ARROWS TO MOVE · SHIFT OR M TO RUN · DRAG TO LOOK</div>
         <div class="city-controls" id="city-controls">
-          <div class="joystick" aria-label="Movement joystick"><div class="joystick-knob"></div></div>
+          <div class="movement-controls">
+            <div class="joystick" aria-label="Movement joystick"><div class="joystick-knob"></div></div>
+            <button class="action-button sprint-button" aria-label="Run">RUN</button>
+          </div>
           <div class="mobile-actions">
             <button class="action-button attack-button" aria-label="Punch">PUNCH</button>
             <button class="action-button kick-button" aria-label="Kick">KICK</button>
             <button class="action-button block-button" aria-label="Block">BLOCK</button>
             <button class="action-button dodge-button" aria-label="Dodge">DODGE</button>
-            <button class="action-button sprint-button" aria-label="Run">RUN</button>
           </div>
         </div>
         <div class="combat-readout" id="combat-readout">PUNCH · KICK · BLOCK · DODGE</div>
