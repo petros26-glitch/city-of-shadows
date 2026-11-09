@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { createCityGame } from "./city.js?v=18";
+import { createCityGame } from "./city.js?v=19";
 
 const STORAGE_KEY = "cos-player-character-v1";
 const state = {
@@ -62,7 +62,7 @@ function savePlayerData() {
 function openInventory() {
   loadShopData();
   renderInventory();
-  $("#inventory-message").textContent = "Choose EQUIP for clothing or USE for food and drinks.";
+  $("#inventory-message").textContent = "Choose WEAR or REMOVE for clothing, or USE for food and drinks.";
   $("#inventory-panel").classList.remove("hidden");
 }
 function closeInventory() { $("#inventory-panel").classList.add("hidden"); }
@@ -92,8 +92,7 @@ function renderInventory() {
     const action = document.createElement("button");
     action.className = "inventory-action";
     const consumable = item === "meal" || item === "water";
-    action.textContent = consumable ? "USE" : (equipment.top === item || equipment.shoes === item ? "EQUIPPED" : "EQUIP");
-    action.disabled = !consumable && (equipment.top === item || equipment.shoes === item);
+    action.textContent = consumable ? "USE" : (equipment.top === item || equipment.shoes === item ? "REMOVE" : "WEAR");
     action.addEventListener("click", () => {
       if (consumable) {
         inventory[item] = Math.max(0, (inventory[item] || 0) - 1);
@@ -103,8 +102,9 @@ function renderInventory() {
       } else {
         const slot = item === "hoodie" ? "top" : item === "sneakers" ? "shoes" : "";
         if (!slot) return;
-        equipment[slot] = item;
-        $("#inventory-message").textContent = itemName(item) + " equipped. Your character's outfit has changed.";
+        equipment[slot] = equipment[slot] === item ? "" : item;
+        window.dispatchEvent(new CustomEvent("cos-equipment-changed", { detail: { ...equipment } }));
+        $("#inventory-message").textContent = equipment[slot] ? itemName(item) + " is now being worn." : itemName(item) + " removed. Starter clothing restored.";
       }
       savePlayerData();
       renderInventory();
@@ -333,6 +333,16 @@ function bindEvents() {
   $("#inventory-close-button").addEventListener("click", closeInventory);
   $("#inventory-panel").addEventListener("click", event => { if (event.target.id === "inventory-panel") closeInventory(); });
   $("#game-inventory-button").addEventListener("click", openInventory);
+  $("#game-menu-button").addEventListener("click", () => $("#game-menu-panel").classList.remove("hidden"));
+  $("#game-menu-resume-button").addEventListener("click", () => $("#game-menu-panel").classList.add("hidden"));
+  $("#game-menu-inventory-button").addEventListener("click", () => { $("#game-menu-panel").classList.add("hidden"); openInventory(); });
+  $("#game-menu-settings-button").addEventListener("click", () => { $("#game-menu-panel").classList.add("hidden"); $("#info-title").innerHTML = "GAME <em>SETTINGS.</em>"; $("#info-copy").textContent = "Current build uses low-power graphics and device-appropriate controls."; $("#info-panel").classList.remove("hidden"); });
+  $("#game-menu-home-button").addEventListener("click", () => {
+    $("#game-menu-panel").classList.add("hidden");
+    if (screen.orientation && typeof screen.orientation.unlock === "function") { try { screen.orientation.unlock(); } catch {} }
+    if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(() => {});
+    if (destroyCity) destroyCity(); destroyCity = null; showScreen(homeScreen);
+  });
   $("#menu-settings-button").addEventListener("click", () => {
     $("#info-title").innerHTML = 'GAME <em>SETTINGS.</em>';
     $("#info-copy").textContent = "The settings screen is being expanded. Current builds use automatic low-power graphics settings and device-appropriate touch or keyboard controls.";
