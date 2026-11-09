@@ -125,7 +125,8 @@ export function createCityGame(container, controls, characterData, onExit, onSho
   const equippedShoes = characterData?.equipment?.shoes === "sneakers";
   const shirt = new THREE.MeshStandardMaterial({ color: equippedTop ? "#7b2630" : (characterData?.gender === "female" ? "#55242c" : "#292a31") });
   const pants = new THREE.MeshStandardMaterial({ color: "#17191f" });
-  const shoes = new THREE.MeshStandardMaterial({ color: equippedShoes ? "#e0ded8" : "#08090c", roughness: 0.72 });
+  const shoes = new THREE.MeshStandardMaterial({ color: "#08090c", roughness: 0.72 });
+  const playerShoes = new THREE.MeshStandardMaterial({ color: equippedShoes ? "#e0ded8" : "#08090c", roughness: 0.72 });
   const hair = new THREE.MeshStandardMaterial({ color: "#171116" });
 
   function makeHumanoid(group, shirtMaterial, skinMaterial, trouserMaterial, shoeMaterial, hairMaterial) {
@@ -154,7 +155,13 @@ export function createCityGame(container, controls, characterData, onExit, onSho
   }
 
   const player = new THREE.Group();
-  const playerParts = makeHumanoid(player,shirt,skin,pants,shoes,hair);
+  const playerParts = makeHumanoid(player,shirt,skin,pants,playerShoes,hair);
+  const equipmentChanged = event => {
+    const current = event.detail || {};
+    shirt.color.set(current.top === "hoodie" ? "#7b2630" : (characterData?.gender === "female" ? "#55242c" : "#292a31"));
+    playerShoes.color.set(current.shoes === "sneakers" ? "#e0ded8" : "#08090c");
+  };
+  window.addEventListener("cos-equipment-changed", equipmentChanged);
   scene.add(player);
   player.position.set(0,0,4);
 
@@ -183,7 +190,7 @@ export function createCityGame(container, controls, characterData, onExit, onSho
     npc.position.set(route.a[0],0,route.a[1]);
     npc.rotation.y = Math.atan2(route.b[0]-route.a[0], route.b[1]-route.a[1]);
     scene.add(npc);
-    pedestrians.push({ npc, parts, route, progress:0, direction:1, phase:index*1.7, radius:pedestrianRadius });
+    pedestrians.push({ npc, parts, route, progress:0, direction:1, phase:index*1.7, radius:pedestrianRadius, health:100, alive:true });
   });
 
   // A living sparring opponent with a complete low-poly body.
@@ -312,53 +319,50 @@ export function createCityGame(container, controls, characterData, onExit, onSho
   const dodgeButton = controls.querySelector(".dodge-button");
   const runButton = controls.querySelector(".sprint-button");
 
-  function attack(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    if (attackCooldown > 0 || opponentHealth <= 0) return;
-    attackButton.classList.add("pressed");
-    attackCooldown = 0.48;
-    playerAttackTime = 0.34;
-    playerAttackSide = playerAttackSide === 0 ? 1 : 0;
-    const distance = player.position.distanceTo(opponent.position);
-    const readout = controls.querySelector("#combat-readout");
-    if (distance < 3.35) {
-      opponentHealth = Math.max(0, opponentHealth - 20);
-      updateOpponentHealthBar();
-      opponentHitReaction = 0.22;
-      opponentFlash = 0.16;
-      opponentTorso.material.color.set("#f3c0a5");
-      readout.textContent = opponentHealth > 0
-        ? "PUNCH CONNECTED · OPPONENT " + opponentHealth + "%"
-        : "OPPONENT DEFEATED · 0% HEALTH";
-    } else {
-      readout.textContent = "PUNCH MISSED · GET CLOSER";
+  function findMeleeTarget(maxRange) {
+    const fx=Math.sin(player.rotation.y), fz=Math.cos(player.rotation.y);
+    const targets=[...pedestrians.filter(p=>p.alive).map(person=>({kind:"pedestrian",person,npc:person.npc,health:person.health})),...(opponentHealth>0?[{kind:"opponent",npc:opponent,health:opponentHealth}]:[])];
+    let best=null;
+    for(const target of targets){
+      const dx=target.npc.position.x-player.position.x, dz=target.npc.position.z-player.position.z;
+      const distance=Math.hypot(dx,dz);
+      if(distance>maxRange||distance<0.01||((fx*dx+fz*dz)/distance)<0.15)continue;
+      if(!best||distance<best.distance)best={...target,distance};
     }
-    setTimeout(() => attackButton.classList.remove("pressed"), 140);
+    return best;
   }
-
-  function kick(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    if (attackCooldown > 0 || opponentHealth <= 0) return;
-    kickButton.classList.add("pressed");
-    attackCooldown = 0.72;
-    playerKickTime = 0.48;
-    const distance = player.position.distanceTo(opponent.position);
-    const readout = controls.querySelector("#combat-readout");
-    if (distance < 3.8) {
-      opponentHealth = Math.max(0, opponentHealth - 35);
-      updateOpponentHealthBar();
-      opponentHitReaction = 0.3;
-      opponentFlash = 0.18;
+  function hitMeleeTarget(target,damage,kind){
+    if(!target)return false;
+    const hp=Math.max(0,target.health-damage);
+    if(target.kind==="opponent"){
+      opponentHealth=hp; updateOpponentHealthBar();
+      opponentHitReaction=kind==="kick"?0.3:0.22; opponentFlash=kind==="kick"?0.18:0.16;
       opponentTorso.material.color.set("#f3c0a5");
-      readout.textContent = opponentHealth > 0
-        ? "KICK CONNECTED · OPPONENT " + opponentHealth + "%"
-        : "OPPONENT DEFEATED · 0% HEALTH";
-    } else {
-      readout.textContent = "KICK MISSED · GET CLOSER";
+      controls.querySelector("#combat-readout").textContent=hp>0?kind.toUpperCase()+" CONNECTED · OPPONENT "+hp+"%":"OPPONENT DEFEATED · 0% HEALTH";
+    }else{
+      const p=target.person; p.health=hp;
+      p.parts.body.material.color.set("#f3c0a5");
+      p.npc.rotation.y=Math.atan2(player.position.x-p.npc.position.x,player.position.z-p.npc.position.z);
+      if(hp<=0){
+        p.alive=false; p.npc.rotation.x=-0.95;
+        p.parts.legs.forEach(leg=>leg.rotation.x=1.1);
+        p.parts.arms.forEach(arm=>arm.rotation.x=-0.8);
+        controls.querySelector("#combat-readout").textContent="PEDESTRIAN DEFEATED";
+      }else controls.querySelector("#combat-readout").textContent=kind.toUpperCase()+" HIT · PEDESTRIAN "+hp+"%";
     }
-    setTimeout(() => kickButton.classList.remove("pressed"), 180);
+    return true;
+  }
+  function attack(e){
+    e.preventDefault();e.stopPropagation();if(attackCooldown>0)return;
+    attackButton.classList.add("pressed");attackCooldown=0.48;playerAttackTime=0.34;playerAttackSide=playerAttackSide===0?1:0;
+    if(!hitMeleeTarget(findMeleeTarget(3.35),20,"punch"))controls.querySelector("#combat-readout").textContent="PUNCH MISSED · FACE A PERSON AND GET CLOSER";
+    setTimeout(()=>attackButton.classList.remove("pressed"),140);
+  }
+  function kick(e){
+    e.preventDefault();e.stopPropagation();if(attackCooldown>0)return;
+    kickButton.classList.add("pressed");attackCooldown=0.72;playerKickTime=0.48;
+    if(!hitMeleeTarget(findMeleeTarget(3.8),35,"kick"))controls.querySelector("#combat-readout").textContent="KICK MISSED · FACE A PERSON AND GET CLOSER";
+    setTimeout(()=>kickButton.classList.remove("pressed"),180);
   }
 
   function runStart(e) {
@@ -481,7 +485,7 @@ export function createCityGame(container, controls, characterData, onExit, onSho
     const nextX = THREE.MathUtils.clamp(player.position.x+dx,-42,42);
     const nextZ = THREE.MathUtils.clamp(player.position.z+dz,-42,42);
     const radius = playerRadius;
-    const blockedByPedestrianX = pedestrians.some(person =>
+    const blockedByPedestrianX = pedestrians.some(person => person.alive &&
       Math.hypot(nextX-person.npc.position.x, player.position.z-person.npc.position.z) < radius + person.radius
     );
     const blockedByOpponentX = Math.hypot(nextX-opponent.position.x, player.position.z-opponent.position.z) < radius + 0.62;
@@ -493,7 +497,7 @@ export function createCityGame(container, controls, characterData, onExit, onSho
       Math.hypot(nextX-o.x, player.position.z-o.z) < o.radius + radius
     );
     if (!blockedBuildingX && !blockedTreeX && !blockedByPedestrianX && !blockedByOpponentX) player.position.x=nextX;
-    const blockedByPedestrianZ = pedestrians.some(person =>
+    const blockedByPedestrianZ = pedestrians.some(person => person.alive &&
       Math.hypot(player.position.x-person.npc.position.x, nextZ-person.npc.position.z) < radius + person.radius
     );
     const blockedByOpponentZ = Math.hypot(player.position.x-opponent.position.x, nextZ-opponent.position.z) < radius + 0.62;
@@ -543,6 +547,7 @@ export function createCityGame(container, controls, characterData, onExit, onSho
 
     // Pedestrians walk along short street routes and turn around at each end.
     pedestrians.forEach(person => {
+      if (!person.alive) return;
       const route = person.route;
       const start = person.direction > 0 ? route.a : route.b;
       const end = person.direction > 0 ? route.b : route.a;
@@ -676,6 +681,7 @@ export function createCityGame(container, controls, characterData, onExit, onSho
     window.removeEventListener("keydown",keyDown);
     window.removeEventListener("keyup",keyUp);
     window.removeEventListener("keydown",inventoryKey);
+    window.removeEventListener("cos-equipment-changed", equipmentChanged);
     if (inventoryButton) inventoryButton.removeEventListener("click", openInventory);
     joy.removeEventListener("pointerdown",joyStart);
     joy.removeEventListener("pointermove",joyMove);
