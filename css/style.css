@@ -285,3 +285,32 @@ h2 { font-size: clamp(48px, 6vw, 76px); }
   .shop-panel { padding:10px; }
   .shop-card { padding:17px; }
 }
+
+
+/* Reposition controls into a familiar mobile open-world layout. */
+.city-controls { align-items:end; }
+.movement-controls { display:flex; flex-direction:column; align-items:center; gap:8px; pointer-events:auto; }
+.movement-controls .joystick { order:2; }
+.movement-controls .sprint-button { order:1; position:static; width:76px; height:34px; min-width:76px; border-radius:18px; }
+.mobile-actions { width:150px; grid-template-columns:repeat(2,minmax(64px,1fr)); grid-template-areas:"attack kick" "block dodge"; gap:8px; }
+.sprint-button { grid-area:auto; }
+@media (max-width:800px) {
+  .city-controls { left:12px; right:12px; }
+  .movement-controls { gap:7px; }
+  .movement-controls .joystick { width:100px; height:100px; }
+  .movement-controls .sprint-button { width:72px; min-width:72px; height:32px; }
+  .mobile-actions { width:146px; gap:7px; }
+}
+@media (max-width:480px) {
+  .movement-controls .joystick { width:88px; height:88px; }
+  .movement-controls .sprint-button { width:68px; min-width:68px; height:30px; }
+  .mobile-actions { width:132px; grid-template-columns:repeat(2,minmax(60px,1fr)); gap:6px; }
+  .mobile-actions .action-button { height:42px; font-size:9px; }
+}
+@media (orientation:landscape) and (max-width:1000px) {
+  .city-controls { left:20px; right:20px; bottom:54px; }
+  .movement-controls { gap:7px; }
+  .movement-controls .joystick { width:92px; height:92px; }
+  .movement-controls .sprint-button { width:76px; min-width:76px; height:32px; }
+  .mobile-actions { width:154px; grid-template-areas:"attack kick" "block dodge"; }
+}
