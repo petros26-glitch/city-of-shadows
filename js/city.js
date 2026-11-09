@@ -1,6 +1,6 @@
 import * as THREE from "three";
 
-export function createCityGame(container, controls, characterData, onExit, onShopInteract) {
+export function createCityGame(container, controls, characterData, onExit, onShopInteract, onInventoryInteract) {
   const scene = new THREE.Scene();
   scene.background = new THREE.Color("#171923");
   scene.fog = new THREE.Fog("#171923", 22, 95);
@@ -167,6 +167,8 @@ export function createCityGame(container, controls, characterData, onExit, onSho
   ];
   const pedestrianSkin = new THREE.MeshStandardMaterial({ color:"#895b43" });
   const pedestrians = [];
+  const pedestrianRadius = 0.62;
+  const playerRadius = 0.58;
   const pedestrianRoutes = [
     { a:[-5, -5], b:[-5, 5], speed:0.72 },
     { a:[5, 5], b:[5, -5], speed:0.62 },
@@ -181,7 +183,7 @@ export function createCityGame(container, controls, characterData, onExit, onSho
     npc.position.set(route.a[0],0,route.a[1]);
     npc.rotation.y = Math.atan2(route.b[0]-route.a[0], route.b[1]-route.a[1]);
     scene.add(npc);
-    pedestrians.push({ npc, parts, route, progress:0, direction:1, phase:index*1.7 });
+    pedestrians.push({ npc, parts, route, progress:0, direction:1, phase:index*1.7, radius:pedestrianRadius });
   });
 
   // A living sparring opponent with a complete low-poly body.
@@ -245,6 +247,18 @@ export function createCityGame(container, controls, characterData, onExit, onSho
   let opponentHitReaction = 0;
 
   const keys = new Set();
+  const inventoryButton = document.querySelector("#game-inventory-button");
+  const openInventory = () => {
+    if (typeof onInventoryInteract === "function") onInventoryInteract();
+  };
+  const inventoryKey = e => {
+    if (e.key.toLowerCase() === "i" && !e.repeat) {
+      e.preventDefault();
+      openInventory();
+    }
+  };
+  if (inventoryButton) inventoryButton.addEventListener("click", openInventory);
+  window.addEventListener("keydown", inventoryKey);
   let joystick = { x: 0, y: 0 };
   let sprint = false;
   let cameraAngle = 0;
@@ -438,6 +452,12 @@ export function createCityGame(container, controls, characterData, onExit, onSho
   function loop(time){
     animationId=requestAnimationFrame(loop);
     const dt=Math.min((time-previous)/1000||0,0.05);previous=time;
+    const inventoryOpen = !document.querySelector("#inventory-panel").classList.contains("hidden");
+    const shopOpen = !document.querySelector("#shop-panel").classList.contains("hidden");
+    if (inventoryOpen || shopOpen) {
+      renderer.render(scene,camera);
+      return;
+    }
     let x=joystick.x+(keys.has("d")||keys.has("arrowright")?1:0)-(keys.has("a")||keys.has("arrowleft")?1:0);
     let z=joystick.y+(keys.has("s")||keys.has("arrowdown")?1:0)-(keys.has("w")||keys.has("arrowup")?1:0);
     const length=Math.hypot(x,z);
@@ -460,7 +480,11 @@ export function createCityGame(container, controls, characterData, onExit, onSho
     // allow the player to slide along a wall instead of passing through it.
     const nextX = THREE.MathUtils.clamp(player.position.x+dx,-42,42);
     const nextZ = THREE.MathUtils.clamp(player.position.z+dz,-42,42);
-    const radius = 0.58;
+    const radius = playerRadius;
+    const blockedByPedestrianX = pedestrians.some(person =>
+      Math.hypot(nextX-person.npc.position.x, player.position.z-person.npc.position.z) < radius + person.radius
+    );
+    const blockedByOpponentX = Math.hypot(nextX-opponent.position.x, player.position.z-opponent.position.z) < radius + 0.62;
     const blockedBuildingX = buildingColliders.some(b =>
       nextX+radius>b.minX && nextX-radius<b.maxX &&
       player.position.z+radius>b.minZ && player.position.z-radius<b.maxZ
@@ -468,7 +492,11 @@ export function createCityGame(container, controls, characterData, onExit, onSho
     const blockedTreeX = environmentColliders.some(o =>
       Math.hypot(nextX-o.x, player.position.z-o.z) < o.radius + radius
     );
-    if (!blockedBuildingX && !blockedTreeX) player.position.x=nextX;
+    if (!blockedBuildingX && !blockedTreeX && !blockedByPedestrianX && !blockedByOpponentX) player.position.x=nextX;
+    const blockedByPedestrianZ = pedestrians.some(person =>
+      Math.hypot(player.position.x-person.npc.position.x, nextZ-person.npc.position.z) < radius + person.radius
+    );
+    const blockedByOpponentZ = Math.hypot(player.position.x-opponent.position.x, nextZ-opponent.position.z) < radius + 0.62;
     const blockedBuildingZ = buildingColliders.some(b =>
       player.position.x+radius>b.minX && player.position.x-radius<b.maxX &&
       nextZ+radius>b.minZ && nextZ-radius<b.maxZ
@@ -476,7 +504,7 @@ export function createCityGame(container, controls, characterData, onExit, onSho
     const blockedTreeZ = environmentColliders.some(o =>
       Math.hypot(player.position.x-o.x, nextZ-o.z) < o.radius + radius
     );
-    if (!blockedBuildingZ && !blockedTreeZ) player.position.z=nextZ;
+    if (!blockedBuildingZ && !blockedTreeZ && !blockedByPedestrianZ && !blockedByOpponentZ) player.position.z=nextZ;
     if(moving) player.rotation.y=Math.atan2(dx,dz);
 
     // Animate arms and legs while walking or running.
@@ -520,7 +548,14 @@ export function createCityGame(container, controls, characterData, onExit, onSho
       const end = person.direction > 0 ? route.b : route.a;
       const vx = end[0] - start[0], vz = end[1] - start[1];
       const distance = Math.hypot(vx,vz) || 1;
-      person.progress += route.speed * dt / distance;
+      const nextProgress = Math.min(1, person.progress + route.speed * dt / distance);
+      const nextFrom = person.direction > 0 ? route.a : route.b;
+      const nextTo = person.direction > 0 ? route.b : route.a;
+      const nextNpcX = THREE.MathUtils.lerp(nextFrom[0],nextTo[0],nextProgress);
+      const nextNpcZ = THREE.MathUtils.lerp(nextFrom[1],nextTo[1],nextProgress);
+      const playerTooClose = Math.hypot(nextNpcX-player.position.x,nextNpcZ-player.position.z) < person.radius + playerRadius + 0.08;
+      const opponentTooClose = Math.hypot(nextNpcX-opponent.position.x,nextNpcZ-opponent.position.z) < person.radius + 0.62;
+      if (!playerTooClose && !opponentTooClose) person.progress = nextProgress;
       if (person.progress >= 1) {
         person.progress = 0;
         person.direction *= -1;
@@ -640,6 +675,8 @@ export function createCityGame(container, controls, characterData, onExit, onSho
     observer.disconnect();
     window.removeEventListener("keydown",keyDown);
     window.removeEventListener("keyup",keyUp);
+    window.removeEventListener("keydown",inventoryKey);
+    if (inventoryButton) inventoryButton.removeEventListener("click", openInventory);
     joy.removeEventListener("pointerdown",joyStart);
     joy.removeEventListener("pointermove",joyMove);
     joy.removeEventListener("pointerup",joyEnd);
