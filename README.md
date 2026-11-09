@@ -30,14 +30,13 @@ The project will be built incrementally, beginning with a small, playable experi
 
 The initial development direction is a lightweight browser-based 3D prototype using JavaScript and Three.js. The project will be kept mindful of low-memory Android development constraints. A future offline-installable Windows build is a goal, not a feature that is already available.
 
-## First milestones
+## Full game roadmap
 
-1. Establish the project structure and visual identity.
-2. Build the first working character creator.
-3. Create a small playable neighbourhood.
-4. Add player movement and camera controls.
-5. Introduce basic survival systems.
-6. Build and test the opening chapter, **The Streets**.
+The long-term plan includes a cinematic main menu, character creation, inventory and visible wardrobe, a living city with pedestrians and traffic, survival needs, jobs, missions, gangs, police, combat, vehicles, properties, businesses, relationships, reputation, a city map, day/night, weather, audio, settings, and persistent saves.
+
+The current implementation is an early browser prototype. The main menu now links to an initial inventory/wardrobe screen; the first shop purchases can be used or equipped; the equipped hoodie and sneakers alter the prototype character's appearance; and the starter neighbourhood includes a small group of walking pedestrians. These are first-pass systems, not finished commercial-grade versions.
+
+Development will continue in tested milestones. Advanced features such as full vehicle driving, police pursuits, large-scale city districts, mission chapters, cloud saves, detailed character models, and complete business/property systems remain planned work.
 
 ## Project status
 
