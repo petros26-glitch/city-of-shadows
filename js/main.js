@@ -315,6 +315,13 @@ function updateHair(material = createMaterial("#171116")) {
 function updateCharacterAppearance() {
   if (!previewReady || !character) return;
   scene.remove(character);
+  character.traverse(object => {
+    if (object.geometry) object.geometry.dispose();
+    if (object.material) {
+      if (Array.isArray(object.material)) object.material.forEach(material => material.dispose());
+      else object.material.dispose();
+    }
+  });
   buildCharacter();
 }
 
@@ -352,6 +359,7 @@ function initPreview() {
   previewReady = true;
   $("#preview-status").textContent = "3D preview ready · drag to rotate";
   renderer.setAnimationLoop(() => {
+    if (!creatorScreen || creatorScreen.classList.contains("hidden")) return;
     currentRotation += (targetRotation - currentRotation) * 0.08;
     if (character) character.rotation.y = currentRotation;
     renderer.render(scene, camera);
