@@ -235,3 +235,21 @@ h2 { font-size: clamp(48px, 6vw, 76px); }
     background: #171319;
   }
 }
+
+
+/* Four focused combat actions: punch, kick, block and dodge. */
+.mobile-actions {
+  grid-template-areas: "attack kick" "block dodge";
+}
+.attack-button { grid-area:attack; }
+.kick-button { grid-area:kick; background:rgba(157,91,35,.96); border-color:#d69a55; }
+.block-button { grid-area:block; background:rgba(43,73,100,.96); border-color:#557da5; }
+.dodge-button { grid-area:dodge; }
+.block-button.pressed { background:#426b91; border-color:#9bc8ef; box-shadow:0 0 12px rgba(80,150,210,.45); }
+@media (orientation:landscape) and (max-width:1000px) {
+  .mobile-actions { width:156px; grid-template-areas:"attack kick" "block dodge"; }
+}
+@media (max-width:480px) {
+  .mobile-actions { width:136px; grid-template-columns:repeat(2,minmax(62px,1fr)); }
+  .action-button { height:44px; font-size:9px; }
+}
