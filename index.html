@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./css/style.css?v=11">
+  <link rel="stylesheet" href="./css/style.css?v=12">
   <script type="importmap">
     {
       "imports": {
@@ -17,7 +17,7 @@
       }
     }
   </script>
-  <script type="module" src="./js/main.js?v=25"></script>
+  <script type="module" src="./js/main.js?v=26"></script>
 </head>
 <body>
   <div class="ambient ambient-one"></div>
@@ -166,8 +166,7 @@
     <section id="city-screen" class="screen city-screen hidden">
       <div class="city-heading">
         <div>
-          <p class="eyebrow"><span></span> CHAPTER 01 / THE STREETS</p>
-          <h2>WELCOME TO THE <em>NEIGHBOURHOOD.</em></h2>
+          <h2 class="city-title">CITY <em>STREETS</em></h2>
         </div>
         <button id="leave-city-button" class="text-button">← MAIN MENU</button>
       </div>
@@ -178,7 +177,6 @@
           <div class="city-hud-actions"><button id="game-inventory-button" class="game-inventory-button" type="button">BAG / WARDROBE</button><button id="game-menu-button" class="game-inventory-button" type="button">GAME MENU ☰</button></div>
         </div>
         <div id="needs-hud" class="needs-hud">HUNGER 100% · WATER 100% · ENERGY 100%</div>
-        <div class="city-help">PC: WASD / ARROWS TO MOVE · SHIFT OR M TO RUN · DRAG TO LOOK</div>
         <div class="city-controls" id="city-controls">
           <div class="movement-controls">
             <div class="joystick" aria-label="Movement joystick"><div class="joystick-knob"></div></div>
@@ -190,11 +188,9 @@
             <button class="action-button block-button" aria-label="Block" title="Block"><span aria-hidden="true">🛡</span></button>
             <button class="action-button dodge-button" aria-label="Dodge" title="Dodge"><span aria-hidden="true">↗</span></button>
           </div>
+          <div class="drive-controls" aria-label="Vehicle controls"><button class="drive-button drive-forward" type="button">▲<span>GO</span></button><button class="drive-button drive-reverse" type="button">▼<span>BACK</span></button><button class="drive-button drive-exit" type="button">EXIT</button></div>
         </div>
-        <div class="drive-controls" aria-label="Vehicle controls"><button class="drive-button drive-forward" type="button">▲<span>ACCELERATE</span></button><button class="drive-button drive-reverse" type="button">▼<span>REVERSE</span></button><button class="drive-button drive-exit" type="button">EXIT CAR</button></div>
-        <div class="combat-readout" id="combat-readout">PUNCH · KICK · BLOCK · DODGE</div>
       </div>
-      <p class="city-disclaimer">EARLY PLAYABLE BUILD · CREATED BY DSQUARE</p>
     </section>
   </main>
 
