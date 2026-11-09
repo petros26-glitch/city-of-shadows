@@ -1,6 +1,6 @@
 import * as THREE from "three";
 
-export function createCityGame(container, controls, characterData, onExit, onShopInteract, onInventoryInteract) {
+export function createCityGame(container, controls, characterData, onExit, onShopInteract, onInventoryInteract, onNeedsUpdate) {
   const scene = new THREE.Scene();
   scene.background = new THREE.Color("#171923");
   scene.fog = new THREE.Fog("#171923", 22, 95);
@@ -270,6 +270,8 @@ export function createCityGame(container, controls, characterData, onExit, onSho
   scene.add(opponent);
   let opponentHealth = 100;
   let playerHealth = 100;
+  const survival = { hunger: characterData?.needs?.hunger ?? 100, hydration: characterData?.needs?.hydration ?? 100, energy: characterData?.needs?.energy ?? 100 };
+  let needsClock = 0;
   let attackCooldown = 0;
   let opponentAttackCooldown = 0;
   let dodgeTime = 0;
@@ -536,9 +538,21 @@ export function createCityGame(container, controls, characterData, onExit, onSho
     if(length>1){x/=length;z/=length;}
     const moving=length>0.08;
     const fast=sprint||keys.has("shift")||keys.has("m");
+    needsClock += dt;
+    if (needsClock >= 5) {
+      const elapsed = needsClock; needsClock = 0;
+      survival.hunger = Math.max(0, survival.hunger - elapsed * 0.16);
+      survival.hydration = Math.max(0, survival.hydration - elapsed * 0.23);
+      survival.energy = Math.max(0, Math.min(100, survival.energy + (moving ? (fast ? -elapsed * 1.7 : elapsed * 0.18) : elapsed * 1.1)));
+      if (typeof onNeedsUpdate === "function") onNeedsUpdate({ ...survival });
+      const needsHud = document.querySelector("#needs-hud");
+      if (needsHud) needsHud.textContent = `HUNGER ${Math.round(survival.hunger)}%  ·  WATER ${Math.round(survival.hydration)}%  ·  ENERGY ${Math.round(survival.energy)}%`;
+    }
+    if (survival.energy < 8 && fast) sprint = false;
     attackCooldown = Math.max(0, attackCooldown - dt);
     dodgeTime = Math.max(0, dodgeTime - dt);
-    const speed=(fast?7.2:4.2) * (dodgeTime>0 ? 2.2 : 1);
+    const tiredFactor = survival.energy < 15 ? 0.72 : 1;
+    const speed=(fast?7.2:4.2) * tiredFactor * (dodgeTime>0 ? 2.2 : 1);
     const sin=Math.sin(cameraAngle),cos=Math.cos(cameraAngle);
     let dx=(x*cos+z*sin)*speed*dt;
     let dz=(-x*sin+z*cos)*speed*dt;
