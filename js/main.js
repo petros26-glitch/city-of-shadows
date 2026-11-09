@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { createCityGame } from "./city.js?v=25";
+import { createCityGame } from "./city.js?v=26";
 
 const STORAGE_KEY = "cos-player-character-v1";
 const state = {
@@ -33,14 +33,17 @@ let equipment = { top: "", pants: "", shoes: "" };
 let needs = { hunger: 100, hydration: 100, energy: 100 };
 
 
+function readStoredValue(key) {
+  try { return localStorage.getItem(key); } catch { return null; }
+}
 function readStoredJSON(key, fallback) {
   try {
-    const raw = localStorage.getItem(key);
+    const raw = readStoredValue(key);
     return raw ? JSON.parse(raw) : fallback;
   } catch { return fallback; }
 }
 function loadShopData() {
-  const rawWallet = localStorage.getItem(WALLET_KEY);
+  const rawWallet = readStoredValue(WALLET_KEY);
   const savedWallet = Number(rawWallet);
   wallet = rawWallet === null ? 500 : (Number.isFinite(savedWallet) && savedWallet >= 0 ? savedWallet : 500);
   const storedInventory = readStoredJSON(INVENTORY_KEY, {});
@@ -74,10 +77,15 @@ function itemName(item) {
   return ({ meal:"Street Meal", water:"Bottled Water", hoodie:"Street Hoodie", jacket:"Denim Jacket", jeans:"Blue Jeans", sneakers:"Fresh Sneakers" })[item] || item;
 }
 function savePlayerData() {
-  localStorage.setItem(WALLET_KEY, String(wallet));
-  localStorage.setItem(INVENTORY_KEY, JSON.stringify(inventory));
-  localStorage.setItem(EQUIPMENT_KEY, JSON.stringify(equipment));
-  localStorage.setItem(NEEDS_KEY, JSON.stringify(needs));
+  try {
+    localStorage.setItem(WALLET_KEY, String(wallet));
+    localStorage.setItem(INVENTORY_KEY, JSON.stringify(inventory));
+    localStorage.setItem(EQUIPMENT_KEY, JSON.stringify(equipment));
+    localStorage.setItem(NEEDS_KEY, JSON.stringify(needs));
+    return true;
+  } catch {
+    return false;
+  }
 }
 function openInventory() {
   loadShopData();
