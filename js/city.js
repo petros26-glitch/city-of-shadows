@@ -83,6 +83,7 @@ export function createCityGame(container, controls, characterData, onExit) {
   for (const [x,z] of [[-7,-14],[7,-14],[-7,14],[7,14]]) {
     block(new THREE.CylinderGeometry(0.07,0.09,4.3,6), lineMat, x, 2.15, z);
     block(new THREE.BoxGeometry(0.8,0.12,0.2), lineMat, x+0.3, 4.2, z);
+    environmentColliders.push({ x, z, radius: 0.48 });
   }
 
   const skin = new THREE.MeshStandardMaterial({ color: characterData?.skin || "#6f402d" });
