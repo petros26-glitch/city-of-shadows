@@ -458,7 +458,8 @@ export function createCityGame(container, controls, characterData, onExit, onSho
     const dt=Math.min((time-previous)/1000||0,0.05);previous=time;
     const inventoryOpen = !document.querySelector("#inventory-panel").classList.contains("hidden");
     const shopOpen = !document.querySelector("#shop-panel").classList.contains("hidden");
-    if (inventoryOpen || shopOpen) {
+    const gameMenuOpen = !document.querySelector("#game-menu-panel").classList.contains("hidden");
+    if (inventoryOpen || shopOpen || gameMenuOpen) {
       renderer.render(scene,camera);
       return;
     }
