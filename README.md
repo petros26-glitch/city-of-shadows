@@ -1,46 +1,50 @@
 # CITY OF SHADOWS
 
-**A 3D African open-world gangster survival game.**
+**A 3D African open-world street-survival and crime-drama game.**
 
 > A city. A thousand secrets. One fight for power.
 
 ## Created by Dsquare
 
-**CITY OF SHADOWS is an original game project created by Dsquare.**  
-The game is being developed as a standalone project, separate from Petros Curious Mind.
+**CITY OF SHADOWS is an original game project created by Dsquare.** It is a standalone project, separate from Petros Curious Mind.
 
 ## The vision
 
-CITY OF SHADOWS combines the atmosphere of modern African city life with the drama and presentation of a cinematic gangster story.
+A fictional modern African city inspired by the energy and variety of Lagos. The player arrives with very little and builds a life through exploration, work, relationships, survival, and dangerous choices.
 
-Players begin with almost nothing and make choices that shape their path through the city—from finding food and shelter to building relationships, earning money, navigating rivalries, and pursuing influence in the criminal underworld.
+## Current playable foundation
 
-### Core direction
+The browser build uses JavaScript and Three.js and is designed with low-memory Android devices in mind.
 
-- **Genre:** 3D open-world gangster and survival story
-- **Setting:** A fictional modern African city, inspired by the energy and variety of cities such as Lagos
-- **Tone:** Realistic everyday city life combined with cinematic crime-drama storytelling
-- **Player character:** Custom-created male or female protagonist, starting age 18–25
-- **World:** A living city with neighbourhoods, markets, businesses, vehicles, pedestrians, gangs, and police
-- **Progression:** Story chapters, player choices, missions, reputation, relationships, and consequences
+- Character creation with male/female selection, age, skin tone and hairstyle choices.
+- Third-person neighbourhood exploration with touch joystick and action buttons, plus PC keyboard controls.
+- A low-rise neighbourhood with roads, pavements, buildings, windows, trees and streetlights.
+- A 24/7 corner shop and a street market with produce stalls and separate proximity prompts. Both currently open the same first-pass shop catalogue.
+- A few parked low-poly vehicles with collision obstacles.
+- Walking pedestrians and a sparring opponent.
+- Punch and kick targeting for nearby pedestrians and the sparring opponent.
+- A local wallet and inventory, food and water use, and clothing purchases.
+- Wardrobe slots for tops, trousers and shoes. Hoodie, denim jacket, blue jeans and sneakers can be purchased; equipped items change the prototype character's material colours.
+- In-city bag/wardrobe access and a pause menu.
+- Local browser storage for character, wallet, inventory, equipment and needs.
 
-## Development approach
+## Controls
 
-The project will be built incrementally, beginning with a small, playable experience rather than attempting a huge open world immediately.
+**Android:** virtual joystick, punch, kick, run, block and dodge buttons. Drag on the 3D view to rotate the camera.
 
-The initial development direction is a lightweight browser-based 3D prototype using JavaScript and Three.js. The project will be kept mindful of low-memory Android development constraints. A future offline-installable Windows build is a goal, not a feature that is already available.
+**PC:** WASD or arrow keys to move, Shift or M to run, and mouse drag on the 3D view to look around. Press I for the inventory.
 
-## Full game roadmap
+## Development roadmap
 
-The long-term plan includes a cinematic main menu, character creation, inventory and visible wardrobe, a living city with pedestrians and traffic, survival needs, jobs, missions, gangs, police, combat, vehicles, properties, businesses, relationships, reputation, a city map, day/night, weather, audio, settings, and persistent saves.
+The next major systems are a larger connected city, more distinctive buildings and districts, working market-specific goods and vendors, richer player models and clothing meshes, vehicles that can be driven, survival needs that affect play, jobs and mission chains, police response, rival groups, ranged combat, properties, businesses, relationships, reputation, a map, day/night, sound, and more complete save/progression systems.
 
-The current implementation is an early browser prototype. The main menu now links to an initial inventory/wardrobe screen; the first shop purchases can be used or equipped; the equipped hoodie and sneakers alter the prototype character's appearance; and the starter neighbourhood includes a small group of walking pedestrians. These are first-pass systems, not finished commercial-grade versions.
+These are planned features, not claims about what is already playable. The current character models and environment are deliberately simple low-poly prototypes. The parked vehicles cannot yet be driven, and the market currently shares the corner shop's catalogue.
 
-Development will continue in tested milestones. Advanced features such as full vehicle driving, police pursuits, large-scale city districts, mission chapters, cloud saves, detailed character models, and complete business/property systems remain planned work.
+## Performance and deployment
 
-## Project status
+The game is deployed as a browser project on GitHub Pages. It needs a modern browser, WebGL and an internet connection to load the Three.js module and web fonts. It is not yet an offline Android app or a finished PC executable.
 
-**Early planning and foundation stage.** Features described above are design goals; they should not be considered implemented until they are built and tested.
+The project is being expanded in coherent playable milestones, with performance kept in mind for low-memory Android hardware.
 
 ---
 
