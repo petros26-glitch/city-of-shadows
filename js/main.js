@@ -355,6 +355,14 @@ function bindEvents() {
   $("#game-menu-button").addEventListener("click", () => $("#game-menu-panel").classList.remove("hidden"));
   $("#game-menu-resume-button").addEventListener("click", () => $("#game-menu-panel").classList.add("hidden"));
   $("#game-menu-inventory-button").addEventListener("click", () => { $("#game-menu-panel").classList.add("hidden"); openInventory(); });
+  $("#game-menu-home-button").addEventListener("click", () => {
+    $("#game-menu-panel").classList.add("hidden");
+    if (screen.orientation && typeof screen.orientation.unlock === "function") { try { screen.orientation.unlock(); } catch {} }
+    if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(() => {});
+    if (destroyCity) destroyCity();
+    destroyCity = null;
+    showScreen(homeScreen);
+  });
   $("#shop-panel").addEventListener("click", event => { if (event.target.id === "shop-panel") closeShop(); });
   document.querySelectorAll(".shop-buy-button").forEach(button => button.addEventListener("click", () => buyShopItem(button)));
   $("#new-game-button").addEventListener("click", () => {
