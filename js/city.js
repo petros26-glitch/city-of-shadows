@@ -120,6 +120,58 @@ export function createCityGame(container, controls, characterData, onExit, onSho
   block(new THREE.BoxGeometry(5.8,0.12,0.9), pavementMat,13.2,0.08,0.15);
   buildingColliders.push({ minX:10.5, maxX:15.9, minZ:-5.85, maxZ:-0.72 });
 
+
+  // Expanded street market: compact stalls, produce, canopies and visible shopfront signs.
+  const marketColors = ["#a33b32","#d19a38","#557b4b","#496b86"];
+  const marketColliders = [];
+  function marketStall(x,z,index,label) {
+    const color = new THREE.MeshStandardMaterial({ color: marketColors[index % marketColors.length], roughness: 0.9 });
+    const wood = new THREE.MeshStandardMaterial({ color: "#68452f", roughness: 1 });
+    const produce = new THREE.MeshStandardMaterial({ color: index % 2 ? "#d6a33a" : "#9c3d32", roughness: 0.8 });
+    block(new THREE.BoxGeometry(3.2,0.18,1.65),wood,x,1.05,z);
+    block(new THREE.BoxGeometry(3.45,0.16,1.9),color,x,2.65,z);
+    block(new THREE.BoxGeometry(0.12,1.55,0.12),wood,x-1.48,1.35,z-0.72);
+    block(new THREE.BoxGeometry(0.12,1.55,0.12),wood,x+1.48,1.35,z-0.72);
+    block(new THREE.BoxGeometry(0.12,1.55,0.12),wood,x-1.48,1.35,z+0.72);
+    block(new THREE.BoxGeometry(0.12,1.55,0.12),wood,x+1.48,1.35,z+0.72);
+    for(let k=0;k<5;k++) block(new THREE.SphereGeometry(0.19,7,5),produce,x-1.05+(k%3)*0.55,1.28+(k%2)*0.08,z-0.18+Math.floor(k/3)*0.48);
+    const signCanvas=document.createElement("canvas"); signCanvas.width=512; signCanvas.height=128;
+    const ctx=signCanvas.getContext("2d"); ctx.fillStyle="#171116";ctx.fillRect(0,0,512,128);
+    ctx.fillStyle="#f6dfb5";ctx.font="bold 54px Arial";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(label,256,66);
+    const texture=new THREE.CanvasTexture(signCanvas);
+    const sign=new THREE.Mesh(new THREE.PlaneGeometry(2.6,0.65),new THREE.MeshBasicMaterial({map:texture}));
+    sign.position.set(x,2.08,z-0.84);scene.add(sign);
+    marketColliders.push({minX:x-1.7,maxX:x+1.7,minZ:z-1.0,maxZ:z+1.0});
+  }
+  marketStall(-18,-6,0,"FRESH FOOD");
+  marketStall(-18,0,1,"FRUIT & VEG");
+  marketStall(-18,6,2,"MARKET GOODS");
+  const marketSignCanvas=document.createElement("canvas");marketSignCanvas.width=768;marketSignCanvas.height=160;
+  const marketCtx=marketSignCanvas.getContext("2d");marketCtx.fillStyle="#171116";marketCtx.fillRect(0,0,768,160);
+  marketCtx.strokeStyle="#c79b55";marketCtx.lineWidth=8;marketCtx.strokeRect(8,8,752,144);
+  marketCtx.fillStyle="#f4d8a5";marketCtx.font="bold 76px Arial";marketCtx.textAlign="center";marketCtx.textBaseline="middle";marketCtx.fillText("CITY MARKET",384,82);
+  const marketSign=new THREE.Mesh(new THREE.PlaneGeometry(7.2,1.5),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(marketSignCanvas)}));
+  marketSign.position.set(-18,4.1,8.8);scene.add(marketSign);
+
+  // A few parked low-poly vehicles make the roads feel occupied without heavy physics.
+  const vehicleMaterials=["#8b252c","#263b50","#b18a42"].map(color=>new THREE.MeshStandardMaterial({color,roughness:0.72}));
+  const tyreMaterial=new THREE.MeshStandardMaterial({color:"#111216",roughness:1});
+  function parkedCar(x,z,index,rotation=0){
+    const car=new THREE.Group();
+    const paint=vehicleMaterials[index%vehicleMaterials.length];
+    block(new THREE.BoxGeometry(2.15,0.68,4.0),paint,0,0.68,0,car);
+    block(new THREE.BoxGeometry(1.72,0.7,1.9),shopGlassMat,0,1.32,-0.15,car);
+    for(const side of [-1,1])for(const end of [-1,1]){
+      const wheel=block(new THREE.CylinderGeometry(0.34,0.34,0.2,8),tyreMaterial,side*1.08,0.43,end*1.28,car);
+      wheel.rotation.z=Math.PI/2;
+    }
+    car.position.set(x,0,z);car.rotation.y=rotation;scene.add(car);
+    environmentColliders.push({x,z,radius:1.55});
+  }
+  parkedCar(3.2,11.4,0,0);
+  parkedCar(27.2,5.0,1,Math.PI/2);
+  parkedCar(-28.0,7.0,2,Math.PI/2);
+
   const skin = new THREE.MeshStandardMaterial({ color: characterData?.skin || "#6f402d" });
   const equippedTop = characterData?.equipment?.top === "hoodie";
   const equippedShoes = characterData?.equipment?.shoes === "sneakers";
