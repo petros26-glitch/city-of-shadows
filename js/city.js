@@ -179,8 +179,8 @@ export function createCityGame(container, controls, characterData, onExit) {
 
   function attack(e) {
     e.preventDefault();
-    attackButton.classList.add("pressed");
     if (attackCooldown > 0) return;
+    attackButton.classList.add("pressed");
     attackCooldown = 0.55;
     const distance = player.position.distanceTo(opponent.position);
     const readout = controls.querySelector("#combat-readout");
@@ -194,7 +194,7 @@ export function createCityGame(container, controls, characterData, onExit) {
     } else {
       readout.textContent = "PUNCH MISSED · MOVE CLOSER TO THE OPPONENT";
     }
-    setTimeout(() => attackButton.classList.remove("pressed"), 120);
+    attackButton.classList.remove("pressed");
   }
   function dodge(e) {
     e.preventDefault();
