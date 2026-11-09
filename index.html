@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./css/style.css?v=3">
+  <link rel="stylesheet" href="./css/style.css?v=4">
   <script type="importmap">
     {
       "imports": {
@@ -17,7 +17,7 @@
       }
     }
   </script>
-  <script type="module" src="./js/main.js?v=17"></script>
+  <script type="module" src="./js/main.js?v=18"></script>
 </head>
 <body>
   <div class="ambient ambient-one"></div>
@@ -174,13 +174,13 @@
         <div class="city-controls" id="city-controls">
           <div class="movement-controls">
             <div class="joystick" aria-label="Movement joystick"><div class="joystick-knob"></div></div>
-            <button class="action-button sprint-button" aria-label="Run">RUN</button>
+            <button class="action-button sprint-button" aria-label="Run" title="Run"><span aria-hidden="true">⚡</span></button>
           </div>
           <div class="mobile-actions">
-            <button class="action-button attack-button" aria-label="Punch">PUNCH</button>
-            <button class="action-button kick-button" aria-label="Kick">KICK</button>
-            <button class="action-button block-button" aria-label="Block">BLOCK</button>
-            <button class="action-button dodge-button" aria-label="Dodge">DODGE</button>
+            <button class="action-button attack-button" aria-label="Punch" title="Punch"><span aria-hidden="true">🥊</span></button>
+            <button class="action-button kick-button" aria-label="Kick" title="Kick"><span aria-hidden="true">🦵</span></button>
+            <button class="action-button block-button" aria-label="Block" title="Block"><span aria-hidden="true">🛡</span></button>
+            <button class="action-button dodge-button" aria-label="Dodge" title="Dodge"><span aria-hidden="true">↗</span></button>
           </div>
         </div>
         <div class="combat-readout" id="combat-readout">PUNCH · KICK · BLOCK · DODGE</div>
