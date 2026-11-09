@@ -157,32 +157,32 @@ export function createCityGame(container, controls, characterData, onExit) {
   sprintButton.addEventListener("lostpointercapture", sprintOff);
   window.addEventListener("pointerup", sprintOff);
   window.addEventListener("pointercancel", sprintOff);
-  const stage=renderer.domElement;
-  stage.addEventListener("pointerdown",e=>{if(e.pointerType==="mouse"){dragging=true;lastX=e.clientX;}});
-  window.addEventListener("pointerup",()=>dragging=false);
-  window.addEventListener("pointermove",e=>{if(dragging){cameraAngle-=(e.clientX-lastX)*0.006;lastX=e.clientX;}});
-  let cameraTurn = 0;
-  const leftButton = controls.querySelector(".look-left");
-  const rightButton = controls.querySelector(".look-right");
-  function bindCameraButton(button, direction) {
-    const start = e => {
-      e.preventDefault();
-      cameraTurn = direction;
-      cameraAngle += direction * 0.10;
-      try { button.setPointerCapture(e.pointerId); } catch {}
-      button.classList.add("pressed");
-    };
-    const stop = () => {
-      if (cameraTurn === direction) cameraTurn = 0;
-      button.classList.remove("pressed");
-    };
-    button.addEventListener("pointerdown", start);
-    button.addEventListener("pointerup", stop);
-    button.addEventListener("pointercancel", stop);
-    button.addEventListener("lostpointercapture", stop);
+  const stage = renderer.domElement;
+  let cameraPointerId = null;
+
+  // Drag directly on the 3D view to look around. The joystick and RUN
+  // controls keep their own pointer, so they can be used simultaneously.
+  function cameraDragStart(e) {
+    if (cameraPointerId !== null) return;
+    cameraPointerId = e.pointerId;
+    dragging = true;
+    lastX = e.clientX;
+    try { stage.setPointerCapture(e.pointerId); } catch {}
   }
-  bindCameraButton(leftButton, -1);
-  bindCameraButton(rightButton, 1);
+  function cameraDragMove(e) {
+    if (!dragging || e.pointerId !== cameraPointerId) return;
+    cameraAngle -= (e.clientX - lastX) * 0.006;
+    lastX = e.clientX;
+  }
+  function cameraDragEnd(e) {
+    if (e.pointerId !== cameraPointerId) return;
+    dragging = false;
+    cameraPointerId = null;
+  }
+  stage.addEventListener("pointerdown", cameraDragStart);
+  stage.addEventListener("pointermove", cameraDragMove);
+  stage.addEventListener("pointerup", cameraDragEnd);
+  stage.addEventListener("pointercancel", cameraDragEnd);
 
   function resize(){
     const w=Math.max(container.clientWidth,1),h=Math.max(container.clientHeight,1);
@@ -198,7 +198,6 @@ export function createCityGame(container, controls, characterData, onExit) {
     const length=Math.hypot(x,z);
     if(length>1){x/=length;z/=length;}
     const moving=length>0.08;
-    if (cameraTurn) cameraAngle += cameraTurn * 1.9 * dt;
     const fast=sprint||keys.has("shift")||keys.has("m");
     const speed=fast?7.2:4.2;
     const sin=Math.sin(cameraAngle),cos=Math.cos(cameraAngle);
@@ -226,6 +225,10 @@ export function createCityGame(container, controls, characterData, onExit) {
     joy.removeEventListener("pointerup",joyEnd);
     joy.removeEventListener("pointercancel",joyEnd);
     sprintOff();
+    stage.removeEventListener("pointerdown", cameraDragStart);
+    stage.removeEventListener("pointermove", cameraDragMove);
+    stage.removeEventListener("pointerup", cameraDragEnd);
+    stage.removeEventListener("pointercancel", cameraDragEnd);
     window.removeEventListener("pointerup", sprintOff);
     window.removeEventListener("pointercancel", sprintOff);
     renderer.dispose();
