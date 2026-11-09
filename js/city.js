@@ -181,7 +181,6 @@ export function createCityGame(container, controls, characterData, onExit) {
   let opponentPunchTime = 0;
   let opponentPunchSide = 1;
   let opponentHitReaction = 0;
-  let defeatedResetTime = 0;
 
   const keys = new Set();
   let joystick = { x: 0, y: 0 };
@@ -235,6 +234,7 @@ export function createCityGame(container, controls, characterData, onExit) {
   const kickButton = controls.querySelector(".kick-button");
   const blockButton = controls.querySelector(".block-button");
   const dodgeButton = controls.querySelector(".dodge-button");
+  const runButton = controls.querySelector(".sprint-button");
 
   function attack(e) {
     e.preventDefault();
@@ -287,6 +287,11 @@ export function createCityGame(container, controls, characterData, onExit) {
     setTimeout(() => kickButton.classList.remove("pressed"), 180);
   }
 
+  function runStart(e) {
+    e.preventDefault(); e.stopPropagation(); sprint = true; runButton.classList.add("pressed");
+  }
+  function runEnd() { sprint = false; runButton.classList.remove("pressed"); }
+
   function blockStart(e) {
     e.preventDefault();
     e.stopPropagation();
@@ -332,6 +337,10 @@ export function createCityGame(container, controls, characterData, onExit) {
   blockButton.addEventListener("pointercancel", blockEnd);
   blockButton.addEventListener("lostpointercapture", blockEnd);
   dodgeButton.addEventListener("pointerdown", dodge);
+  runButton.addEventListener("pointerdown", runStart);
+  runButton.addEventListener("pointerup", runEnd);
+  runButton.addEventListener("pointercancel", runEnd);
+  runButton.addEventListener("lostpointercapture", runEnd);
 
   const stage = renderer.domElement;
   let cameraPointerId = null;
@@ -494,17 +503,6 @@ export function createCityGame(container, controls, characterData, onExit) {
       opponent.position.x -= Math.sin(opponent.rotation.y) * recoil * dt * 8;
       opponent.position.z -= Math.cos(opponent.rotation.y) * recoil * dt * 8;
     }
-    if (opponentHealth <= 0 && defeatedResetTime > 0) {
-      defeatedResetTime = Math.max(0, defeatedResetTime - dt);
-      if (defeatedResetTime === 0) {
-        opponentHealth = 100;
-        updateOpponentHealthBar();
-        opponent.position.set(0, 0, 6.5);
-        opponent.rotation.y = Math.PI;
-        opponentTorso.material.color.set("#8e3438");
-        controls.querySelector("#combat-readout").textContent = "TRAINING OPPONENT READY";
-      }
-    }
     const desired=new THREE.Vector3(player.position.x+Math.sin(cameraAngle)*7,4.1,player.position.z+Math.cos(cameraAngle)*7);
     camera.position.lerp(desired,0.12);
     camera.lookAt(player.position.x,1.15,player.position.z);
@@ -512,7 +510,7 @@ export function createCityGame(container, controls, characterData, onExit) {
       opponentFlash -= dt;
       if (opponentFlash <= 0) opponentTorso.material.color.set(opponentHealth > 0 ? "#8e3438" : "#333333");
     }
-    // Keep the training opponent visible; it automatically returns after defeat.
+    // Keep the defeated opponent visible at 0%; it stays down for this session.
     opponent.visible = true;
     renderer.render(scene,camera);
     const status=controls.querySelector(".city-status");
@@ -530,6 +528,11 @@ export function createCityGame(container, controls, characterData, onExit) {
     joy.removeEventListener("pointerup",joyEnd);
     joy.removeEventListener("pointercancel",joyEnd);
     blockEnd();
+    runEnd();
+    runButton.removeEventListener("pointerdown", runStart);
+    runButton.removeEventListener("pointerup", runEnd);
+    runButton.removeEventListener("pointercancel", runEnd);
+    runButton.removeEventListener("lostpointercapture", runEnd);
     attackButton.removeEventListener("pointerdown", attack);
     kickButton.removeEventListener("pointerdown", kick);
     blockButton.removeEventListener("pointerdown", blockStart);
