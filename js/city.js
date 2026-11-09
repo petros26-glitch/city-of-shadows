@@ -131,23 +131,32 @@ export function createCityGame(container, controls, characterData, onExit) {
   joy.addEventListener("pointermove",joyMove);
   joy.addEventListener("pointerup",joyEnd);
   joy.addEventListener("pointercancel",joyEnd);
-  const sprintButton=controls.querySelector(".sprint-button");
-  const sprintOn = e => {
+  const sprintButton = controls.querySelector(".sprint-button");
+  let sprintPointerId = null;
+
+  // RUN is independent: hold it before or while using the movement joystick.
+  function sprintOn(e) {
     e.preventDefault();
+    e.stopPropagation();
+    sprintPointerId = e.pointerId;
     sprint = true;
     sprintButton.classList.add("pressed");
-    if (e.pointerId !== undefined && sprintButton.setPointerCapture) {
-      try { sprintButton.setPointerCapture(e.pointerId); } catch {}
-    }
-  };
-  const sprintOff = () => {
+    try { sprintButton.setPointerCapture(e.pointerId); } catch {}
+  }
+
+  function sprintOff(e) {
+    if (e && sprintPointerId !== null && e.pointerId !== sprintPointerId) return;
+    sprintPointerId = null;
     sprint = false;
     sprintButton.classList.remove("pressed");
-  };
+  }
+
   sprintButton.addEventListener("pointerdown", sprintOn);
   sprintButton.addEventListener("pointerup", sprintOff);
   sprintButton.addEventListener("pointercancel", sprintOff);
   sprintButton.addEventListener("lostpointercapture", sprintOff);
+  window.addEventListener("pointerup", sprintOff);
+  window.addEventListener("pointercancel", sprintOff);
   const stage=renderer.domElement;
   stage.addEventListener("pointerdown",e=>{if(e.pointerType==="mouse"){dragging=true;lastX=e.clientX;}});
   window.addEventListener("pointerup",()=>dragging=false);
@@ -217,6 +226,8 @@ export function createCityGame(container, controls, characterData, onExit) {
     joy.removeEventListener("pointerup",joyEnd);
     joy.removeEventListener("pointercancel",joyEnd);
     sprintOff();
+    window.removeEventListener("pointerup", sprintOff);
+    window.removeEventListener("pointercancel", sprintOff);
     renderer.dispose();
     scene.traverse(obj=>{if(obj.geometry)obj.geometry.dispose();if(obj.material){if(Array.isArray(obj.material))obj.material.forEach(m=>m.dispose());else obj.material.dispose();}});
     container.replaceChildren();
