@@ -25,8 +25,12 @@ let previewReady = false;
 let destroyCity = null;
 const WALLET_KEY = "cos-player-wallet-v1";
 const INVENTORY_KEY = "cos-player-inventory-v1";
+const EQUIPMENT_KEY = "cos-player-equipment-v1";
+const NEEDS_KEY = "cos-player-needs-v1";
 let wallet = 500;
 let inventory = {};
+let equipment = { top: "", shoes: "" };
+let needs = { hunger: 100, hydration: 100, energy: 100 };
 
 
 function loadShopData() {
@@ -35,7 +39,9 @@ function loadShopData() {
     wallet = savedWallet === null ? 500 : Number(savedWallet);
     if (!Number.isFinite(wallet) || wallet < 0) wallet = 500;
     inventory = JSON.parse(localStorage.getItem(INVENTORY_KEY) || "{}") || {};
-  } catch { wallet = 500; inventory = {}; }
+    equipment = JSON.parse(localStorage.getItem(EQUIPMENT_KEY) || '{"top":"","shoes":""}') || { top:"", shoes:"" };
+    needs = JSON.parse(localStorage.getItem(NEEDS_KEY) || '{"hunger":100,"hydration":100,"energy":100}') || { hunger:100, hydration:100, energy:100 };
+  } catch { wallet = 500; inventory = {}; equipment = { top:"", shoes:"" }; needs = { hunger:100, hydration:100, energy:100 }; }
 }
 function renderShop() {
   $("#shop-cash").textContent = "₦" + wallet.toLocaleString("en-NG");
@@ -44,10 +50,73 @@ function renderShop() {
     ? entries.map(([item,count]) => item[0].toUpperCase()+item.slice(1)+" × "+count).join(" · ")
     : "No items yet";
 }
+function itemName(item) {
+  return ({ meal:"Street Meal", water:"Bottled Water", hoodie:"Street Hoodie", sneakers:"Fresh Sneakers" })[item] || item;
+}
+function savePlayerData() {
+  localStorage.setItem(WALLET_KEY, String(wallet));
+  localStorage.setItem(INVENTORY_KEY, JSON.stringify(inventory));
+  localStorage.setItem(EQUIPMENT_KEY, JSON.stringify(equipment));
+  localStorage.setItem(NEEDS_KEY, JSON.stringify(needs));
+}
+function openInventory() {
+  loadShopData();
+  renderInventory();
+  $("#inventory-message").textContent = "Choose EQUIP for clothing or USE for food and drinks.";
+  $("#inventory-panel").classList.remove("hidden");
+}
+function closeInventory() { $("#inventory-panel").classList.add("hidden"); }
+function renderInventory() {
+  $("#inventory-cash").textContent = "₦" + wallet.toLocaleString("en-NG");
+  const rows = Object.entries(inventory).filter(([,count]) => count > 0);
+  $("#wardrobe-current").textContent = "EQUIPPED · " +
+    (equipment.top ? itemName(equipment.top) : "STARTER TOP") + " · " +
+    (equipment.shoes ? itemName(equipment.shoes) : "STARTER SHOES");
+  $("#inventory-list").replaceChildren();
+  if (!rows.length) {
+    const empty = document.createElement("p");
+    empty.className = "inventory-empty";
+    empty.textContent = "Your inventory is empty. Visit the neighbourhood shop to buy items.";
+    $("#inventory-list").appendChild(empty);
+    return;
+  }
+  rows.forEach(([item,count]) => {
+    const row = document.createElement("article");
+    row.className = "inventory-row";
+    const info = document.createElement("div");
+    const name = document.createElement("strong");
+    name.textContent = itemName(item);
+    const quantity = document.createElement("span");
+    quantity.textContent = "Owned · " + count + (equipment.top === item || equipment.shoes === item ? " · EQUIPPED" : "");
+    info.append(name, quantity);
+    const action = document.createElement("button");
+    action.className = "inventory-action";
+    const consumable = item === "meal" || item === "water";
+    action.textContent = consumable ? "USE" : (equipment.top === item || equipment.shoes === item ? "EQUIPPED" : "EQUIP");
+    action.disabled = !consumable && (equipment.top === item || equipment.shoes === item);
+    action.addEventListener("click", () => {
+      if (consumable) {
+        inventory[item] = Math.max(0, (inventory[item] || 0) - 1);
+        if (item === "meal") needs.hunger = Math.min(100, needs.hunger + 35);
+        if (item === "water") needs.hydration = Math.min(100, needs.hydration + 40);
+        $("#inventory-message").textContent = itemName(item) + " used. Your needs have been restored.";
+      } else {
+        const slot = item === "hoodie" ? "top" : item === "sneakers" ? "shoes" : "";
+        if (!slot) return;
+        equipment[slot] = item;
+        $("#inventory-message").textContent = itemName(item) + " equipped. Your character's outfit has changed.";
+      }
+      savePlayerData();
+      renderInventory();
+    });
+    row.append(info, action);
+    $("#inventory-list").appendChild(row);
+  });
+}
 function openShop() {
   loadShopData();
   renderShop();
-  $("#shop-message").textContent = "Choose an item to buy.";
+  $("#shop-message").textContent = "Choose an item to buy. Purchases go into your inventory.";
   $("#shop-panel").classList.remove("hidden");
 }
 function closeShop() { $("#shop-panel").classList.add("hidden"); }
@@ -61,9 +130,9 @@ function buyShopItem(button) {
   }
   wallet -= price;
   inventory[item] = (inventory[item] || 0) + 1;
-  localStorage.setItem(WALLET_KEY, String(wallet));
-  localStorage.setItem(INVENTORY_KEY, JSON.stringify(inventory));
+  savePlayerData();
   renderShop();
+  renderInventory();
   $("#shop-message").textContent = "Purchase complete. " + item + " added to your bag.";
 }
 
@@ -261,6 +330,20 @@ function setView(view) {
 
 function bindEvents() {
   $("#shop-close-button").addEventListener("click", closeShop);
+  $("#inventory-close-button").addEventListener("click", closeInventory);
+  $("#inventory-panel").addEventListener("click", event => { if (event.target.id === "inventory-panel") closeInventory(); });
+  $("#menu-inventory-button").addEventListener("click", openInventory);
+  $("#menu-settings-button").addEventListener("click", () => {
+    $("#info-title").innerHTML = 'GAME <em>SETTINGS.</em>';
+    $("#info-copy").textContent = "The settings screen is being expanded. Current builds use automatic low-power graphics settings and device-appropriate touch or keyboard controls.";
+    $("#info-panel").classList.remove("hidden");
+  });
+  $("#menu-about-button").addEventListener("click", () => {
+    $("#info-title").innerHTML = 'ABOUT THE <em>GAME.</em>';
+    $("#info-copy").textContent = "CITY OF SHADOWS is an open-world African street-survival and crime-drama game project. Created by Dsquare. Your choices shape your life in the city.";
+    $("#info-panel").classList.remove("hidden");
+  });
+  $("#info-close-button").addEventListener("click", () => $("#info-panel").classList.add("hidden"));
   $("#shop-panel").addEventListener("click", event => { if (event.target.id === "shop-panel") closeShop(); });
   document.querySelectorAll(".shop-buy-button").forEach(button => button.addEventListener("click", () => buyShopItem(button)));
   $("#new-game-button").addEventListener("click", () => {
@@ -305,6 +388,9 @@ function bindEvents() {
         destroyCity = null;
       }
       try {
+        loadShopData();
+        saved.equipment = { ...equipment };
+        saved.needs = { ...needs };
         destroyCity = createCityGame(cityStage, $("#city-controls"), saved, () => {
           if (destroyCity) destroyCity();
           destroyCity = null;
@@ -373,6 +459,7 @@ function bindEvents() {
 }
 
 bindEvents();
+loadShopData();
 updateContinueButton();
 
 try {
