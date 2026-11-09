@@ -657,14 +657,13 @@ export function createCityGame(container, controls, characterData, onExit, onSho
       if(t.car.position[axis]>52)t.car.position[axis]=-52;
       if(t.car.position[axis]<-52)t.car.position[axis]=52;
     });
-    const moving = Math.hypot(joystick.x,joystick.y)>0.08 || ["w","a","s","d","arrowup","arrowdown","arrowleft","arrowright"].some(key=>keys.has(key));
-    const fast = sprint||keys.has("shift")||keys.has("m");
+    const runningInput = sprint||keys.has("shift")||keys.has("m");
     needsClock += dt;
     if (needsClock >= 5) {
       const elapsed = needsClock; needsClock = 0;
       survival.hunger = Math.max(0, survival.hunger - elapsed * 0.16);
       survival.hydration = Math.max(0, survival.hydration - elapsed * 0.23);
-      survival.energy = Math.max(0, Math.min(100, survival.energy + (drivingVehicle ? elapsed * 0.25 : moving ? (fast ? -elapsed * 1.7 : elapsed * 0.18) : elapsed * 1.1)));
+      survival.energy = Math.max(0, Math.min(100, survival.energy + (drivingVehicle ? elapsed * 0.25 : (joystick.x!==0 || joystick.y!==0 || ["w","a","s","d","arrowup","arrowdown","arrowleft","arrowright"].some(key=>keys.has(key))) ? (runningInput ? -elapsed * 1.7 : elapsed * 0.18) : elapsed * 1.1)));
       if (typeof onNeedsUpdate === "function") onNeedsUpdate({ ...survival });
       const needsHud = document.querySelector("#needs-hud");
       if (needsHud) needsHud.textContent = `HUNGER ${Math.round(survival.hunger)}%  ·  WATER ${Math.round(survival.hydration)}%  ·  ENERGY ${Math.round(survival.energy)}%`;
