@@ -342,7 +342,6 @@ export function createCityGame(container, controls, characterData, onExit, onSho
   let opponentHitReaction = 0;
 
   const keys = new Set();
-  const inventoryButton = document.querySelector("#game-inventory-button");
   const openInventory = () => {
     if (typeof onInventoryInteract === "function") onInventoryInteract();
   };
@@ -352,7 +351,6 @@ export function createCityGame(container, controls, characterData, onExit, onSho
       openInventory();
     }
   };
-  if (inventoryButton) inventoryButton.addEventListener("click", openInventory);
   window.addEventListener("keydown", inventoryKey);
   let joystick = { x: 0, y: 0 };
   let drivingVehicle = null;
