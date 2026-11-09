@@ -136,6 +136,10 @@ export function createCityGame(container, controls, characterData, onExit) {
   let dodgeDirZ = 1;
   let opponentFlash = 0;
   let walkClock = 0;
+  let playerAttackTime = 0;
+  let playerAttackSide = 1;
+  let opponentPunchTime = 0;
+  let opponentPunchSide = 1;
 
   const keys = new Set();
   let joystick = { x: 0, y: 0 };
@@ -210,27 +214,30 @@ export function createCityGame(container, controls, characterData, onExit) {
 
   function attack(e) {
     e.preventDefault();
+    e.stopPropagation();
     if (attackCooldown > 0) return;
+
     attackButton.classList.add("pressed");
     attackCooldown = 0.55;
+    playerAttackTime = 0.34;
+    playerAttackSide = playerAttackSide === 0 ? 1 : 0;
+
     const distance = player.position.distanceTo(opponent.position);
     const readout = controls.querySelector("#combat-readout");
     if (opponentHealth > 0 && distance < 3.6) {
-      if (opponentHealth <= 0) {
-        readout.textContent = "OPPONENT DEFEATED · PRESS USE TO RESET TRAINING";
-      } else {
-        opponentHealth = Math.max(0, opponentHealth - 25);
-        opponentFlash = 0.16;
-        opponentTorso.material.color.set("#f3c0a5");
-        opponentParts.arms[0].rotation.x = -1.2;
-        readout.textContent = opponentHealth > 0
-          ? "HIT CONFIRMED · OPPONENT HEALTH " + opponentHealth + "%"
-          : "OPPONENT DEFEATED · PRESS USE TO RESET TRAINING";
-      }
+      opponentHealth = Math.max(0, opponentHealth - 25);
+      opponentFlash = 0.16;
+      opponentTorso.material.color.set("#f3c0a5");
+      readout.textContent = opponentHealth > 0
+        ? "PUNCH HIT · OPPONENT HEALTH " + opponentHealth + "%"
+        : "OPPONENT DEFEATED · PRESS USE TO RESET TRAINING";
+    } else if (opponentHealth <= 0) {
+      readout.textContent = "OPPONENT DEFEATED · PRESS USE TO RESET TRAINING";
     } else {
-      readout.textContent = "PUNCH MISSED · MOVE CLOSER TO THE RED-SHIRT OPPONENT";
+      readout.textContent = "PUNCH MISSED · MOVE CLOSER TO THE OPPONENT";
     }
-    attackButton.classList.remove("pressed");
+
+    setTimeout(() => attackButton.classList.remove("pressed"), 140);
   }
   function dodge(e) {
     e.preventDefault();
@@ -366,6 +373,18 @@ export function createCityGame(container, controls, characterData, onExit) {
     playerParts.legs[0].rotation.x = -swing;
     playerParts.legs[1].rotation.x = swing;
 
+    // A short, visible punch animation on alternating arms.
+    playerAttackTime = Math.max(0, playerAttackTime - dt);
+    if (playerAttackTime > 0) {
+      const punch = Math.sin((1 - playerAttackTime / 0.34) * Math.PI);
+      playerParts.arms[playerAttackSide].rotation.x = -1.75 * punch;
+      playerParts.arms[playerAttackSide].rotation.z =
+        (playerAttackSide === 0 ? 1 : -1) * 0.18 * punch;
+    } else {
+      playerParts.arms[0].rotation.z = 0;
+      playerParts.arms[1].rotation.z = 0;
+    }
+
     // Opponent AI: notice the player, approach, face them and throw punches.
     const opponentDx = player.position.x-opponent.position.x;
     const opponentDz = player.position.z-opponent.position.z;
@@ -390,12 +409,22 @@ export function createCityGame(container, controls, characterData, onExit) {
         }
       } else {
         opponentAttackCooldown=Math.max(0,opponentAttackCooldown-dt);
-        opponentParts.arms[0].rotation.x=-0.85;
+        opponentParts.arms[0].rotation.x = 0;
+        opponentParts.arms[1].rotation.x = 0;
+        opponentPunchTime = Math.max(0, opponentPunchTime - dt);
         if (opponentAttackCooldown===0) {
           opponentAttackCooldown=1.5;
+          opponentPunchTime=0.34;
+          opponentPunchSide=opponentPunchSide===0?1:0;
           playerHealth=Math.max(0,playerHealth-8);
           controls.querySelector("#combat-readout").textContent =
-            "OPPONENT HIT YOU · YOUR HEALTH "+playerHealth+"%";
+            "OPPONENT PUNCHES YOU · YOUR HEALTH "+playerHealth+"%";
+        }
+        if (opponentPunchTime > 0) {
+          const punch = Math.sin((1-opponentPunchTime/0.34)*Math.PI);
+          opponentParts.arms[opponentPunchSide].rotation.x = -1.75*punch;
+          opponentParts.arms[opponentPunchSide].rotation.z =
+            (opponentPunchSide===0?1:-1)*0.18*punch;
         }
       }
     }
