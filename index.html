@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./css/style.css?v=12">
+  <link rel="stylesheet" href="./css/style.css?v=13">
   <script type="importmap">
     {
       "imports": {
@@ -17,14 +17,14 @@
       }
     }
   </script>
-  <script type="module" src="./js/main.js?v=26"></script>
+  <script type="module" src="./js/main.js?v=27"></script>
 </head>
 <body>
   <div class="ambient ambient-one"></div>
   <div class="ambient ambient-two"></div>
 
   <header class="topbar">
-    <a class="brand" href="./" aria-label="CITY OF SHADOWS home">
+    <a class="brand" href="./" id="home-brand-link" aria-label="CITY OF SHADOWS home">
       <span class="brand-mark">C<span>O</span>S</span>
       <span class="brand-name">CITY OF <b>SHADOWS</b></span>
     </a>
@@ -42,10 +42,6 @@
           <button id="new-game-button" class="button button-primary">NEW GAME <span>→</span></button>
           <button id="continue-button" class="button button-secondary" disabled>CONTINUE</button>
         </div>
-        <nav class="main-menu-links" aria-label="Main menu">
-          <button id="menu-settings-button" class="menu-link">SETTINGS</button>
-          <button id="menu-about-button" class="menu-link">ABOUT THE GAME</button>
-        </nav>
       </div>
       <div class="home-art" aria-hidden="true">
         <div class="sun-glow"></div>
@@ -59,9 +55,7 @@
         <div class="art-caption">THE CITY IS YOURS TO SURVIVE.</div>
       </div>
       <footer class="home-footer">
-        <span>AN ORIGINAL GAME PROJECT</span>
         <strong>CREATED BY DSQUARE</strong>
-        <span class="version">FOUNDATION BUILD 0.1</span>
       </footer>
     </section>
 
@@ -155,7 +149,7 @@
           <p id="saved-details" class="saved-details"></p>
         </div>
       </div>
-      <p class="coming-soon">YOUR FIRST NEIGHBOURHOOD IS READY. STEP OUT AND EXPLORE.</p>
+      <p class="coming-soon">YOUR CITY IS READY.</p>
       <div class="home-actions">
         <button id="enter-city-button" class="button button-primary">ENTER THE CITY <span>→</span></button>
         <button id="edit-character-button" class="button button-primary">EDIT CHARACTER</button>
@@ -189,12 +183,13 @@
             <button class="action-button dodge-button" aria-label="Dodge" title="Dodge"><span aria-hidden="true">↗</span></button>
           </div>
           <div class="drive-controls" aria-label="Vehicle controls"><button class="drive-button drive-forward" type="button">▲<span>GO</span></button><button class="drive-button drive-reverse" type="button">▼<span>BACK</span></button><button class="drive-button drive-exit" type="button">EXIT</button></div>
+          <div id="combat-readout" hidden aria-hidden="true"></div>
         </div>
       </div>
     </section>
   </main>
 
-  <section id="game-menu-panel" class="shop-panel hidden" aria-label="In-game menu"><div class="shop-card game-menu-card"><div class="shop-heading"><div><p class="eyebrow"><span></span> CITY OF SHADOWS</p><h2>GAME <em>MENU.</em></h2></div></div><div class="game-menu-actions"><button id="game-menu-resume-button" class="button button-primary">RESUME GAME</button><button id="game-menu-inventory-button" class="button button-secondary">BAG / WARDROBE</button><button id="game-menu-settings-button" class="button button-secondary">SETTINGS</button><button id="game-menu-home-button" class="button button-secondary">RETURN TO MAIN MENU</button></div></div></section>
+  <section id="game-menu-panel" class="shop-panel hidden" aria-label="In-game menu"><div class="shop-card game-menu-card"><div class="shop-heading"><div><p class="eyebrow"><span></span> CITY OF SHADOWS</p><h2>GAME <em>MENU.</em></h2></div></div><div class="game-menu-actions"><button id="game-menu-resume-button" class="button button-primary">RESUME GAME</button><button id="game-menu-inventory-button" class="button button-secondary">BAG / WARDROBE</button><button id="game-menu-home-button" class="button button-secondary">RETURN TO MAIN MENU</button></div></div></section>
   <section id="shop-panel" class="shop-panel hidden" aria-label="Neighbourhood shop">
     <div class="shop-card">
       <div class="shop-heading">
@@ -226,12 +221,6 @@
       <div class="wardrobe-current" id="wardrobe-current">CURRENT OUTFIT · STARTER CLOTHES</div>
       <div id="inventory-list" class="inventory-list"></div>
       <p id="inventory-message" class="shop-message" aria-live="polite">Items you buy appear here. Choose EQUIP or USE.</p>
-    </div>
-  </section>
-  <section id="info-panel" class="shop-panel hidden" aria-label="Game information">
-    <div class="shop-card">
-      <div class="shop-heading"><div><p class="eyebrow"><span></span> CREATED BY DSQUARE</p><h2 id="info-title">GAME <em>INFO.</em></h2></div><button id="info-close-button" class="text-button">CLOSE ✕</button></div>
-      <p id="info-copy" class="shop-intro"></p>
     </div>
   </section>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
