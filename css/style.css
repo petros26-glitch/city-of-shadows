@@ -158,7 +158,14 @@ h2 { font-size: clamp(48px, 6vw, 76px); }
 .city-disclaimer { color:#777176; text-align:right; font-size:8px; letter-spacing:1.4px; }
 .joystick { width:112px; height:112px; border-radius:50%; border:1px solid rgba(255,255,255,.3); background:rgba(10,10,14,.48); display:grid; place-items:center; touch-action:none; }
 .joystick-knob { width:43px; height:43px; border-radius:50%; background:rgba(199,155,85,.8); border:2px solid rgba(255,255,255,.55); pointer-events:none; }
-.mobile-actions { display:flex; align-items:center; gap:9px; }
+.mobile-actions { display:grid; grid-template-columns:repeat(2,minmax(54px,1fr)); gap:7px; width:132px; }
+.action-button { min-width:0; height:46px; border:1px solid rgba(255,255,255,.28); border-radius:7px; background:rgba(10,10,14,.82); color:white; font-size:10px; font-weight:800; letter-spacing:.4px; touch-action:none; user-select:none; -webkit-user-select:none; }
+.attack-button { background:rgba(189,38,48,.9); border-color:var(--red-bright); }
+.sprint-button { background:rgba(143,106,49,.92); border-color:#c79b55; }
+.dodge-button { background:rgba(43,73,100,.92); }
+.interact-button { background:rgba(54,76,61,.92); }
+.action-button.pressed { filter:brightness(1.35); transform:scale(.96); }
+.combat-readout { position:relative; z-index:2; margin-top:8px; color:#e5c68e; font-size:9px; letter-spacing:1px; text-align:right; pointer-events:none; }
 .mobile-actions button { min-width:48px; height:46px; border:1px solid rgba(255,255,255,.28); background:rgba(10,10,14,.72); color:white; font-size:11px; font-weight:800; touch-action:none; }
 .mobile-actions .sprint-button { background:rgba(189,38,48,.85); border-color:var(--red-bright); }
 .mobile-actions .sprint-button.pressed { background:#f04a51; transform:scale(.96); }
@@ -178,8 +185,9 @@ h2 { font-size: clamp(48px, 6vw, 76px); }
   .city-stage { height:55vh; min-height:310px; }
   .joystick { width:96px; height:96px; }
   .joystick-knob { width:38px; height:38px; }
-  .mobile-actions { gap:6px; }
-  .mobile-actions button { min-width:42px; height:42px; }
+  .mobile-actions { width:116px; grid-template-columns:repeat(2,minmax(50px,1fr)); gap:5px; }
+  .action-button { height:40px; font-size:9px; }
+  .combat-readout { font-size:8px; margin-top:5px; }
   .city-heading .text-button { padding-top:5px; }
 }
 
