@@ -424,7 +424,7 @@ export function createCityGame(container, controls, characterData, onExit, onSho
   const knob = controls.querySelector(".joystick-knob");
   let joyPointer = null;
   function joyStart(e) {
-    e.preventDefault();
+    e.preventDefault(); e.stopPropagation();
     if (joyPointer !== null) return;
     joyPointer = e.pointerId;
     try { joy.setPointerCapture(joyPointer); } catch {}
@@ -432,7 +432,7 @@ export function createCityGame(container, controls, characterData, onExit, onSho
   }
   function joyMove(e) {
     if (joyPointer !== e.pointerId) return;
-    e.preventDefault();
+    e.preventDefault(); e.stopPropagation();
     const rect=joy.getBoundingClientRect(), cx=rect.left+rect.width/2, cy=rect.top+rect.height/2;
     let dx=e.clientX-cx, dy=e.clientY-cy, len=Math.hypot(dx,dy), max=rect.width*0.34;
     if(len>max){dx=dx/len*max;dy=dy/len*max;}
@@ -446,9 +446,9 @@ export function createCityGame(container, controls, characterData, onExit, onSho
     knob.style.transform = "translate(0,0)";
   }
   joy.addEventListener("pointerdown",joyStart);
-  joy.addEventListener("pointermove",joyMove);
-  joy.addEventListener("pointerup",joyEnd);
-  joy.addEventListener("pointercancel",joyEnd);
+  window.addEventListener("pointermove",joyMove,{passive:false});
+  window.addEventListener("pointerup",joyEnd);
+  window.addEventListener("pointercancel",joyEnd);
   const attackButton = controls.querySelector(".attack-button");
   const kickButton = controls.querySelector(".kick-button");
   const blockButton = controls.querySelector(".block-button");
@@ -562,6 +562,7 @@ export function createCityGame(container, controls, characterData, onExit, onSho
   // Drag directly on the 3D view to look around. The joystick and RUN
   // controls keep their own pointer, so they can be used simultaneously.
   function cameraDragStart(e) {
+    if (e.target !== stage) return;
     if (cameraPointerId !== null) return;
     cameraPointerId = e.pointerId;
     dragging = true;
@@ -883,9 +884,9 @@ export function createCityGame(container, controls, characterData, onExit, onSho
     window.removeEventListener("cos-equipment-changed", equipmentChanged);
     if (inventoryButton) inventoryButton.removeEventListener("click", openInventory);
     joy.removeEventListener("pointerdown",joyStart);
-    joy.removeEventListener("pointermove",joyMove);
-    joy.removeEventListener("pointerup",joyEnd);
-    joy.removeEventListener("pointercancel",joyEnd);
+    window.removeEventListener("pointermove",joyMove);
+    window.removeEventListener("pointerup",joyEnd);
+    window.removeEventListener("pointercancel",joyEnd);
     blockEnd();
     runEnd();
     runButton.removeEventListener("pointerdown", runStart);
