@@ -362,6 +362,8 @@ export function createCityGame(container, controls, characterData, onExit, onSho
   function setDriving(active, vehicle = null) {
     drivingVehicle = active ? vehicle : null;
     if (driveControls) driveControls.classList.toggle("active", active);
+    const cityControls = document.querySelector("#city-controls");
+    if (cityControls) cityControls.classList.toggle("driving-mode", active);
     if (vehiclePrompt) vehiclePrompt.hidden = active;
     player.visible = !active;
     driveForward = false; driveReverse = false;
