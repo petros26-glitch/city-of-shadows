@@ -196,7 +196,9 @@ export function createCityGame(container, controls, characterData, onExit, onSho
   for(let i=0;i<4;i++){
     const horizontal=i<2, lane=i%2===0?2.5:-2.5, start=-48+i*19;
     const car=buildCar(horizontal?start:lane, horizontal?lane:start, (i+1)%3, horizontal?Math.PI/2:0);
-    trafficCars.push({car,horizontal,lane,speed:i%2===0?4.2:5.1,direction:i%2===0?1:-1});
+    const direction=i%2===0?1:-1;
+    if(direction<0) car.rotation.y += Math.PI;
+    trafficCars.push({car,horizontal,lane,speed:i%2===0?4.2:5.1,direction});
   }
 
   const skin = new THREE.MeshStandardMaterial({ color: characterData?.skin || "#6f402d" });
@@ -377,19 +379,21 @@ export function createCityGame(container, controls, characterData, onExit, onSho
       const d = Math.hypot(player.position.x-entry.car.position.x, player.position.z-entry.car.position.z);
       if (d < distance) { nearest = entry; distance = d; }
     }
-    if (nearest) { setDriving(true, nearest.car); player.position.set(nearest.car.position.x,0,nearest.car.position.z-2.7); }
+    if (nearest) { player.position.set(nearest.car.position.x,0,nearest.car.position.z-2.7); setDriving(true, nearest.car); }
   }
   function exitVehicle() {
     if (!drivingVehicle) return;
     const car = drivingVehicle;
     const side = new THREE.Vector3(Math.cos(car.rotation.y),0,-Math.sin(car.rotation.y));
-    player.position.copy(car.position).add(side.multiplyScalar(2.1));
+    const exitPosition=car.position.clone().add(side.multiplyScalar(2.5));
+    const blocked=buildingColliders.some(b=>exitPosition.x+playerRadius>b.minX&&exitPosition.x-playerRadius<b.maxX&&exitPosition.z+playerRadius>b.minZ&&exitPosition.z-playerRadius<b.maxZ)||environmentColliders.some(o=>!o.vehicle&&Math.hypot(exitPosition.x-o.x,exitPosition.z-o.z)<o.radius+playerRadius);
+    player.position.copy(blocked?car.position.clone().add(side.multiplyScalar(-2.5)):exitPosition);
     player.position.y=0; setDriving(false);
   }
   vehiclePrompt.addEventListener("click",enterNearestVehicle);
   function bindPedal(button, setter) {
     if (!button) return;
-    const down=e=>{e.preventDefault();e.stopPropagation();setter(true);button.classList.add("pressed");};
+    const down=e=>{e.preventDefault();e.stopPropagation();try{button.setPointerCapture(e.pointerId);}catch{}setter(true);button.classList.add("pressed");};
     const up=()=>{setter(false);button.classList.remove("pressed");};
     button.addEventListener("pointerdown",down); button.addEventListener("pointerup",up);
     button.addEventListener("pointercancel",up); button.addEventListener("lostpointercapture",up);
@@ -607,17 +611,21 @@ export function createCityGame(container, controls, characterData, onExit, onSho
       const steer=joystick.x+(keys.has("d")||keys.has("arrowright")?1:0)-(keys.has("a")||keys.has("arrowleft")?1:0);
       const throttle=(driveForward||keys.has("w")||keys.has("arrowup")?1:0)-(driveReverse||keys.has("s")||keys.has("arrowdown")?1:0);
       if(throttle!==0){
-        car.rotation.y += steer*dt*1.25*Math.sign(throttle);
-        const velocity=throttle*9.5*dt;
-        const nx=THREE.MathUtils.clamp(car.position.x+Math.sin(car.rotation.y)*velocity,-52,52);
-        const nz=THREE.MathUtils.clamp(car.position.z+Math.cos(car.rotation.y)*velocity,-52,52);
-        const blocked=buildingColliders.some(b=>nx+1.15>b.minX&&nx-1.15<b.maxX&&nz+2.1>b.minZ&&nz-2.1<b.maxZ) || environmentColliders.some(o=>!o.vehicle&&Math.hypot(nx-o.x,nz-o.z)<o.radius+1.2);
-        if(!blocked){car.position.x=nx;car.position.z=nz;}
-      } else if(Math.abs(steer)>0.08) car.rotation.y+=steer*dt*0.35;
+        car.rotation.y += steer*dt*1.05*Math.sign(throttle);
+        const velocity=throttle*8.2*dt;
+        const nx=THREE.MathUtils.clamp(car.position.x+Math.sin(car.rotation.y)*velocity,-44,44);
+        const nz=THREE.MathUtils.clamp(car.position.z+Math.cos(car.rotation.y)*velocity,-44,44);
+        const blockedBuilding=buildingColliders.some(b=>nx+1.15>b.minX&&nx-1.15<b.maxX&&nz+2.1>b.minZ&&nz-2.1<b.maxZ);
+        const blockedStatic=environmentColliders.some(o=>!o.vehicle&&Math.hypot(nx-o.x,nz-o.z)<o.radius+1.2);
+        const blockedParked=vehicles.some(v=>v.car!==car&&Math.hypot(nx-v.car.position.x,nz-v.car.position.z)<3.3);
+        const blockedTraffic=trafficCars.some(t=>Math.hypot(nx-t.car.position.x,nz-t.car.position.z)<3.3);
+        if(!blockedBuilding&&!blockedStatic&&!blockedParked&&!blockedTraffic){car.position.x=nx;car.position.z=nz;}
+      }
       const behind=new THREE.Vector3(-Math.sin(car.rotation.y)*8,4.2,-Math.cos(car.rotation.y)*8).add(car.position);
       camera.position.lerp(behind,0.14);camera.lookAt(car.position.x,1.1,car.position.z);
       renderer.render(scene,camera);
       controls.querySelector(".city-status").textContent=throttle>0?"DRIVING FORWARD":throttle<0?"REVERSING":"VEHICLE STOPPED";
+      const readout=controls.querySelector("#combat-readout");if(readout)readout.textContent="STEER WITH JOYSTICK · HOLD ▲ TO ACCELERATE · HOLD ▼ TO REVERSE";
       return;
     }
     let x=joystick.x+(keys.has("d")||keys.has("arrowright")?1:0)-(keys.has("a")||keys.has("arrowleft")?1:0);
