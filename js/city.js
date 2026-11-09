@@ -95,6 +95,23 @@ export function createCityGame(container, controls, characterData, onExit) {
   scene.add(player);
   player.position.set(0,0,4);
 
+  // Lightweight training opponent for the first combat test.
+  const opponent = new THREE.Group();
+  const opponentMat = new THREE.MeshStandardMaterial({ color: "#8e3438" });
+  const opponentSkin = new THREE.MeshStandardMaterial({ color: "#80513b" });
+  const opponentTorso = new THREE.Mesh(new THREE.CapsuleGeometry(0.36,0.72,4,8), opponentMat);
+  opponentTorso.position.y = 1.3; opponent.add(opponentTorso);
+  const opponentHead = new THREE.Mesh(new THREE.SphereGeometry(0.24,10,8), opponentSkin);
+  opponentHead.position.y = 2.05; opponent.add(opponentHead);
+  const opponentLegs = new THREE.Mesh(new THREE.BoxGeometry(0.44,0.75,0.3), pants);
+  opponentLegs.position.y = 0.48; opponent.add(opponentLegs);
+  opponent.position.set(0,0,-1.8);
+  scene.add(opponent);
+  let opponentHealth = 100;
+  let attackCooldown = 0;
+  let dodgeTime = 0;
+  let opponentFlash = 0;
+
   const keys = new Set();
   let joystick = { x: 0, y: 0 };
   let sprint = false;
@@ -132,31 +149,70 @@ export function createCityGame(container, controls, characterData, onExit) {
   joy.addEventListener("pointerup",joyEnd);
   joy.addEventListener("pointercancel",joyEnd);
   const sprintButton = controls.querySelector(".sprint-button");
+  const attackButton = controls.querySelector(".attack-button");
+  const dodgeButton = controls.querySelector(".dodge-button");
+  const interactButton = controls.querySelector(".interact-button");
   let sprintPointerId = null;
 
-  // RUN is independent: hold it before or while using the movement joystick.
+  // RUN stays active independently of joystick movement, including multitouch.
   function sprintOn(e) {
     e.preventDefault();
     e.stopPropagation();
+    if (sprintPointerId !== null) return;
     sprintPointerId = e.pointerId;
     sprint = true;
     sprintButton.classList.add("pressed");
     try { sprintButton.setPointerCapture(e.pointerId); } catch {}
   }
-
   function sprintOff(e) {
-    if (e && sprintPointerId !== null && e.pointerId !== sprintPointerId) return;
+    if (e && sprintPointerId !== e.pointerId) return;
     sprintPointerId = null;
     sprint = false;
     sprintButton.classList.remove("pressed");
   }
-
   sprintButton.addEventListener("pointerdown", sprintOn);
   sprintButton.addEventListener("pointerup", sprintOff);
   sprintButton.addEventListener("pointercancel", sprintOff);
   sprintButton.addEventListener("lostpointercapture", sprintOff);
   window.addEventListener("pointerup", sprintOff);
   window.addEventListener("pointercancel", sprintOff);
+
+  function attack(e) {
+    e.preventDefault();
+    attackButton.classList.add("pressed");
+    if (attackCooldown > 0) return;
+    attackCooldown = 0.55;
+    const distance = player.position.distanceTo(opponent.position);
+    const readout = controls.querySelector("#combat-readout");
+    if (opponentHealth > 0 && distance < 3.1) {
+      opponentHealth = Math.max(0, opponentHealth - 25);
+      opponentFlash = 0.16;
+      opponentTorso.material.color.set("#f3c0a5");
+      readout.textContent = opponentHealth > 0
+        ? "HIT CONFIRMED · OPPONENT HEALTH " + opponentHealth + "%"
+        : "OPPONENT DEFEATED · TRAINING COMPLETE";
+    } else {
+      readout.textContent = "PUNCH MISSED · MOVE CLOSER TO THE OPPONENT";
+    }
+    setTimeout(() => attackButton.classList.remove("pressed"), 120);
+  }
+  function dodge(e) {
+    e.preventDefault();
+    dodgeButton.classList.add("pressed");
+    dodgeTime = 0.24;
+    setTimeout(() => dodgeButton.classList.remove("pressed"), 180);
+  }
+  function interact(e) {
+    e.preventDefault();
+    const readout = controls.querySelector("#combat-readout");
+    readout.textContent = "NO INTERACTIVE PERSON OR OBJECT NEARBY YET";
+    interactButton.classList.add("pressed");
+    setTimeout(() => interactButton.classList.remove("pressed"), 120);
+  }
+  attackButton.addEventListener("pointerdown", attack);
+  dodgeButton.addEventListener("pointerdown", dodge);
+  interactButton.addEventListener("pointerdown", interact);
+
   const stage = renderer.domElement;
   let cameraPointerId = null;
 
@@ -199,7 +255,9 @@ export function createCityGame(container, controls, characterData, onExit) {
     if(length>1){x/=length;z/=length;}
     const moving=length>0.08;
     const fast=sprint||keys.has("shift")||keys.has("m");
-    const speed=fast?7.2:4.2;
+    attackCooldown = Math.max(0, attackCooldown - dt);
+    dodgeTime = Math.max(0, dodgeTime - dt);
+    const speed=(fast?7.2:4.2) * (dodgeTime>0 ? 2.2 : 1);
     const sin=Math.sin(cameraAngle),cos=Math.cos(cameraAngle);
     const dx=(x*cos+z*sin)*speed*dt;
     const dz=(-x*sin+z*cos)*speed*dt;
@@ -209,6 +267,11 @@ export function createCityGame(container, controls, characterData, onExit) {
     const desired=new THREE.Vector3(player.position.x+Math.sin(cameraAngle)*7,4.1,player.position.z+Math.cos(cameraAngle)*7);
     camera.position.lerp(desired,0.12);
     camera.lookAt(player.position.x,1.15,player.position.z);
+    if (opponentFlash > 0) {
+      opponentFlash -= dt;
+      if (opponentFlash <= 0) opponentTorso.material.color.set(opponentHealth > 0 ? "#8e3438" : "#333333");
+    }
+    if (opponentHealth <= 0) opponent.visible = false;
     renderer.render(scene,camera);
     const status=controls.querySelector(".city-status");
     status.textContent=moving?(fast?"RUNNING":"WALKING"):"EXPLORE THE NEIGHBOURHOOD";
@@ -225,6 +288,13 @@ export function createCityGame(container, controls, characterData, onExit) {
     joy.removeEventListener("pointerup",joyEnd);
     joy.removeEventListener("pointercancel",joyEnd);
     sprintOff();
+    sprintButton.removeEventListener("pointerdown", sprintOn);
+    sprintButton.removeEventListener("pointerup", sprintOff);
+    sprintButton.removeEventListener("pointercancel", sprintOff);
+    sprintButton.removeEventListener("lostpointercapture", sprintOff);
+    attackButton.removeEventListener("pointerdown", attack);
+    dodgeButton.removeEventListener("pointerdown", dodge);
+    interactButton.removeEventListener("pointerdown", interact);
     stage.removeEventListener("pointerdown", cameraDragStart);
     stage.removeEventListener("pointermove", cameraDragMove);
     stage.removeEventListener("pointerup", cameraDragEnd);
