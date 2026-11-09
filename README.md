@@ -20,7 +20,7 @@ The browser build uses JavaScript and Three.js and is designed with low-memory A
 - Third-person neighbourhood exploration with touch joystick and action buttons, plus PC keyboard controls.
 - A low-rise neighbourhood with roads, pavements, buildings, windows, trees and streetlights.
 - A 24/7 corner shop and a street market with produce stalls and separate proximity prompts. Both currently open the same first-pass shop catalogue.
-- A few parked low-poly vehicles with collision obstacles.
+- Parked low-poly vehicles that can be entered, driven and exited, with simple moving traffic and collision checks.
 - Walking pedestrians and a sparring opponent.
 - Punch and kick targeting for nearby pedestrians and the sparring opponent.
 - A local wallet and inventory, food and water use, and clothing purchases.
@@ -31,19 +31,19 @@ The browser build uses JavaScript and Three.js and is designed with low-memory A
 
 ## Controls
 
-**Android:** virtual joystick, punch, kick, run, block and dodge buttons. Drag on the 3D view to rotate the camera.
+**Android:** virtual joystick, punch, kick, run, block and dodge buttons. Enter a parked car to use GO, BACK and EXIT; steer with the joystick. Drag the 3D view to rotate the camera.
 
-**PC:** WASD or arrow keys to move, Shift or M to run, and mouse drag on the 3D view to look around. Press I for the inventory.
+**PC:** WASD or arrow keys to move, Shift or M to run, E to enter/exit a nearby car, W/S to drive, A/D to steer, and mouse drag to look around. Press I for the inventory.
 
 ## Development roadmap
 
 The next major systems are a larger connected city, more distinctive buildings and districts, working market-specific goods and vendors, richer player models and clothing meshes, vehicles that can be driven, jobs and mission chains, police response, rival groups, ranged combat, properties, businesses, relationships, reputation, a map, day/night, sound, and more complete save/progression systems.
 
-These are planned features, not claims about what is already playable. The current character models and environment are deliberately simple low-poly prototypes. The parked vehicles cannot yet be driven, and the market currently shares the corner shop's catalogue.
+These are planned features, not claims about what is already playable. The current character models and environment are deliberately simple low-poly prototypes. The market currently shares the corner shop's first-pass catalogue.
 
 ## Performance and deployment
 
-The game is deployed as a browser project on GitHub Pages. It needs a modern browser, WebGL and an internet connection to load the Three.js module and web fonts. It is not yet an offline Android app or a finished PC executable.
+The game is deployed as a browser project on GitHub Pages. It needs a modern browser, WebGL and an internet connection to load the Three.js module. It is not yet an offline Android app or a finished PC executable.
 
 The project is being expanded in coherent playable milestones, with performance kept in mind for low-memory Android hardware.
 
