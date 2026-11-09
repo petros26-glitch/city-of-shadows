@@ -400,10 +400,25 @@ export function createCityGame(container, controls, characterData, onExit, onSho
     if (!drivingVehicle) return;
     const car = drivingVehicle;
     const side = new THREE.Vector3(Math.cos(car.rotation.y),0,-Math.sin(car.rotation.y));
-    const exitPosition=car.position.clone().add(side.multiplyScalar(2.5));
-    const blocked=buildingColliders.some(b=>exitPosition.x+playerRadius>b.minX&&exitPosition.x-playerRadius<b.maxX&&exitPosition.z+playerRadius>b.minZ&&exitPosition.z-playerRadius<b.maxZ)||environmentColliders.some(o=>!o.vehicle&&Math.hypot(exitPosition.x-o.x,exitPosition.z-o.z)<o.radius+playerRadius);
-    player.position.copy(blocked?car.position.clone().add(side.multiplyScalar(-2.5)):exitPosition);
-    player.position.y=0; setDriving(false);
+    const candidates = [side.clone().multiplyScalar(2.7), side.clone().multiplyScalar(-2.7), new THREE.Vector3(0,0,3.2), new THREE.Vector3(0,0,-3.2)];
+    const isBlocked = position => {
+      if (Math.abs(position.x)>42 || Math.abs(position.z)>42) return true;
+      if (buildingColliders.some(b=>position.x+playerRadius>b.minX&&position.x-playerRadius<b.maxX&&position.z+playerRadius>b.minZ&&position.z-playerRadius<b.maxZ)) return true;
+      if (environmentColliders.some(o=>Math.hypot(position.x-o.x,position.z-o.z)<o.radius+playerRadius)) return true;
+      if (vehicles.some(v=>v.car!==car&&Math.hypot(position.x-v.car.position.x,position.z-v.car.position.z)<2.8)) return true;
+      if (trafficCars.some(t=>t.car!==car&&!t.hijacked&&Math.hypot(position.x-t.car.position.x,position.z-t.car.position.z)<2.8)) return true;
+      if (pedestrians.some(p=>p.alive&&Math.hypot(position.x-p.npc.position.x,position.z-p.npc.position.z)<playerRadius+p.radius)) return true;
+      return Math.hypot(position.x-opponent.position.x,position.z-opponent.position.z)<playerRadius+0.62;
+    };
+    const safe = candidates.map(offset=>car.position.clone().add(offset)).find(position=>!isBlocked(position));
+    if (!safe) {
+      const readout=controls.querySelector("#combat-readout");
+      if(readout)readout.textContent="CANNOT EXIT HERE · MOVE THE VEHICLE TO CLEAR SPACE";
+      return;
+    }
+    player.position.copy(safe);
+    player.position.y=0;
+    setDriving(false);
   }
   vehiclePrompt.addEventListener("click",enterNearestVehicle);
   function bindPedal(button, setter) {
@@ -642,6 +657,18 @@ export function createCityGame(container, controls, characterData, onExit, onSho
       if(t.car.position[axis]>52)t.car.position[axis]=-52;
       if(t.car.position[axis]<-52)t.car.position[axis]=52;
     });
+    const moving = Math.hypot(joystick.x,joystick.y)>0.08 || ["w","a","s","d","arrowup","arrowdown","arrowleft","arrowright"].some(key=>keys.has(key));
+    const fast = sprint||keys.has("shift")||keys.has("m");
+    needsClock += dt;
+    if (needsClock >= 5) {
+      const elapsed = needsClock; needsClock = 0;
+      survival.hunger = Math.max(0, survival.hunger - elapsed * 0.16);
+      survival.hydration = Math.max(0, survival.hydration - elapsed * 0.23);
+      survival.energy = Math.max(0, Math.min(100, survival.energy + (drivingVehicle ? elapsed * 0.25 : moving ? (fast ? -elapsed * 1.7 : elapsed * 0.18) : elapsed * 1.1)));
+      if (typeof onNeedsUpdate === "function") onNeedsUpdate({ ...survival });
+      const needsHud = document.querySelector("#needs-hud");
+      if (needsHud) needsHud.textContent = `HUNGER ${Math.round(survival.hunger)}%  ·  WATER ${Math.round(survival.hydration)}%  ·  ENERGY ${Math.round(survival.energy)}%`;
+    }
     if (drivingVehicle) {
       const car=drivingVehicle;
       const steer=driveJoystick.x+(keys.has("d")||keys.has("arrowright")?1:0)-(keys.has("a")||keys.has("arrowleft")?1:0);
@@ -665,22 +692,19 @@ export function createCityGame(container, controls, characterData, onExit, onSho
       const readout=controls.querySelector("#combat-readout");if(readout)readout.textContent="STEER WITH JOYSTICK · HOLD ▲ TO ACCELERATE · HOLD ▼ TO REVERSE";
       return;
     }
+    if (playerHealth <= 0) {
+      const readout=controls.querySelector("#combat-readout");
+      if(readout)readout.textContent="YOU ARE DOWN · RETURN TO MAIN MENU AND START AGAIN";
+      renderer.render(scene,camera);
+      return;
+    }
     let x=joystick.x+(keys.has("d")||keys.has("arrowright")?1:0)-(keys.has("a")||keys.has("arrowleft")?1:0);
     let z=joystick.y+(keys.has("s")||keys.has("arrowdown")?1:0)-(keys.has("w")||keys.has("arrowup")?1:0);
     const length=Math.hypot(x,z);
     if(length>1){x/=length;z/=length;}
     const moving=length>0.08;
     const fast=sprint||keys.has("shift")||keys.has("m");
-    needsClock += dt;
-    if (needsClock >= 5) {
-      const elapsed = needsClock; needsClock = 0;
-      survival.hunger = Math.max(0, survival.hunger - elapsed * 0.16);
-      survival.hydration = Math.max(0, survival.hydration - elapsed * 0.23);
-      survival.energy = Math.max(0, Math.min(100, survival.energy + (moving ? (fast ? -elapsed * 1.7 : elapsed * 0.18) : elapsed * 1.1)));
-      if (typeof onNeedsUpdate === "function") onNeedsUpdate({ ...survival });
-      const needsHud = document.querySelector("#needs-hud");
-      if (needsHud) needsHud.textContent = `HUNGER ${Math.round(survival.hunger)}%  ·  WATER ${Math.round(survival.hydration)}%  ·  ENERGY ${Math.round(survival.energy)}%`;
-    }
+
     if (survival.energy < 8 && fast) sprint = false;
     attackCooldown = Math.max(0, attackCooldown - dt);
     dodgeTime = Math.max(0, dodgeTime - dt);
@@ -796,7 +820,7 @@ export function createCityGame(container, controls, characterData, onExit, onSho
     const opponentDx = player.position.x-opponent.position.x;
     const opponentDz = player.position.z-opponent.position.z;
     const opponentDistance = Math.hypot(opponentDx,opponentDz);
-    if (opponentHealth > 0 && opponentDistance < 15) {
+    if (playerHealth > 0 && opponentHealth > 0 && opponentDistance < 15) {
       opponent.rotation.y = Math.atan2(opponentDx,opponentDz);
       if (opponentDistance > 1.65) {
         const approach = Math.min(2.15*dt, opponentDistance-1.55);
@@ -829,9 +853,11 @@ export function createCityGame(container, controls, characterData, onExit, onSho
           opponentPunchSide=opponentPunchSide===0?1:0;
           const incomingDamage = blockHeld ? 2 : 8;
           playerHealth=Math.max(0,playerHealth-incomingDamage);
-          controls.querySelector("#combat-readout").textContent = blockHeld
-            ? "BLOCKED · REDUCED DAMAGE · YOUR HEALTH " + playerHealth + "%"
-            : "OPPONENT PUNCHES YOU · YOUR HEALTH " + playerHealth + "%";
+          controls.querySelector("#combat-readout").textContent = playerHealth===0
+            ? "YOU ARE DOWN · RESTART THE NEIGHBOURHOOD TO TRY AGAIN"
+            : blockHeld
+              ? "BLOCKED · REDUCED DAMAGE · YOUR HEALTH " + playerHealth + "%"
+              : "OPPONENT PUNCHES YOU · YOUR HEALTH " + playerHealth + "%";
         }
         if (opponentPunchTime > 0) {
           const punch = Math.sin((1-opponentPunchTime/0.34)*Math.PI);
@@ -884,6 +910,7 @@ export function createCityGame(container, controls, characterData, onExit, onSho
     vehiclePrompt.hidden=!nearestVehicle||!!drivingVehicle;
     if(!vehiclePrompt.hidden){
       vehiclePrompt.textContent=nearestVehicle.traffic?"HIJACK MOVING CAR":"ENTER VEHICLE";
+      vehiclePrompt.setAttribute("aria-label",nearestVehicle.traffic?"Hijack the nearby moving car":"Enter the nearby parked car");
       const target=nearestVehicle.car;
       const projected=target.position.clone().add(new THREE.Vector3(0,1.8,0)).project(camera),rect=container.getBoundingClientRect();
       const px=(projected.x*.5+.5)*rect.width,py=(-projected.y*.5+.5)*rect.height;
