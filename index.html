@@ -39,9 +39,14 @@
         <p class="home-description">A city. A thousand secrets. One fight for power.</p>
         <p class="home-note">Your story begins with nothing.</p>
         <div class="home-actions">
-          <button id="new-game-button" class="button button-primary">CREATE YOUR CHARACTER <span>→</span></button>
+          <button id="new-game-button" class="button button-primary">NEW GAME <span>→</span></button>
           <button id="continue-button" class="button button-secondary" disabled>CONTINUE</button>
         </div>
+        <nav class="main-menu-links" aria-label="Main menu">
+          <button id="menu-inventory-button" class="menu-link">INVENTORY / WARDROBE</button>
+          <button id="menu-settings-button" class="menu-link">SETTINGS</button>
+          <button id="menu-about-button" class="menu-link">ABOUT THE GAME</button>
+        </nav>
       </div>
       <div class="home-art" aria-hidden="true">
         <div class="sun-glow"></div>
@@ -208,6 +213,24 @@
     </div>
   </section>
 
+  <section id="inventory-panel" class="shop-panel hidden" aria-label="Player inventory and wardrobe">
+    <div class="shop-card inventory-card">
+      <div class="shop-heading">
+        <div><p class="eyebrow"><span></span> YOUR PERSONAL ITEMS</p><h2>INVENTORY <em>/ WARDROBE.</em></h2></div>
+        <button id="inventory-close-button" class="text-button">CLOSE ✕</button>
+      </div>
+      <div class="shop-wallet"><span>AVAILABLE CASH</span><strong id="inventory-cash">₦500</strong></div>
+      <div class="wardrobe-current" id="wardrobe-current">CURRENT OUTFIT · STARTER CLOTHES</div>
+      <div id="inventory-list" class="inventory-list"></div>
+      <p id="inventory-message" class="shop-message" aria-live="polite">Items you buy appear here. Choose EQUIP or USE.</p>
+    </div>
+  </section>
+  <section id="info-panel" class="shop-panel hidden" aria-label="Game information">
+    <div class="shop-card">
+      <div class="shop-heading"><div><p class="eyebrow"><span></span> CREATED BY DSQUARE</p><h2 id="info-title">GAME <em>INFO.</em></h2></div><button id="info-close-button" class="text-button">CLOSE ✕</button></div>
+      <p id="info-copy" class="shop-intro"></p>
+    </div>
+  </section>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <script src="./js/ui.js" defer></script>
 </body>
