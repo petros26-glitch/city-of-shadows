@@ -121,9 +121,11 @@ export function createCityGame(container, controls, characterData, onExit, onSho
   buildingColliders.push({ minX:10.5, maxX:15.9, minZ:-5.85, maxZ:-0.72 });
 
   const skin = new THREE.MeshStandardMaterial({ color: characterData?.skin || "#6f402d" });
-  const shirt = new THREE.MeshStandardMaterial({ color: characterData?.gender === "female" ? "#55242c" : "#292a31" });
+  const equippedTop = characterData?.equipment?.top === "hoodie";
+  const equippedShoes = characterData?.equipment?.shoes === "sneakers";
+  const shirt = new THREE.MeshStandardMaterial({ color: equippedTop ? "#7b2630" : (characterData?.gender === "female" ? "#55242c" : "#292a31") });
   const pants = new THREE.MeshStandardMaterial({ color: "#17191f" });
-  const shoes = new THREE.MeshStandardMaterial({ color: "#08090c", roughness: 0.72 });
+  const shoes = new THREE.MeshStandardMaterial({ color: equippedShoes ? "#e0ded8" : "#08090c", roughness: 0.72 });
   const hair = new THREE.MeshStandardMaterial({ color: "#171116" });
 
   function makeHumanoid(group, shirtMaterial, skinMaterial, trouserMaterial, shoeMaterial, hairMaterial) {
@@ -155,6 +157,32 @@ export function createCityGame(container, controls, characterData, onExit, onSho
   const playerParts = makeHumanoid(player,shirt,skin,pants,shoes,hair);
   scene.add(player);
   player.position.set(0,0,4);
+
+  // Lightweight pedestrians give the first neighbourhood everyday street activity.
+  const pedestrianMaterials = [
+    new THREE.MeshStandardMaterial({ color:"#31506a" }),
+    new THREE.MeshStandardMaterial({ color:"#7b4a2d" }),
+    new THREE.MeshStandardMaterial({ color:"#4c5940" }),
+    new THREE.MeshStandardMaterial({ color:"#6c3540" })
+  ];
+  const pedestrianSkin = new THREE.MeshStandardMaterial({ color:"#895b43" });
+  const pedestrians = [];
+  const pedestrianRoutes = [
+    { a:[-5, -5], b:[-5, 5], speed:0.72 },
+    { a:[5, 5], b:[5, -5], speed:0.62 },
+    { a:[-5, 10], b:[5, 10], speed:0.55 },
+    { a:[10, 5], b:[10, -5], speed:0.66 },
+    { a:[-10, 5], b:[-10, -5], speed:0.58 },
+    { a:[5, -10], b:[-5, -10], speed:0.52 }
+  ];
+  pedestrianRoutes.forEach((route,index) => {
+    const npc = new THREE.Group();
+    const parts = makeHumanoid(npc, pedestrianMaterials[index % pedestrianMaterials.length], pedestrianSkin, pants, shoes, hair);
+    npc.position.set(route.a[0],0,route.a[1]);
+    npc.rotation.y = Math.atan2(route.b[0]-route.a[0], route.b[1]-route.a[1]);
+    scene.add(npc);
+    pedestrians.push({ npc, parts, route, progress:0, direction:1, phase:index*1.7 });
+  });
 
   // A living sparring opponent with a complete low-poly body.
   const opponent = new THREE.Group();
@@ -484,6 +512,30 @@ export function createCityGame(container, controls, characterData, onExit, onSho
       playerParts.arms[0].rotation.x = -1.05;
       playerParts.arms[1].rotation.x = -1.05;
     }
+
+    // Pedestrians walk along short street routes and turn around at each end.
+    pedestrians.forEach(person => {
+      const route = person.route;
+      const start = person.direction > 0 ? route.a : route.b;
+      const end = person.direction > 0 ? route.b : route.a;
+      const vx = end[0] - start[0], vz = end[1] - start[1];
+      const distance = Math.hypot(vx,vz) || 1;
+      person.progress += route.speed * dt / distance;
+      if (person.progress >= 1) {
+        person.progress = 0;
+        person.direction *= -1;
+      }
+      const from = person.direction > 0 ? route.a : route.b;
+      const to = person.direction > 0 ? route.b : route.a;
+      person.npc.position.x = THREE.MathUtils.lerp(from[0],to[0],person.progress);
+      person.npc.position.z = THREE.MathUtils.lerp(from[1],to[1],person.progress);
+      person.npc.rotation.y = Math.atan2(to[0]-from[0],to[1]-from[1]);
+      const step = Math.sin(time*0.004 + person.phase)*0.32;
+      person.parts.legs[0].rotation.x = step;
+      person.parts.legs[1].rotation.x = -step;
+      person.parts.arms[0].rotation.x = -step*0.55;
+      person.parts.arms[1].rotation.x = step*0.55;
+    });
 
     // Opponent AI: notice the player, approach, face them and throw punches.
     const opponentDx = player.position.x-opponent.position.x;
