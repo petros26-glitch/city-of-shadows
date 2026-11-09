@@ -562,3 +562,77 @@ h2 { font-size: clamp(48px, 6vw, 76px); }
  #city-controls.driving-mode{display:flex!important;position:absolute!important;right:18px!important;bottom:18px!important;left:auto!important;z-index:20!important}
  #city-controls.driving-mode .drive-controls{display:flex!important;flex-direction:row!important}
 }
+
+
+/* Phase One control clarity: always readable touch controls on phones. */
+@media(max-width:800px){
+  #city-controls{
+    display:flex!important;
+    position:fixed!important;
+    left:12px!important;right:12px!important;
+    bottom:max(14px,env(safe-area-inset-bottom))!important;
+    width:auto!important;
+    z-index:80!important;
+    justify-content:space-between!important;
+    align-items:flex-end!important;
+    gap:12px!important;
+    padding:0!important;
+    pointer-events:none!important;
+  }
+  #city-controls .movement-controls,
+  #city-controls .mobile-actions,
+  #city-controls .drive-controls{pointer-events:auto!important}
+  #city-controls .movement-controls{flex:0 0 auto!important}
+  #city-controls .movement-controls .joystick{
+    width:82px!important;height:82px!important;flex:0 0 82px!important;
+    border:2px solid rgba(235,205,150,.9)!important;
+    background:rgba(10,12,18,.88)!important;
+    box-shadow:0 3px 16px rgba(0,0,0,.5)!important;
+  }
+  #city-controls .joystick-knob{width:36px!important;height:36px!important}
+  #city-controls .mobile-actions{
+    display:grid!important;
+    grid-template-columns:repeat(3,48px)!important;
+    grid-template-rows:repeat(2,54px)!important;
+    grid-auto-flow:row!important;
+    width:auto!important;height:auto!important;max-height:none!important;
+    flex:0 0 auto!important;gap:5px!important;
+    align-content:end!important;justify-content:end!important;
+  }
+  #city-controls .mobile-actions .action-button{
+    position:static!important;
+    width:48px!important;height:54px!important;min-width:48px!important;
+    border-radius:12px!important;padding:3px 1px!important;
+    display:flex!important;flex-direction:column!important;
+    align-items:center!important;justify-content:center!important;gap:1px!important;
+    font-size:17px!important;
+    border:1px solid rgba(255,255,255,.42)!important;
+    box-shadow:0 3px 12px rgba(0,0,0,.45)!important;
+  }
+  #city-controls .action-button small{
+    display:block!important;font-size:7px!important;font-weight:900!important;
+    line-height:1!important;letter-spacing:.2px!important;color:#fff!important;
+  }
+  #city-controls.driving-mode .mobile-actions{display:none!important}
+  #city-controls .drive-controls{
+    display:none;position:static!important;
+    margin-left:auto!important;flex-direction:row!important;
+    align-items:flex-end!important;gap:7px!important;
+  }
+  #city-controls.driving-mode .drive-controls{display:flex!important}
+  #city-controls .drive-button{
+    width:54px!important;min-width:54px!important;height:58px!important;
+    border-radius:12px!important;font-size:18px!important;
+    border:1px solid rgba(255,255,255,.5)!important;
+    background:rgba(10,12,18,.94)!important;
+  }
+  #city-controls .drive-button span{font-size:8px!important}
+  #city-controls .drive-exit{height:40px!important;width:52px!important;min-width:52px!important}
+}
+@media(max-width:380px){
+  #city-controls{left:7px!important;right:7px!important;gap:6px!important}
+  #city-controls .movement-controls .joystick{width:70px!important;height:70px!important;flex-basis:70px!important}
+  #city-controls .mobile-actions{grid-template-columns:repeat(3,42px)!important;grid-template-rows:repeat(2,48px)!important;gap:4px!important}
+  #city-controls .mobile-actions .action-button{width:42px!important;height:48px!important;min-width:42px!important}
+  #city-controls .action-button small{font-size:6px!important}
+}
