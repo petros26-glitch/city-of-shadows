@@ -1,6 +1,6 @@
 import * as THREE from "three";
 
-export function createCityGame(container, controls, characterData, onExit) {
+export function createCityGame(container, controls, characterData, onExit, onShopInteract) {
   const scene = new THREE.Scene();
   scene.background = new THREE.Color("#171923");
   scene.fog = new THREE.Fog("#171923", 22, 95);
@@ -10,6 +10,16 @@ export function createCityGame(container, controls, characterData, onExit) {
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.15));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   container.replaceChildren(renderer.domElement);
+  const shopPrompt = document.createElement("button");
+  shopPrompt.type = "button";
+  shopPrompt.className = "door-interact-prompt";
+  shopPrompt.textContent = "ENTER SHOP";
+  shopPrompt.setAttribute("aria-label", "Enter the 24/7 shop");
+  shopPrompt.hidden = true;
+  shopPrompt.addEventListener("click", () => {
+    if (typeof onShopInteract === "function") onShopInteract();
+  });
+  container.appendChild(shopPrompt);
 
   scene.add(new THREE.HemisphereLight(0xc8d4e5, 0x40352e, 2));
   const sun = new THREE.DirectionalLight(0xffd2a0, 1.5);
@@ -91,6 +101,7 @@ export function createCityGame(container, controls, characterData, onExit) {
 
 
   // A clearly marked corner store beside the main road, visible from the starting area.
+  const shopDoorPoint = new THREE.Vector3(11.65,1.25,-0.72);
   const shopBuilding = block(new THREE.BoxGeometry(5.4,4.2,5.2), shopWallMat, 13.2,2.1,-3.2);
   block(new THREE.BoxGeometry(5.7,0.28,5.5), shopTrimMat, 13.2,4.28,-3.2);
   block(new THREE.BoxGeometry(1.25,2.35,0.12), shopGlassMat, 11.65,1.2,-0.52);
@@ -537,6 +548,22 @@ export function createCityGame(container, controls, characterData, onExit) {
     const desired=new THREE.Vector3(player.position.x+Math.sin(cameraAngle)*7,4.1,player.position.z+Math.cos(cameraAngle)*7);
     camera.position.lerp(desired,0.12);
     camera.lookAt(player.position.x,1.15,player.position.z);
+
+    // Display the shop interaction over the actual doorway when the player is close.
+    const shopDistance = Math.hypot(player.position.x-shopDoorPoint.x, player.position.z-shopDoorPoint.z);
+    shopPrompt.hidden = shopDistance > 5.2;
+    if (!shopPrompt.hidden) {
+      const projected = shopDoorPoint.clone().project(camera);
+      const rect = container.getBoundingClientRect();
+      const px = (projected.x * 0.5 + 0.5) * rect.width;
+      const py = (-projected.y * 0.5 + 0.5) * rect.height;
+      const onScreen = projected.z > -1 && projected.z < 1 && px > 12 && px < rect.width-12 && py > 12 && py < rect.height-12;
+      shopPrompt.hidden = !onScreen;
+      if (onScreen) {
+        shopPrompt.style.left = px + "px";
+        shopPrompt.style.top = py + "px";
+      }
+    }
     if (opponentFlash > 0) {
       opponentFlash -= dt;
       if (opponentFlash <= 0) opponentTorso.material.color.set(opponentHealth > 0 ? "#8e3438" : "#333333");
@@ -583,6 +610,7 @@ export function createCityGame(container, controls, characterData, onExit) {
     stage.removeEventListener("pointerup", cameraDragEnd);
     stage.removeEventListener("pointercancel", cameraDragEnd);
 
+    shopPrompt.remove();
     renderer.dispose();
     scene.traverse(obj=>{if(obj.geometry)obj.geometry.dispose();if(obj.material){if(Array.isArray(obj.material))obj.material.forEach(m=>m.dispose());else obj.material.dispose();}});
     container.replaceChildren();
