@@ -17,7 +17,7 @@
       }
     }
   </script>
-  <script type="module" src="./js/main.js?v=15"></script>
+  <script type="module" src="./js/main.js?v=16"></script>
 </head>
 <body>
   <div class="ambient ambient-one"></div>
@@ -169,7 +169,7 @@
       </div>
       <div id="city-stage" class="city-stage" aria-label="Playable 3D neighbourhood"></div>
       <div class="city-hud">
-        <div class="city-status">EXPLORE THE NEIGHBOURHOOD</div>
+        <div class="city-status-row"><div class="city-status">EXPLORE THE NEIGHBOURHOOD</div><button id="shop-open-button" class="shop-open-button">OPEN SHOP</button></div>
         <div class="city-help">PC: WASD / ARROWS TO MOVE · SHIFT OR M TO RUN · DRAG TO LOOK</div>
         <div class="city-controls" id="city-controls">
           <div class="joystick" aria-label="Movement joystick"><div class="joystick-knob"></div></div>
@@ -178,6 +178,7 @@
             <button class="action-button kick-button" aria-label="Kick">KICK</button>
             <button class="action-button block-button" aria-label="Block">BLOCK</button>
             <button class="action-button dodge-button" aria-label="Dodge">DODGE</button>
+            <button class="action-button sprint-button" aria-label="Run">RUN</button>
           </div>
         </div>
         <div class="combat-readout" id="combat-readout">PUNCH · KICK · BLOCK · DODGE</div>
@@ -185,6 +186,25 @@
       <p class="city-disclaimer">EARLY PLAYABLE BUILD · CREATED BY DSQUARE</p>
     </section>
   </main>
+
+  <section id="shop-panel" class="shop-panel hidden" aria-label="Neighbourhood shop">
+    <div class="shop-card">
+      <div class="shop-heading">
+        <div><p class="eyebrow"><span></span> NEIGHBOURHOOD STORE</p><h2>THE <em>SHOP.</em></h2></div>
+        <button id="shop-close-button" class="text-button">CLOSE ✕</button>
+      </div>
+      <div class="shop-wallet">YOUR CASH <strong id="shop-cash">₦500</strong></div>
+      <p class="shop-intro">Buy useful supplies and streetwear with money earned in the city.</p>
+      <div class="shop-items">
+        <article class="shop-item"><div><strong>Street Meal</strong><span>Food supply · ₦25</span></div><button class="shop-buy-button" data-item="meal" data-price="25">BUY</button></article>
+        <article class="shop-item"><div><strong>Bottled Water</strong><span>Drink supply · ₦10</span></div><button class="shop-buy-button" data-item="water" data-price="10">BUY</button></article>
+        <article class="shop-item"><div><strong>Street Hoodie</strong><span>Clothing · ₦120</span></div><button class="shop-buy-button" data-item="hoodie" data-price="120">BUY</button></article>
+        <article class="shop-item"><div><strong>Fresh Sneakers</strong><span>Footwear · ₦90</span></div><button class="shop-buy-button" data-item="sneakers" data-price="90">BUY</button></article>
+      </div>
+      <p id="shop-message" class="shop-message" aria-live="polite">Your purchases will be saved on this device.</p>
+      <div class="shop-inventory">YOUR BAG <span id="shop-inventory">No items yet</span></div>
+    </div>
+  </section>
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <script src="./js/ui.js" defer></script>
