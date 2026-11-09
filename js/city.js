@@ -353,12 +353,15 @@ export function createCityGame(container, controls, characterData, onExit, onSho
   };
   window.addEventListener("keydown", inventoryKey);
   let joystick = { x: 0, y: 0 };
+  let driveJoystick = { x: 0, y: 0 };
   let drivingVehicle = null;
   let driveForward = false, driveReverse = false;
   const driveControls = controls.querySelector(".drive-controls");
   const driveForwardButton = controls.querySelector(".drive-forward");
   const driveReverseButton = controls.querySelector(".drive-reverse");
   const driveExitButton = controls.querySelector(".drive-exit");
+  const driveJoy = controls.querySelector(".drive-joystick");
+  const driveKnob = controls.querySelector(".drive-joystick-knob");
   function setDriving(active, vehicle = null) {
     drivingVehicle = active ? vehicle : null;
     if (driveControls) driveControls.classList.toggle("active", active);
@@ -367,17 +370,31 @@ export function createCityGame(container, controls, characterData, onExit, onSho
     if (vehiclePrompt) vehiclePrompt.hidden = active;
     player.visible = !active;
     driveForward = false; driveReverse = false;
+    driveJoystick = { x: 0, y: 0 };
+    driveKnob.style.transform = "translate(0,0)";
     if (active) controls.querySelector("#combat-readout").textContent = "DRIVING · JOYSTICK / A-D TO STEER · HOLD ACCELERATE OR REVERSE";
     else controls.querySelector("#combat-readout").textContent = "ON FOOT · PUNCH · KICK · BLOCK · DODGE";
   }
   function enterNearestVehicle() {
     if (drivingVehicle) return;
-    let nearest = null, distance = 4.8;
+    let nearest = null, distance = 5.8;
     for (const entry of vehicles) {
       const d = Math.hypot(player.position.x-entry.car.position.x, player.position.z-entry.car.position.z);
-      if (d < distance) { nearest = entry; distance = d; }
+      if (d < distance) { nearest = {car:entry.car,traffic:false}; distance = d; }
     }
-    if (nearest) { player.position.set(nearest.car.position.x,0,nearest.car.position.z-2.7); setDriving(true, nearest.car); }
+    for (const entry of trafficCars) {
+      if (entry.hijacked) continue;
+      const d = Math.hypot(player.position.x-entry.car.position.x, player.position.z-entry.car.position.z);
+      if (d < distance) { nearest = {car:entry.car,traffic:true,trafficEntry:entry}; distance = d; }
+    }
+    if (!nearest) return;
+    if (nearest.traffic) {
+      nearest.trafficEntry.hijacked = true;
+      vehicles.push({car:nearest.car,drivable:true,hijacked:true});
+      environmentColliders.push({x:nearest.car.position.x,z:nearest.car.position.z,radius:1.55,vehicle:nearest.car});
+    }
+    player.position.set(nearest.car.position.x,0,nearest.car.position.z-2.7);
+    setDriving(true,nearest.car);
   }
   function exitVehicle() {
     if (!drivingVehicle) return;
@@ -447,6 +464,25 @@ export function createCityGame(container, controls, characterData, onExit, onSho
   window.addEventListener("pointermove",joyMove,{passive:false});
   window.addEventListener("pointerup",joyEnd);
   window.addEventListener("pointercancel",joyEnd);
+  let driveJoyPointer=null;
+  function driveJoyStart(e){
+    e.preventDefault();e.stopPropagation();if(driveJoyPointer!==null)return;
+    driveJoyPointer=e.pointerId;try{driveJoy.setPointerCapture(e.pointerId);}catch{}driveJoyMove(e);
+  }
+  function driveJoyMove(e){
+    if(driveJoyPointer!==e.pointerId)return;e.preventDefault();e.stopPropagation();
+    const rect=driveJoy.getBoundingClientRect(),cx=rect.left+rect.width/2,cy=rect.top+rect.height/2;
+    let dx=e.clientX-cx,dy=e.clientY-cy,len=Math.hypot(dx,dy),max=rect.width*.34;
+    if(len>max){dx=dx/len*max;dy=dy/len*max;}
+    driveJoystick={x:dx/max,y:dy/max};driveKnob.style.transform=`translate(${dx}px,${dy}px)`;
+  }
+  function driveJoyEnd(e){
+    if(driveJoyPointer!==e.pointerId)return;driveJoyPointer=null;driveJoystick={x:0,y:0};driveKnob.style.transform="translate(0,0)";
+  }
+  driveJoy.addEventListener("pointerdown",driveJoyStart);
+  window.addEventListener("pointermove",driveJoyMove,{passive:false});
+  window.addEventListener("pointerup",driveJoyEnd);
+  window.addEventListener("pointercancel",driveJoyEnd);
   const attackButton = controls.querySelector(".attack-button");
   const kickButton = controls.querySelector(".kick-button");
   const blockButton = controls.querySelector(".block-button");
@@ -600,6 +636,7 @@ export function createCityGame(container, controls, characterData, onExit, onSho
     }
     // Ambient traffic keeps moving even while the player is driving.
     trafficCars.forEach(t=>{
+      if(t.hijacked || (drivingVehicle && t.car===drivingVehicle)) return;
       const axis=t.horizontal?"x":"z";
       t.car.position[axis]+=t.speed*t.direction*dt;
       if(t.car.position[axis]>52)t.car.position[axis]=-52;
@@ -607,8 +644,9 @@ export function createCityGame(container, controls, characterData, onExit, onSho
     });
     if (drivingVehicle) {
       const car=drivingVehicle;
-      const steer=joystick.x+(keys.has("d")||keys.has("arrowright")?1:0)-(keys.has("a")||keys.has("arrowleft")?1:0);
-      const throttle=(driveForward||keys.has("w")||keys.has("arrowup")?1:0)-(driveReverse||keys.has("s")||keys.has("arrowdown")?1:0);
+      const steer=driveJoystick.x+(keys.has("d")||keys.has("arrowright")?1:0)-(keys.has("a")||keys.has("arrowleft")?1:0);
+      const analogThrottle=-driveJoystick.y;
+      const throttle=Math.abs(analogThrottle)>.18?Math.sign(analogThrottle):(driveForward||keys.has("w")||keys.has("arrowup")?1:0)-(driveReverse||keys.has("s")||keys.has("arrowdown")?1:0);
       if(throttle!==0){
         car.rotation.y += steer*dt*1.05*Math.sign(throttle);
         const velocity=throttle*8.2*dt;
@@ -833,11 +871,20 @@ export function createCityGame(container, controls, characterData, onExit, onSho
         shopPrompt.style.top = py + "px";
       }
     }
-    let nearestVehicleDistance=Infinity;
-    for(const entry of vehicles)nearestVehicleDistance=Math.min(nearestVehicleDistance,Math.hypot(player.position.x-entry.car.position.x,player.position.z-entry.car.position.z));
-    vehiclePrompt.hidden=nearestVehicleDistance>4.8;
+    let nearestVehicle=null,nearestVehicleDistance=5.8;
+    for(const entry of vehicles){
+      const d=Math.hypot(player.position.x-entry.car.position.x,player.position.z-entry.car.position.z);
+      if(d<nearestVehicleDistance){nearestVehicle={car:entry.car,traffic:false};nearestVehicleDistance=d;}
+    }
+    for(const entry of trafficCars){
+      if(entry.hijacked)continue;
+      const d=Math.hypot(player.position.x-entry.car.position.x,player.position.z-entry.car.position.z);
+      if(d<nearestVehicleDistance){nearestVehicle={car:entry.car,traffic:true};nearestVehicleDistance=d;}
+    }
+    vehiclePrompt.hidden=!nearestVehicle||!!drivingVehicle;
     if(!vehiclePrompt.hidden){
-      const target=vehicles.reduce((best,entry)=>Math.hypot(player.position.x-entry.car.position.x,player.position.z-entry.car.position.z)<Math.hypot(player.position.x-best.car.position.x,player.position.z-best.car.position.z)?entry:best,vehicles[0]).car;
+      vehiclePrompt.textContent=nearestVehicle.traffic?"HIJACK MOVING CAR":"ENTER VEHICLE";
+      const target=nearestVehicle.car;
       const projected=target.position.clone().add(new THREE.Vector3(0,1.8,0)).project(camera),rect=container.getBoundingClientRect();
       const px=(projected.x*.5+.5)*rect.width,py=(-projected.y*.5+.5)*rect.height;
       const onScreen=projected.z>-1&&projected.z<1&&px>12&&px<rect.width-12&&py>12&&py<rect.height-12;
@@ -882,6 +929,10 @@ export function createCityGame(container, controls, characterData, onExit, onSho
     window.removeEventListener("cos-equipment-changed", equipmentChanged);
     if (inventoryButton) inventoryButton.removeEventListener("click", openInventory);
     joy.removeEventListener("pointerdown",joyStart);
+    driveJoy.removeEventListener("pointerdown",driveJoyStart);
+    window.removeEventListener("pointermove",driveJoyMove);
+    window.removeEventListener("pointerup",driveJoyEnd);
+    window.removeEventListener("pointercancel",driveJoyEnd);
     window.removeEventListener("pointermove",joyMove);
     window.removeEventListener("pointerup",joyEnd);
     window.removeEventListener("pointercancel",joyEnd);
