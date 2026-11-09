@@ -254,8 +254,7 @@ export function createCityGame(container, controls, characterData, onExit) {
       opponentTorso.material.color.set("#f3c0a5");
       readout.textContent = opponentHealth > 0
         ? "PUNCH CONNECTED · OPPONENT " + opponentHealth + "%"
-        : "OPPONENT DEFEATED · RESETTING TRAINING";
-      if (opponentHealth <= 0) defeatedResetTime = 4;
+        : "OPPONENT DEFEATED · 0% HEALTH";
     } else {
       readout.textContent = "PUNCH MISSED · GET CLOSER";
     }
@@ -279,8 +278,7 @@ export function createCityGame(container, controls, characterData, onExit) {
       opponentTorso.material.color.set("#f3c0a5");
       readout.textContent = opponentHealth > 0
         ? "KICK CONNECTED · OPPONENT " + opponentHealth + "%"
-        : "OPPONENT DEFEATED · RESETTING TRAINING";
-      if (opponentHealth <= 0) defeatedResetTime = 4;
+        : "OPPONENT DEFEATED · 0% HEALTH";
     } else {
       readout.textContent = "KICK MISSED · GET CLOSER";
     }
