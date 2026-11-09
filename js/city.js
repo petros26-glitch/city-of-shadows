@@ -132,6 +132,8 @@ export function createCityGame(container, controls, characterData, onExit) {
   let opponentAttackCooldown = 0;
   let dodgeTime = 0;
   let dodgeDistance = 0;
+  let dodgeDirX = 0;
+  let dodgeDirZ = 1;
   let opponentFlash = 0;
   let walkClock = 0;
 
@@ -232,9 +234,34 @@ export function createCityGame(container, controls, characterData, onExit) {
   }
   function dodge(e) {
     e.preventDefault();
-    dodgeButton.classList.add("pressed");
+    e.stopPropagation();
+
+    // Use the current joystick/keyboard direction at the exact moment
+    // Dodge is pressed. Convert camera-relative input into world direction.
+    let moveX = joystick.x
+      + (keys.has("d") || keys.has("arrowright") ? 1 : 0)
+      - (keys.has("a") || keys.has("arrowleft") ? 1 : 0);
+    let moveZ = joystick.y
+      + (keys.has("s") || keys.has("arrowdown") ? 1 : 0)
+      - (keys.has("w") || keys.has("arrowup") ? 1 : 0);
+
+    const inputLength = Math.hypot(moveX, moveZ);
+    if (inputLength > 0.08) {
+      moveX /= inputLength;
+      moveZ /= inputLength;
+      const sin = Math.sin(cameraAngle);
+      const cos = Math.cos(cameraAngle);
+      dodgeDirX = moveX * cos + moveZ * sin;
+      dodgeDirZ = -moveX * sin + moveZ * cos;
+    } else {
+      // With no movement input, dodge in the direction the character faces.
+      dodgeDirX = Math.sin(player.rotation.y);
+      dodgeDirZ = Math.cos(player.rotation.y);
+    }
+
     dodgeTime = 0.28;
     dodgeDistance = 2.2;
+    dodgeButton.classList.add("pressed");
     setTimeout(() => dodgeButton.classList.remove("pressed"), 260);
   }
   function interact(e) {
@@ -310,8 +337,8 @@ export function createCityGame(container, controls, characterData, onExit) {
     let dz=(-x*sin+z*cos)*speed*dt;
     if (dodgeTime > 0 && dodgeDistance > 0) {
       const dodgeStep = Math.min(dodgeDistance, 2.2 * dt / 0.28);
-      dx += Math.cos(cameraAngle) * dodgeStep;
-      dz -= Math.sin(cameraAngle) * dodgeStep;
+      dx += dodgeDirX * dodgeStep;
+      dz += dodgeDirZ * dodgeStep;
       dodgeDistance -= dodgeStep;
     }
     // Resolve movement against building footprints. Axis-separated checks
