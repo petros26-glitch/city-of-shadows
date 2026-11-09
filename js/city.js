@@ -20,6 +20,16 @@ export function createCityGame(container, controls, characterData, onExit, onSho
     if (typeof onShopInteract === "function") onShopInteract();
   });
   container.appendChild(shopPrompt);
+  const marketPrompt = document.createElement("button");
+  marketPrompt.type = "button";
+  marketPrompt.className = "door-interact-prompt";
+  marketPrompt.textContent = "BROWSE MARKET";
+  marketPrompt.setAttribute("aria-label", "Browse the city market");
+  marketPrompt.hidden = true;
+  marketPrompt.addEventListener("click", () => {
+    if (typeof onShopInteract === "function") onShopInteract();
+  });
+  container.appendChild(marketPrompt);
 
   scene.add(new THREE.HemisphereLight(0xc8d4e5, 0x40352e, 2));
   const sun = new THREE.DirectionalLight(0xffd2a0, 1.5);
@@ -152,6 +162,8 @@ export function createCityGame(container, controls, characterData, onExit, onSho
   marketCtx.fillStyle="#f4d8a5";marketCtx.font="bold 76px Arial";marketCtx.textAlign="center";marketCtx.textBaseline="middle";marketCtx.fillText("CITY MARKET",384,82);
   const marketSign=new THREE.Mesh(new THREE.PlaneGeometry(7.2,1.5),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(marketSignCanvas)}));
   marketSign.position.set(-18,4.1,8.8);scene.add(marketSign);
+  buildingColliders.push(...marketColliders);
+  const marketDoorPoint = new THREE.Vector3(-15.7,1.2,0);
 
   // A few parked low-poly vehicles make the roads feel occupied without heavy physics.
   const vehicleMaterials=["#8b252c","#263b50","#b18a42"].map(color=>new THREE.MeshStandardMaterial({color,roughness:0.72}));
@@ -709,6 +721,17 @@ export function createCityGame(container, controls, characterData, onExit, onSho
         shopPrompt.style.top = py + "px";
       }
     }
+    const marketDistance = Math.hypot(player.position.x-marketDoorPoint.x, player.position.z-marketDoorPoint.z);
+    marketPrompt.hidden = marketDistance > 5.2;
+    if (!marketPrompt.hidden) {
+      const projected = marketDoorPoint.clone().project(camera);
+      const rect = container.getBoundingClientRect();
+      const px = (projected.x * 0.5 + 0.5) * rect.width;
+      const py = (-projected.y * 0.5 + 0.5) * rect.height;
+      const onScreen = projected.z > -1 && projected.z < 1 && px > 12 && px < rect.width-12 && py > 12 && py < rect.height-12;
+      marketPrompt.hidden = !onScreen;
+      if (onScreen) { marketPrompt.style.left = px + "px"; marketPrompt.style.top = py + "px"; }
+    }
     if (opponentFlash > 0) {
       opponentFlash -= dt;
       if (opponentFlash <= 0) opponentTorso.material.color.set(opponentHealth > 0 ? "#8e3438" : "#333333");
@@ -759,6 +782,7 @@ export function createCityGame(container, controls, characterData, onExit, onSho
     stage.removeEventListener("pointercancel", cameraDragEnd);
 
     shopPrompt.remove();
+    marketPrompt.remove();
     renderer.dispose();
     scene.traverse(obj=>{if(obj.geometry)obj.geometry.dispose();if(obj.material){if(Array.isArray(obj.material))obj.material.forEach(m=>m.dispose());else obj.material.dispose();}});
     container.replaceChildren();
