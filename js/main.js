@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { createCityGame } from "./city.js?v=13";
+import { createCityGame } from "./city.js?v=14";
 
 const STORAGE_KEY = "cos-player-character-v1";
 const state = {
@@ -23,6 +23,48 @@ let cameraTarget = 0;
 let dragStart = null;
 let previewReady = false;
 let destroyCity = null;
+const WALLET_KEY = "cos-player-wallet-v1";
+const INVENTORY_KEY = "cos-player-inventory-v1";
+let wallet = 500;
+let inventory = {};
+
+
+function loadShopData() {
+  try {
+    wallet = Number(localStorage.getItem(WALLET_KEY));
+    if (!Number.isFinite(wallet) || wallet < 0) wallet = 500;
+    inventory = JSON.parse(localStorage.getItem(INVENTORY_KEY) || "{}") || {};
+  } catch { wallet = 500; inventory = {}; }
+}
+function renderShop() {
+  $("#shop-cash").textContent = "₦" + wallet.toLocaleString("en-NG");
+  const entries = Object.entries(inventory).filter(([,count]) => count > 0);
+  $("#shop-inventory").textContent = entries.length
+    ? entries.map(([item,count]) => item[0].toUpperCase()+item.slice(1)+" × "+count).join(" · ")
+    : "No items yet";
+}
+function openShop() {
+  loadShopData();
+  renderShop();
+  $("#shop-message").textContent = "Choose an item to buy.";
+  $("#shop-panel").classList.remove("hidden");
+}
+function closeShop() { $("#shop-panel").classList.add("hidden"); }
+function buyShopItem(button) {
+  const item = button.dataset.item;
+  const price = Number(button.dataset.price);
+  if (!item || !Number.isFinite(price) || price <= 0) return;
+  if (wallet < price) {
+    $("#shop-message").textContent = "Not enough cash for this item.";
+    return;
+  }
+  wallet -= price;
+  inventory[item] = (inventory[item] || 0) + 1;
+  localStorage.setItem(WALLET_KEY, String(wallet));
+  localStorage.setItem(INVENTORY_KEY, JSON.stringify(inventory));
+  renderShop();
+  $("#shop-message").textContent = "Purchase complete. " + item + " added to your bag.";
+}
 
 function notify(message) {
   toast.textContent = message;
@@ -217,6 +259,10 @@ function setView(view) {
 }
 
 function bindEvents() {
+  $("#shop-open-button").addEventListener("click", openShop);
+  $("#shop-close-button").addEventListener("click", closeShop);
+  $("#shop-panel").addEventListener("click", event => { if (event.target.id === "shop-panel") closeShop(); });
+  document.querySelectorAll(".shop-buy-button").forEach(button => button.addEventListener("click", () => buyShopItem(button)));
   $("#new-game-button").addEventListener("click", () => {
     const saved = loadSavedCharacter();
     fillForm(saved || { name: "", gender: "male", age: 20, skin: "#6f402d", hair: "short" });
