@@ -334,6 +334,20 @@ function setView(view) {
 }
 
 function bindEvents() {
+  $("#home-brand-link").addEventListener("click", event => {
+    event.preventDefault();
+    $("#game-menu-panel").classList.add("hidden");
+    $("#shop-panel").classList.add("hidden");
+    $("#inventory-panel").classList.add("hidden");
+    if (screen.orientation && typeof screen.orientation.unlock === "function") { try { screen.orientation.unlock(); } catch {} }
+    if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(() => {});
+    if (destroyCity) destroyCity();
+    destroyCity = null;
+    showScreen(homeScreen);
+  });
+  $("#game-menu-panel").addEventListener("click", event => {
+    if (event.target.id === "game-menu-panel") $("#game-menu-panel").classList.add("hidden");
+  });
   $("#shop-close-button").addEventListener("click", closeShop);
   $("#inventory-close-button").addEventListener("click", closeInventory);
   $("#inventory-panel").addEventListener("click", event => { if (event.target.id === "inventory-panel") closeInventory(); });
@@ -341,24 +355,6 @@ function bindEvents() {
   $("#game-menu-button").addEventListener("click", () => $("#game-menu-panel").classList.remove("hidden"));
   $("#game-menu-resume-button").addEventListener("click", () => $("#game-menu-panel").classList.add("hidden"));
   $("#game-menu-inventory-button").addEventListener("click", () => { $("#game-menu-panel").classList.add("hidden"); openInventory(); });
-  $("#game-menu-settings-button").addEventListener("click", () => { $("#game-menu-panel").classList.add("hidden"); $("#info-title").innerHTML = "GAME <em>SETTINGS.</em>"; $("#info-copy").textContent = "Current build uses low-power graphics and device-appropriate controls."; $("#info-panel").classList.remove("hidden"); });
-  $("#game-menu-home-button").addEventListener("click", () => {
-    $("#game-menu-panel").classList.add("hidden");
-    if (screen.orientation && typeof screen.orientation.unlock === "function") { try { screen.orientation.unlock(); } catch {} }
-    if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(() => {});
-    if (destroyCity) destroyCity(); destroyCity = null; showScreen(homeScreen);
-  });
-  $("#menu-settings-button").addEventListener("click", () => {
-    $("#info-title").innerHTML = 'GAME <em>SETTINGS.</em>';
-    $("#info-copy").textContent = "The settings screen is being expanded. Current builds use automatic low-power graphics settings and device-appropriate touch or keyboard controls.";
-    $("#info-panel").classList.remove("hidden");
-  });
-  $("#menu-about-button").addEventListener("click", () => {
-    $("#info-title").innerHTML = 'ABOUT THE <em>GAME.</em>';
-    $("#info-copy").textContent = "CITY OF SHADOWS is an open-world African street-survival and crime-drama game project. Created by Dsquare. Your choices shape your life in the city.";
-    $("#info-panel").classList.remove("hidden");
-  });
-  $("#info-close-button").addEventListener("click", () => $("#info-panel").classList.add("hidden"));
   $("#shop-panel").addEventListener("click", event => { if (event.target.id === "shop-panel") closeShop(); });
   document.querySelectorAll(".shop-buy-button").forEach(button => button.addEventListener("click", () => buyShopItem(button)));
   $("#new-game-button").addEventListener("click", () => {
