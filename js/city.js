@@ -193,14 +193,14 @@ export function createCityGame(container, controls, characterData, onExit, onSho
   const playerShoes = new THREE.MeshStandardMaterial({ color: equippedShoes ? "#e0ded8" : "#08090c", roughness: 0.72 });
   const hair = new THREE.MeshStandardMaterial({ color: "#171116" });
 
-  function makeHumanoid(group, shirtMaterial, skinMaterial, trouserMaterial, shoeMaterial, hairMaterial) {
+  function makeHumanoid(group, shirtMaterial, skinMaterial, trouserMaterial, shoeMaterial, hairMaterial, hairStyle = "short") {
     const body = block(new THREE.CapsuleGeometry(0.34,0.7,4,8), shirtMaterial, 0,1.35,0,group);
     const neck = block(new THREE.CylinderGeometry(0.12,0.14,0.22,8), skinMaterial, 0,1.86,0,group);
     const head = block(new THREE.SphereGeometry(0.24,10,8), skinMaterial, 0,2.08,0,group);
     const cap = block(new THREE.SphereGeometry(0.25,9,7), hairMaterial, 0,2.24,0,group);
-    cap.scale.y = characterData?.hair === "afro" ? 1.05 : 0.7;
-    cap.scale.x = characterData?.hair === "afro" ? 1.2 : 1;
-    cap.visible = characterData?.hair !== "shaved";
+    cap.scale.y = hairStyle === "afro" ? 1.05 : 0.7;
+    cap.scale.x = hairStyle === "afro" ? 1.2 : 1;
+    cap.visible = hairStyle !== "shaved";
     const arms=[], legs=[];
     for (const side of [-1,1]) {
       const arm = new THREE.Group();
@@ -221,7 +221,7 @@ export function createCityGame(container, controls, characterData, onExit, onSho
   }
 
   const player = new THREE.Group();
-  const playerParts = makeHumanoid(player,shirt,skin,pants,playerShoes,hair);
+  const playerParts = makeHumanoid(player,shirt,skin,pants,playerShoes,hair,characterData?.hair || "short");
   const equipmentChanged = event => {
     const current = event.detail || {};
     shirt.color.set(current.top === "jacket" ? "#343b45" : current.top === "hoodie" ? "#7b2630" : (characterData?.gender === "female" ? "#55242c" : "#292a31"));
