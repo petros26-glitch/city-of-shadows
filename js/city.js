@@ -52,6 +52,9 @@ export function createCityGame(container, controls, characterData, onExit) {
     [-18,17,9,8,8],[-31,19,8,10,10],[-18,33,10,7,7],[-31,34,8,9,8],
     [18,18,10,9,8],[31,19,8,11,10],[18,34,9,8,7],[31,34,8,8,8]
   ];
+  const buildingColliders = lots.map(([x,z,w,h,d]) => ({
+    minX:x-w/2, maxX:x+w/2, minZ:z-d/2, maxZ:z+d/2
+  }));
   lots.forEach(([x,z,w,h,d], i) => {
     const mat = buildingMats[i % buildingMats.length];
     block(new THREE.BoxGeometry(w,h,d), mat, x, h/2, z);
@@ -79,39 +82,58 @@ export function createCityGame(container, controls, characterData, onExit) {
     block(new THREE.BoxGeometry(0.8,0.12,0.2), lineMat, x+0.3, 4.2, z);
   }
 
-  const player = new THREE.Group();
   const skin = new THREE.MeshStandardMaterial({ color: characterData?.skin || "#6f402d" });
   const shirt = new THREE.MeshStandardMaterial({ color: characterData?.gender === "female" ? "#55242c" : "#292a31" });
   const pants = new THREE.MeshStandardMaterial({ color: "#17191f" });
+  const shoes = new THREE.MeshStandardMaterial({ color: "#08090c", roughness: 0.72 });
   const hair = new THREE.MeshStandardMaterial({ color: "#171116" });
-  const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.34,0.7,4,8), shirt);
-  torso.position.y=1.3; player.add(torso);
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.24,10,8), skin);
-  head.position.y=2.05; player.add(head);
-  const legs = new THREE.Mesh(new THREE.BoxGeometry(0.42,0.75,0.28), pants);
-  legs.position.y=0.48; player.add(legs);
-  const hairCap = new THREE.Mesh(new THREE.SphereGeometry(characterData?.hair === "afro" ? 0.29 : 0.245,9,7), hair);
-  hairCap.position.set(0,2.22,0); hairCap.scale.y=0.7; player.add(hairCap);
+
+  function makeHumanoid(group, shirtMaterial, skinMaterial, trouserMaterial, shoeMaterial, hairMaterial) {
+    const body = block(new THREE.CapsuleGeometry(0.34,0.7,4,8), shirtMaterial, 0,1.35,0,group);
+    const neck = block(new THREE.CylinderGeometry(0.12,0.14,0.22,8), skinMaterial, 0,1.86,0,group);
+    const head = block(new THREE.SphereGeometry(0.24,10,8), skinMaterial, 0,2.08,0,group);
+    const cap = block(new THREE.SphereGeometry(0.25,9,7), hairMaterial, 0,2.24,0,group);
+    cap.scale.y=0.7;
+    const arms=[], legs=[];
+    for (const side of [-1,1]) {
+      const arm = new THREE.Group();
+      arm.position.set(side*0.43,1.68,0);
+      group.add(arm);
+      block(new THREE.CapsuleGeometry(0.085,0.48,3,7),shirtMaterial,0,-0.32,0,arm);
+      block(new THREE.SphereGeometry(0.095,8,6),skinMaterial,0,-0.65,0.015,arm);
+      arms.push(arm);
+
+      const leg = new THREE.Group();
+      leg.position.set(side*0.17,0.83,0);
+      group.add(leg);
+      block(new THREE.CapsuleGeometry(0.105,0.48,3,7),trouserMaterial,0,-0.29,0,leg);
+      block(new THREE.BoxGeometry(0.22,0.13,0.38),shoeMaterial,0,-0.61,0.07,leg);
+      legs.push(leg);
+    }
+    return { body, head, arms, legs };
+  }
+
+  const player = new THREE.Group();
+  const playerParts = makeHumanoid(player,shirt,skin,pants,shoes,hair);
   scene.add(player);
   player.position.set(0,0,4);
 
-  // Lightweight training opponent for the first combat test.
+  // A living sparring opponent with a complete low-poly body.
   const opponent = new THREE.Group();
   const opponentMat = new THREE.MeshStandardMaterial({ color: "#8e3438" });
   const opponentSkin = new THREE.MeshStandardMaterial({ color: "#80513b" });
-  const opponentTorso = new THREE.Mesh(new THREE.CapsuleGeometry(0.36,0.72,4,8), opponentMat);
-  opponentTorso.position.y = 1.3; opponent.add(opponentTorso);
-  const opponentHead = new THREE.Mesh(new THREE.SphereGeometry(0.24,10,8), opponentSkin);
-  opponentHead.position.y = 2.05; opponent.add(opponentHead);
-  const opponentLegs = new THREE.Mesh(new THREE.BoxGeometry(0.44,0.75,0.3), pants);
-  opponentLegs.position.y = 0.48; opponent.add(opponentLegs);
+  const opponentParts = makeHumanoid(opponent,opponentMat,opponentSkin,pants,shoes,hair);
+  const opponentTorso = opponentParts.body;
   opponent.position.set(0,0,6.5);
   scene.add(opponent);
   let opponentHealth = 100;
+  let playerHealth = 100;
   let attackCooldown = 0;
+  let opponentAttackCooldown = 0;
   let dodgeTime = 0;
   let dodgeDistance = 0;
   let opponentFlash = 0;
+  let walkClock = 0;
 
   const keys = new Set();
   let joystick = { x: 0, y: 0 };
@@ -198,6 +220,7 @@ export function createCityGame(container, controls, characterData, onExit) {
         opponentHealth = Math.max(0, opponentHealth - 25);
         opponentFlash = 0.16;
         opponentTorso.material.color.set("#f3c0a5");
+        opponentParts.arms[0].rotation.x = -1.2;
         readout.textContent = opponentHealth > 0
           ? "HIT CONFIRMED · OPPONENT HEALTH " + opponentHealth + "%"
           : "OPPONENT DEFEATED · PRESS USE TO RESET TRAINING";
@@ -222,6 +245,8 @@ export function createCityGame(container, controls, characterData, onExit) {
       opponentHealth = 100;
       opponent.visible = true;
       opponentTorso.material.color.set("#8e3438");
+      opponent.position.set(0,0,6.5);
+      playerHealth = 100;
       readout.textContent = "TRAINING OPPONENT RESET · HEALTH 100%";
     } else if (distance <= 6) {
       readout.textContent = "TRAINING OPPONENT · HEALTH " + opponentHealth + "% · PRESS ATTACK";
@@ -289,9 +314,64 @@ export function createCityGame(container, controls, characterData, onExit) {
       dz -= Math.sin(cameraAngle) * dodgeStep;
       dodgeDistance -= dodgeStep;
     }
-    player.position.x=THREE.MathUtils.clamp(player.position.x+dx,-42,42);
-    player.position.z=THREE.MathUtils.clamp(player.position.z+dz,-42,42);
+    // Resolve movement against building footprints. Axis-separated checks
+    // allow the player to slide along a wall instead of passing through it.
+    const nextX = THREE.MathUtils.clamp(player.position.x+dx,-42,42);
+    const nextZ = THREE.MathUtils.clamp(player.position.z+dz,-42,42);
+    const radius = 0.58;
+    const blockedX = buildingColliders.some(b =>
+      nextX+radius>b.minX && nextX-radius<b.maxX &&
+      player.position.z+radius>b.minZ && player.position.z-radius<b.maxZ
+    );
+    if (!blockedX) player.position.x=nextX;
+    const blockedZ = buildingColliders.some(b =>
+      player.position.x+radius>b.minX && player.position.x-radius<b.maxX &&
+      nextZ+radius>b.minZ && nextZ-radius<b.maxZ
+    );
+    if (!blockedZ) player.position.z=nextZ;
     if(moving) player.rotation.y=Math.atan2(dx,dz);
+
+    // Animate arms and legs while walking or running.
+    if (moving) walkClock += dt * (fast ? 12 : 8);
+    const swing = moving ? Math.sin(walkClock)*0.55 : 0;
+    playerParts.arms[0].rotation.x = swing;
+    playerParts.arms[1].rotation.x = -swing;
+    playerParts.legs[0].rotation.x = -swing;
+    playerParts.legs[1].rotation.x = swing;
+
+    // Opponent AI: notice the player, approach, face them and throw punches.
+    const opponentDx = player.position.x-opponent.position.x;
+    const opponentDz = player.position.z-opponent.position.z;
+    const opponentDistance = Math.hypot(opponentDx,opponentDz);
+    if (opponentHealth > 0 && opponentDistance < 15) {
+      opponent.rotation.y = Math.atan2(opponentDx,opponentDz);
+      if (opponentDistance > 1.65) {
+        const approach = Math.min(2.15*dt, opponentDistance-1.55);
+        const ox = opponent.position.x + (opponentDx/opponentDistance)*approach;
+        const oz = opponent.position.z + (opponentDz/opponentDistance)*approach;
+        const opponentBlocked = buildingColliders.some(b =>
+          ox+0.5>b.minX && ox-0.5<b.maxX && oz+0.5>b.minZ && oz-0.5<b.maxZ
+        );
+        if (!opponentBlocked) {
+          opponent.position.x=ox;
+          opponent.position.z=oz;
+          const step = Math.sin(time*0.009)*0.38;
+          opponentParts.legs[0].rotation.x=step;
+          opponentParts.legs[1].rotation.x=-step;
+          opponentParts.arms[0].rotation.x=-step*0.6;
+          opponentParts.arms[1].rotation.x=step*0.6;
+        }
+      } else {
+        opponentAttackCooldown=Math.max(0,opponentAttackCooldown-dt);
+        opponentParts.arms[0].rotation.x=-0.85;
+        if (opponentAttackCooldown===0) {
+          opponentAttackCooldown=1.5;
+          playerHealth=Math.max(0,playerHealth-8);
+          controls.querySelector("#combat-readout").textContent =
+            "OPPONENT HIT YOU · YOUR HEALTH "+playerHealth+"%";
+        }
+      }
+    }
     const desired=new THREE.Vector3(player.position.x+Math.sin(cameraAngle)*7,4.1,player.position.z+Math.cos(cameraAngle)*7);
     camera.position.lerp(desired,0.12);
     camera.lookAt(player.position.x,1.15,player.position.z);
