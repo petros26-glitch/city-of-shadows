@@ -185,10 +185,10 @@ export function createCityGame(container, controls, characterData, onExit, onSho
   parkedCar(-28.0,7.0,2,Math.PI/2);
 
   const skin = new THREE.MeshStandardMaterial({ color: characterData?.skin || "#6f402d" });
-  const equippedTop = characterData?.equipment?.top === "hoodie";
+  const equippedTop = ["hoodie","jacket"].includes(characterData?.equipment?.top);
   const equippedShoes = characterData?.equipment?.shoes === "sneakers";
-  const shirt = new THREE.MeshStandardMaterial({ color: equippedTop ? "#7b2630" : (characterData?.gender === "female" ? "#55242c" : "#292a31") });
-  const pants = new THREE.MeshStandardMaterial({ color: "#17191f" });
+  const shirt = new THREE.MeshStandardMaterial({ color: characterData?.equipment?.top === "jacket" ? "#343b45" : equippedTop ? "#7b2630" : (characterData?.gender === "female" ? "#55242c" : "#292a31") });
+  const pants = new THREE.MeshStandardMaterial({ color: characterData?.equipment?.pants === "jeans" ? "#263d61" : "#17191f" });
   const shoes = new THREE.MeshStandardMaterial({ color: "#08090c", roughness: 0.72 });
   const playerShoes = new THREE.MeshStandardMaterial({ color: equippedShoes ? "#e0ded8" : "#08090c", roughness: 0.72 });
   const hair = new THREE.MeshStandardMaterial({ color: "#171116" });
@@ -198,7 +198,9 @@ export function createCityGame(container, controls, characterData, onExit, onSho
     const neck = block(new THREE.CylinderGeometry(0.12,0.14,0.22,8), skinMaterial, 0,1.86,0,group);
     const head = block(new THREE.SphereGeometry(0.24,10,8), skinMaterial, 0,2.08,0,group);
     const cap = block(new THREE.SphereGeometry(0.25,9,7), hairMaterial, 0,2.24,0,group);
-    cap.scale.y=0.7;
+    cap.scale.y = characterData?.hair === "afro" ? 1.05 : 0.7;
+    cap.scale.x = characterData?.hair === "afro" ? 1.2 : 1;
+    cap.visible = characterData?.hair !== "shaved";
     const arms=[], legs=[];
     for (const side of [-1,1]) {
       const arm = new THREE.Group();
@@ -222,7 +224,8 @@ export function createCityGame(container, controls, characterData, onExit, onSho
   const playerParts = makeHumanoid(player,shirt,skin,pants,playerShoes,hair);
   const equipmentChanged = event => {
     const current = event.detail || {};
-    shirt.color.set(current.top === "hoodie" ? "#7b2630" : (characterData?.gender === "female" ? "#55242c" : "#292a31"));
+    shirt.color.set(current.top === "jacket" ? "#343b45" : current.top === "hoodie" ? "#7b2630" : (characterData?.gender === "female" ? "#55242c" : "#292a31"));
+    pants.color.set(current.pants === "jeans" ? "#263d61" : "#17191f");
     playerShoes.color.set(current.shoes === "sneakers" ? "#e0ded8" : "#08090c");
   };
   window.addEventListener("cos-equipment-changed", equipmentChanged);
