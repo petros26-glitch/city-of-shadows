@@ -72,10 +72,13 @@ export function createCityGame(container, controls, characterData, onExit) {
     }
   });
 
-  // Street trees and simple streetlights.
+  // Street trees and simple streetlights. Their trunks and foliage
+  // are solid gameplay obstacles, not just decoration.
+  const environmentColliders = [];
   for (const [x,z] of [[-10,-20],[10,-20],[-10,20],[10,20],[-10,-38],[10,38]]) {
     block(new THREE.CylinderGeometry(0.18,0.25,2.2,7), pavementMat, x, 1.1, z);
     block(new THREE.SphereGeometry(1.15,8,6), greenMat, x, 2.8, z);
+    environmentColliders.push({ x, z, radius: 1.45 });
   }
   for (const [x,z] of [[-7,-14],[7,-14],[-7,14],[7,14]]) {
     block(new THREE.CylinderGeometry(0.07,0.09,4.3,6), lineMat, x, 2.15, z);
@@ -136,6 +139,40 @@ export function createCityGame(container, controls, characterData, onExit) {
   let dodgeDirZ = 1;
   let opponentFlash = 0;
   let walkClock = 0;
+
+  // Floating opponent health bar, rendered as a lightweight canvas sprite.
+  const healthCanvas = document.createElement("canvas");
+  healthCanvas.width = 256;
+  healthCanvas.height = 80;
+  const healthContext = healthCanvas.getContext("2d");
+  const healthTexture = new THREE.CanvasTexture(healthCanvas);
+  const healthSprite = new THREE.Sprite(new THREE.SpriteMaterial({
+    map: healthTexture, transparent: true, depthTest: false
+  }));
+  healthSprite.scale.set(2.35, 0.74, 1);
+  healthSprite.position.set(0, 3.05, 0);
+  opponent.add(healthSprite);
+  function updateOpponentHealthBar() {
+    const ctx = healthContext;
+    ctx.clearRect(0, 0, 256, 80);
+    ctx.fillStyle = "rgba(8,10,14,0.88)";
+    ctx.beginPath();
+    ctx.roundRect(8, 8, 240, 64, 12);
+    ctx.fill();
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "bold 25px Arial";
+    ctx.textAlign = "center";
+    ctx.fillText("OPPONENT", 128, 34);
+    ctx.fillStyle = "#35383e";
+    ctx.fillRect(28, 46, 200, 13);
+    ctx.fillStyle = opponentHealth > 25 ? "#35c46a" : "#e34b4b";
+    ctx.fillRect(28, 46, 200 * (opponentHealth / 100), 13);
+    ctx.font = "bold 17px Arial";
+    ctx.fillStyle = "#ffffff";
+    ctx.fillText(opponentHealth + "%", 128, 68);
+    healthTexture.needsUpdate = true;
+  }
+  updateOpponentHealthBar();
   let playerAttackTime = 0;
   let playerAttackSide = 1;
   let opponentPunchTime = 0;
@@ -226,6 +263,7 @@ export function createCityGame(container, controls, characterData, onExit) {
     const readout = controls.querySelector("#combat-readout");
     if (opponentHealth > 0 && distance < 3.6) {
       opponentHealth = Math.max(0, opponentHealth - 25);
+      updateOpponentHealthBar();
       opponentFlash = 0.16;
       opponentTorso.material.color.set("#f3c0a5");
       readout.textContent = opponentHealth > 0
@@ -277,6 +315,7 @@ export function createCityGame(container, controls, characterData, onExit) {
     const distance = player.position.distanceTo(opponent.position);
     if (distance <= 6 && opponentHealth <= 0) {
       opponentHealth = 100;
+      updateOpponentHealthBar();
       opponent.visible = true;
       opponentTorso.material.color.set("#8e3438");
       opponent.position.set(0,0,6.5);
@@ -353,16 +392,22 @@ export function createCityGame(container, controls, characterData, onExit) {
     const nextX = THREE.MathUtils.clamp(player.position.x+dx,-42,42);
     const nextZ = THREE.MathUtils.clamp(player.position.z+dz,-42,42);
     const radius = 0.58;
-    const blockedX = buildingColliders.some(b =>
+    const blockedBuildingX = buildingColliders.some(b =>
       nextX+radius>b.minX && nextX-radius<b.maxX &&
       player.position.z+radius>b.minZ && player.position.z-radius<b.maxZ
     );
-    if (!blockedX) player.position.x=nextX;
-    const blockedZ = buildingColliders.some(b =>
+    const blockedTreeX = environmentColliders.some(o =>
+      Math.hypot(nextX-o.x, player.position.z-o.z) < o.radius + radius
+    );
+    if (!blockedBuildingX && !blockedTreeX) player.position.x=nextX;
+    const blockedBuildingZ = buildingColliders.some(b =>
       player.position.x+radius>b.minX && player.position.x-radius<b.maxX &&
       nextZ+radius>b.minZ && nextZ-radius<b.maxZ
     );
-    if (!blockedZ) player.position.z=nextZ;
+    const blockedTreeZ = environmentColliders.some(o =>
+      Math.hypot(player.position.x-o.x, nextZ-o.z) < o.radius + radius
+    );
+    if (!blockedBuildingZ && !blockedTreeZ) player.position.z=nextZ;
     if(moving) player.rotation.y=Math.atan2(dx,dz);
 
     // Animate arms and legs while walking or running.
@@ -395,9 +440,13 @@ export function createCityGame(container, controls, characterData, onExit) {
         const approach = Math.min(2.15*dt, opponentDistance-1.55);
         const ox = opponent.position.x + (opponentDx/opponentDistance)*approach;
         const oz = opponent.position.z + (opponentDz/opponentDistance)*approach;
-        const opponentBlocked = buildingColliders.some(b =>
+        const opponentBlockedByBuilding = buildingColliders.some(b =>
           ox+0.5>b.minX && ox-0.5<b.maxX && oz+0.5>b.minZ && oz-0.5<b.maxZ
         );
+        const opponentBlockedByTree = environmentColliders.some(o =>
+          Math.hypot(ox-o.x, oz-o.z) < o.radius + 0.5
+        );
+        const opponentBlocked = opponentBlockedByBuilding || opponentBlockedByTree;
         if (!opponentBlocked) {
           opponent.position.x=ox;
           opponent.position.z=oz;
