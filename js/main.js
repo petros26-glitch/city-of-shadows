@@ -231,6 +231,17 @@ function bindEvents() {
   $("#back-home-button").addEventListener("click", () => showScreen(homeScreen));
   $("#saved-home-button").addEventListener("click", () => showScreen(homeScreen));
   $("#enter-city-button").addEventListener("click", () => {
+    // Android browsers may allow landscape locking only after entering fullscreen.
+    // Keep both requests inside this tap gesture; unsupported browsers can still rotate manually.
+    const fullscreenRequest = document.documentElement.requestFullscreen
+      ? document.documentElement.requestFullscreen().catch(() => null)
+      : Promise.resolve(null);
+    if (screen.orientation && typeof screen.orientation.lock === "function") {
+      fullscreenRequest.then(() => screen.orientation.lock("landscape")).catch(() => {
+        notify("For landscape play, please rotate your phone sideways.");
+      });
+    }
+
     const saved = loadSavedCharacter();
     if (!saved) {
       notify("Create and save your character first.");
@@ -261,6 +272,12 @@ function bindEvents() {
     });
   });
   $("#leave-city-button").addEventListener("click", () => {
+    if (screen.orientation && typeof screen.orientation.unlock === "function") {
+      try { screen.orientation.unlock(); } catch {}
+    }
+    if (document.fullscreenElement && document.exitFullscreen) {
+      document.exitFullscreen().catch(() => {});
+    }
     if (destroyCity) destroyCity();
     destroyCity = null;
     showScreen(homeScreen);
