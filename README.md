@@ -24,6 +24,7 @@ The browser build uses JavaScript and Three.js and is designed with low-memory A
 - Walking pedestrians and a sparring opponent.
 - Punch and kick targeting for nearby pedestrians and the sparring opponent.
 - A local wallet and inventory, food and water use, and clothing purchases.
+- A survival-needs HUD for hunger, hydration and energy. Hunger and hydration gradually decrease during play; energy drains while running and recovers while walking or standing. Low energy reduces movement speed, and food/water restore needs.
 - Wardrobe slots for tops, trousers and shoes. Hoodie, denim jacket, blue jeans and sneakers can be purchased; equipped items change the prototype character's material colours.
 - In-city bag/wardrobe access and a pause menu.
 - Local browser storage for character, wallet, inventory, equipment and needs.
@@ -36,7 +37,7 @@ The browser build uses JavaScript and Three.js and is designed with low-memory A
 
 ## Development roadmap
 
-The next major systems are a larger connected city, more distinctive buildings and districts, working market-specific goods and vendors, richer player models and clothing meshes, vehicles that can be driven, survival needs that affect play, jobs and mission chains, police response, rival groups, ranged combat, properties, businesses, relationships, reputation, a map, day/night, sound, and more complete save/progression systems.
+The next major systems are a larger connected city, more distinctive buildings and districts, working market-specific goods and vendors, richer player models and clothing meshes, vehicles that can be driven, jobs and mission chains, police response, rival groups, ranged combat, properties, businesses, relationships, reputation, a map, day/night, sound, and more complete save/progression systems.
 
 These are planned features, not claims about what is already playable. The current character models and environment are deliberately simple low-poly prototypes. The parked vehicles cannot yet be driven, and the market currently shares the corner shop's catalogue.
 
