@@ -176,8 +176,12 @@ export function createCityGame(container, controls, characterData, onExit) {
   updateOpponentHealthBar();
   let playerAttackTime = 0;
   let playerAttackSide = 1;
+  let playerKickTime = 0;
+  let blockHeld = false;
   let opponentPunchTime = 0;
   let opponentPunchSide = 1;
+  let opponentHitReaction = 0;
+  let defeatedResetTime = 0;
 
   const keys = new Set();
   let joystick = { x: 0, y: 0 };
@@ -227,112 +231,107 @@ export function createCityGame(container, controls, characterData, onExit) {
   joy.addEventListener("pointermove",joyMove);
   joy.addEventListener("pointerup",joyEnd);
   joy.addEventListener("pointercancel",joyEnd);
-  const sprintButton = controls.querySelector(".sprint-button");
   const attackButton = controls.querySelector(".attack-button");
+  const kickButton = controls.querySelector(".kick-button");
+  const blockButton = controls.querySelector(".block-button");
   const dodgeButton = controls.querySelector(".dodge-button");
-  const interactButton = controls.querySelector(".interact-button");
-  // RUN is a tap-to-toggle mode. It can be switched on before touching
-  // the joystick, and remains active while the player moves.
-  function sprintToggle(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    sprint = !sprint;
-    sprintButton.classList.toggle("pressed", sprint);
-    sprintButton.textContent = sprint ? "RUN ON" : "RUN";
-    controls.querySelector(".city-status").textContent = sprint
-      ? "RUN MODE ON · MOVE WITH THE JOYSTICK"
-      : "RUN MODE OFF";
-  }
-  function sprintOff() {
-    sprint = false;
-    sprintButton.classList.remove("pressed");
-    sprintButton.textContent = "RUN";
-  }
-  sprintButton.addEventListener("pointerdown", sprintToggle);
 
   function attack(e) {
     e.preventDefault();
     e.stopPropagation();
-    if (attackCooldown > 0) return;
-
+    if (attackCooldown > 0 || opponentHealth <= 0) return;
     attackButton.classList.add("pressed");
-    attackCooldown = 0.55;
+    attackCooldown = 0.48;
     playerAttackTime = 0.34;
     playerAttackSide = playerAttackSide === 0 ? 1 : 0;
-
     const distance = player.position.distanceTo(opponent.position);
     const readout = controls.querySelector("#combat-readout");
-    if (opponentHealth > 0 && distance < 3.6) {
-      opponentHealth = Math.max(0, opponentHealth - 25);
+    if (distance < 3.35) {
+      opponentHealth = Math.max(0, opponentHealth - 20);
       updateOpponentHealthBar();
+      opponentHitReaction = 0.22;
       opponentFlash = 0.16;
       opponentTorso.material.color.set("#f3c0a5");
       readout.textContent = opponentHealth > 0
-        ? "PUNCH HIT · OPPONENT HEALTH " + opponentHealth + "%"
-        : "OPPONENT DEFEATED · PRESS USE TO RESET TRAINING";
-    } else if (opponentHealth <= 0) {
-      readout.textContent = "OPPONENT DEFEATED · PRESS USE TO RESET TRAINING";
+        ? "PUNCH CONNECTED · OPPONENT " + opponentHealth + "%"
+        : "OPPONENT DEFEATED · RESETTING TRAINING";
+      if (opponentHealth <= 0) defeatedResetTime = 4;
     } else {
-      readout.textContent = "PUNCH MISSED · MOVE CLOSER TO THE OPPONENT";
+      readout.textContent = "PUNCH MISSED · GET CLOSER";
     }
-
     setTimeout(() => attackButton.classList.remove("pressed"), 140);
   }
+
+  function kick(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (attackCooldown > 0 || opponentHealth <= 0) return;
+    kickButton.classList.add("pressed");
+    attackCooldown = 0.72;
+    playerKickTime = 0.48;
+    const distance = player.position.distanceTo(opponent.position);
+    const readout = controls.querySelector("#combat-readout");
+    if (distance < 3.8) {
+      opponentHealth = Math.max(0, opponentHealth - 35);
+      updateOpponentHealthBar();
+      opponentHitReaction = 0.3;
+      opponentFlash = 0.18;
+      opponentTorso.material.color.set("#f3c0a5");
+      readout.textContent = opponentHealth > 0
+        ? "KICK CONNECTED · OPPONENT " + opponentHealth + "%"
+        : "OPPONENT DEFEATED · RESETTING TRAINING";
+      if (opponentHealth <= 0) defeatedResetTime = 4;
+    } else {
+      readout.textContent = "KICK MISSED · GET CLOSER";
+    }
+    setTimeout(() => kickButton.classList.remove("pressed"), 180);
+  }
+
+  function blockStart(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    blockHeld = true;
+    blockButton.classList.add("pressed");
+    controls.querySelector("#combat-readout").textContent = "BLOCKING · HOLD TO DEFEND";
+  }
+  function blockEnd() {
+    blockHeld = false;
+    blockButton.classList.remove("pressed");
+  }
+
   function dodge(e) {
     e.preventDefault();
     e.stopPropagation();
-
-    // Use the current joystick/keyboard direction at the exact moment
-    // Dodge is pressed. Convert camera-relative input into world direction.
     let moveX = joystick.x
       + (keys.has("d") || keys.has("arrowright") ? 1 : 0)
       - (keys.has("a") || keys.has("arrowleft") ? 1 : 0);
     let moveZ = joystick.y
       + (keys.has("s") || keys.has("arrowdown") ? 1 : 0)
       - (keys.has("w") || keys.has("arrowup") ? 1 : 0);
-
     const inputLength = Math.hypot(moveX, moveZ);
     if (inputLength > 0.08) {
       moveX /= inputLength;
       moveZ /= inputLength;
-      const sin = Math.sin(cameraAngle);
-      const cos = Math.cos(cameraAngle);
+      const sin = Math.sin(cameraAngle), cos = Math.cos(cameraAngle);
       dodgeDirX = moveX * cos + moveZ * sin;
       dodgeDirZ = -moveX * sin + moveZ * cos;
     } else {
-      // With no movement input, dodge in the direction the character faces.
       dodgeDirX = Math.sin(player.rotation.y);
       dodgeDirZ = Math.cos(player.rotation.y);
     }
-
     dodgeTime = 0.28;
     dodgeDistance = 2.2;
     dodgeButton.classList.add("pressed");
     setTimeout(() => dodgeButton.classList.remove("pressed"), 260);
   }
-  function interact(e) {
-    e.preventDefault();
-    const readout = controls.querySelector("#combat-readout");
-    const distance = player.position.distanceTo(opponent.position);
-    if (distance <= 6 && opponentHealth <= 0) {
-      opponentHealth = 100;
-      updateOpponentHealthBar();
-      opponent.visible = true;
-      opponentTorso.material.color.set("#8e3438");
-      opponent.position.set(0,0,6.5);
-      playerHealth = 100;
-      readout.textContent = "TRAINING OPPONENT RESET · HEALTH 100%";
-    } else if (distance <= 6) {
-      readout.textContent = "TRAINING OPPONENT · HEALTH " + opponentHealth + "% · PRESS ATTACK";
-    } else {
-      readout.textContent = "NOTHING TO USE NEARBY · MOVE TOWARD THE TRAINING OPPONENT";
-    }
-    interactButton.classList.add("pressed");
-    setTimeout(() => interactButton.classList.remove("pressed"), 180);
-  }
+
   attackButton.addEventListener("pointerdown", attack);
+  kickButton.addEventListener("pointerdown", kick);
+  blockButton.addEventListener("pointerdown", blockStart);
+  blockButton.addEventListener("pointerup", blockEnd);
+  blockButton.addEventListener("pointercancel", blockEnd);
+  blockButton.addEventListener("lostpointercapture", blockEnd);
   dodgeButton.addEventListener("pointerdown", dodge);
-  interactButton.addEventListener("pointerdown", interact);
 
   const stage = renderer.domElement;
   let cameraPointerId = null;
@@ -419,16 +418,25 @@ export function createCityGame(container, controls, characterData, onExit) {
     playerParts.legs[0].rotation.x = -swing;
     playerParts.legs[1].rotation.x = swing;
 
-    // A short, visible punch animation on alternating arms.
+    // Punches and kicks use separate, readable limb animations.
     playerAttackTime = Math.max(0, playerAttackTime - dt);
     if (playerAttackTime > 0) {
       const punch = Math.sin((1 - playerAttackTime / 0.34) * Math.PI);
-      playerParts.arms[playerAttackSide].rotation.x = -1.75 * punch;
+      playerParts.arms[playerAttackSide].rotation.x = -1.9 * punch;
       playerParts.arms[playerAttackSide].rotation.z =
-        (playerAttackSide === 0 ? 1 : -1) * 0.18 * punch;
+        (playerAttackSide === 0 ? 1 : -1) * 0.2 * punch;
     } else {
       playerParts.arms[0].rotation.z = 0;
       playerParts.arms[1].rotation.z = 0;
+    }
+    playerKickTime = Math.max(0, playerKickTime - dt);
+    if (playerKickTime > 0) {
+      const kickMotion = Math.sin((1 - playerKickTime / 0.48) * Math.PI);
+      playerParts.legs[playerAttackSide].rotation.x = -1.65 * kickMotion;
+    }
+    if (blockHeld) {
+      playerParts.arms[0].rotation.x = -1.05;
+      playerParts.arms[1].rotation.x = -1.05;
     }
 
     // Opponent AI: notice the player, approach, face them and throw punches.
@@ -466,9 +474,11 @@ export function createCityGame(container, controls, characterData, onExit) {
           opponentAttackCooldown=1.5;
           opponentPunchTime=0.34;
           opponentPunchSide=opponentPunchSide===0?1:0;
-          playerHealth=Math.max(0,playerHealth-8);
-          controls.querySelector("#combat-readout").textContent =
-            "OPPONENT PUNCHES YOU · YOUR HEALTH "+playerHealth+"%";
+          const incomingDamage = blockHeld ? 2 : 8;
+          playerHealth=Math.max(0,playerHealth-incomingDamage);
+          controls.querySelector("#combat-readout").textContent = blockHeld
+            ? "BLOCKED · REDUCED DAMAGE · YOUR HEALTH " + playerHealth + "%"
+            : "OPPONENT PUNCHES YOU · YOUR HEALTH " + playerHealth + "%";
         }
         if (opponentPunchTime > 0) {
           const punch = Math.sin((1-opponentPunchTime/0.34)*Math.PI);
@@ -478,6 +488,23 @@ export function createCityGame(container, controls, characterData, onExit) {
         }
       }
     }
+    if (opponentHitReaction > 0) {
+      opponentHitReaction = Math.max(0, opponentHitReaction - dt);
+      const recoil = Math.sin((opponentHitReaction / 0.3) * Math.PI) * 0.18;
+      opponent.position.x -= Math.sin(opponent.rotation.y) * recoil * dt * 8;
+      opponent.position.z -= Math.cos(opponent.rotation.y) * recoil * dt * 8;
+    }
+    if (opponentHealth <= 0 && defeatedResetTime > 0) {
+      defeatedResetTime = Math.max(0, defeatedResetTime - dt);
+      if (defeatedResetTime === 0) {
+        opponentHealth = 100;
+        updateOpponentHealthBar();
+        opponent.position.set(0, 0, 6.5);
+        opponent.rotation.y = Math.PI;
+        opponentTorso.material.color.set("#8e3438");
+        controls.querySelector("#combat-readout").textContent = "TRAINING OPPONENT READY";
+      }
+    }
     const desired=new THREE.Vector3(player.position.x+Math.sin(cameraAngle)*7,4.1,player.position.z+Math.cos(cameraAngle)*7);
     camera.position.lerp(desired,0.12);
     camera.lookAt(player.position.x,1.15,player.position.z);
@@ -485,8 +512,7 @@ export function createCityGame(container, controls, characterData, onExit) {
       opponentFlash -= dt;
       if (opponentFlash <= 0) opponentTorso.material.color.set(opponentHealth > 0 ? "#8e3438" : "#333333");
     }
-    // Keep the defeated training opponent visible so the player can inspect
-    // the result and use the USE button to reset the sparring session.
+    // Keep the training opponent visible; it automatically returns after defeat.
     opponent.visible = true;
     renderer.render(scene,camera);
     const status=controls.querySelector(".city-status");
@@ -503,11 +529,14 @@ export function createCityGame(container, controls, characterData, onExit) {
     joy.removeEventListener("pointermove",joyMove);
     joy.removeEventListener("pointerup",joyEnd);
     joy.removeEventListener("pointercancel",joyEnd);
-    sprintOff();
-    sprintButton.removeEventListener("pointerdown", sprintToggle);
+    blockEnd();
     attackButton.removeEventListener("pointerdown", attack);
+    kickButton.removeEventListener("pointerdown", kick);
+    blockButton.removeEventListener("pointerdown", blockStart);
+    blockButton.removeEventListener("pointerup", blockEnd);
+    blockButton.removeEventListener("pointercancel", blockEnd);
+    blockButton.removeEventListener("lostpointercapture", blockEnd);
     dodgeButton.removeEventListener("pointerdown", dodge);
-    interactButton.removeEventListener("pointerdown", interact);
     stage.removeEventListener("pointerdown", cameraDragStart);
     stage.removeEventListener("pointermove", cameraDragMove);
     stage.removeEventListener("pointerup", cameraDragEnd);
