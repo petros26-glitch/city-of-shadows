@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./css/style.css?v=6">
+  <link rel="stylesheet" href="./css/style.css?v=7">
   <script type="importmap">
     {
       "imports": {
@@ -17,7 +17,7 @@
       }
     }
   </script>
-  <script type="module" src="./js/main.js?v=20"></script>
+  <script type="module" src="./js/main.js?v=21"></script>
 </head>
 <body>
   <div class="ambient ambient-one"></div>
@@ -43,7 +43,6 @@
           <button id="continue-button" class="button button-secondary" disabled>CONTINUE</button>
         </div>
         <nav class="main-menu-links" aria-label="Main menu">
-          <button id="menu-inventory-button" class="menu-link">INVENTORY / WARDROBE</button>
           <button id="menu-settings-button" class="menu-link">SETTINGS</button>
           <button id="menu-about-button" class="menu-link">ABOUT THE GAME</button>
         </nav>
@@ -174,7 +173,10 @@
       </div>
       <div id="city-stage" class="city-stage" aria-label="Playable 3D neighbourhood"></div>
       <div class="city-hud">
-        <div class="city-status-row"><div class="city-status">EXPLORE THE NEIGHBOURHOOD</div></div>
+        <div class="city-status-row">
+          <div class="city-status">EXPLORE THE NEIGHBOURHOOD</div>
+          <button id="game-inventory-button" class="game-inventory-button" type="button">BAG / WARDROBE</button>
+        </div>
         <div class="city-help">PC: WASD / ARROWS TO MOVE · SHIFT OR M TO RUN · DRAG TO LOOK</div>
         <div class="city-controls" id="city-controls">
           <div class="movement-controls">
