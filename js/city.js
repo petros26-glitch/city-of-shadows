@@ -198,7 +198,7 @@ export function createCityGame(container, controls, characterData, onExit, onSho
     const car=buildCar(horizontal?start:lane, horizontal?lane:start, (i+1)%3, horizontal?Math.PI/2:0);
     const direction=i%2===0?1:-1;
     if(direction<0) car.rotation.y += Math.PI;
-    trafficCars.push({car,horizontal,lane,speed:i%2===0?4.2:5.1,direction});
+    trafficCars.push({car,horizontal,lane,speed:i%2===0?2.6:3.2,direction});
   }
 
   const skin = new THREE.MeshStandardMaterial({ color: characterData?.skin || "#6f402d" });
@@ -377,7 +377,7 @@ export function createCityGame(container, controls, characterData, onExit, onSho
   }
   function enterNearestVehicle() {
     if (drivingVehicle) return;
-    let nearest = null, distance = 5.8;
+    let nearest = null, distance = 8.5;
     for (const entry of vehicles) {
       const d = Math.hypot(player.position.x-entry.car.position.x, player.position.z-entry.car.position.z);
       if (d < distance) { nearest = {car:entry.car,traffic:false}; distance = d; }
@@ -655,7 +655,7 @@ export function createCityGame(container, controls, characterData, onExit, onSho
         const blockedBuilding=buildingColliders.some(b=>nx+1.15>b.minX&&nx-1.15<b.maxX&&nz+2.1>b.minZ&&nz-2.1<b.maxZ);
         const blockedStatic=environmentColliders.some(o=>!o.vehicle&&Math.hypot(nx-o.x,nz-o.z)<o.radius+1.2);
         const blockedParked=vehicles.some(v=>v.car!==car&&Math.hypot(nx-v.car.position.x,nz-v.car.position.z)<3.3);
-        const blockedTraffic=trafficCars.some(t=>Math.hypot(nx-t.car.position.x,nz-t.car.position.z)<3.3);
+        const blockedTraffic=trafficCars.some(t=>t.car!==car&&!t.hijacked&&Math.hypot(nx-t.car.position.x,nz-t.car.position.z)<3.3);
         if(!blockedBuilding&&!blockedStatic&&!blockedParked&&!blockedTraffic){car.position.x=nx;car.position.z=nz;}
       }
       const behind=new THREE.Vector3(-Math.sin(car.rotation.y)*8,4.2,-Math.cos(car.rotation.y)*8).add(car.position);
@@ -871,7 +871,7 @@ export function createCityGame(container, controls, characterData, onExit, onSho
         shopPrompt.style.top = py + "px";
       }
     }
-    let nearestVehicle=null,nearestVehicleDistance=5.8;
+    let nearestVehicle=null,nearestVehicleDistance=8.5;
     for(const entry of vehicles){
       const d=Math.hypot(player.position.x-entry.car.position.x,player.position.z-entry.car.position.z);
       if(d<nearestVehicleDistance){nearestVehicle={car:entry.car,traffic:false};nearestVehicleDistance=d;}
