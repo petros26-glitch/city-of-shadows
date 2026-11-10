@@ -236,6 +236,7 @@ function returnToMainMenu() {
   // Always reveal the original opening screen, even if a game cleanup step fails.
   $("#game-menu-panel").classList.add("hidden");
   $("#jobs-panel").classList.add("hidden");
+  deliveryJobActive = false;
   $("#shop-panel").classList.add("hidden");
   $("#inventory-panel").classList.add("hidden");
 
