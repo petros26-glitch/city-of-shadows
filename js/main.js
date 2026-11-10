@@ -473,17 +473,6 @@ function bindEvents() {
       }
     });
   });
-  $("#leave-city-button").addEventListener("click", () => {
-    if (screen.orientation && typeof screen.orientation.unlock === "function") {
-      try { screen.orientation.unlock(); } catch {}
-    }
-    if (document.fullscreenElement && document.exitFullscreen) {
-      document.exitFullscreen().catch(() => {});
-    }
-    if (destroyCity) destroyCity();
-    destroyCity = null;
-    showScreen(homeScreen);
-  });
   $("#edit-character-button").addEventListener("click", () => {
     fillForm(loadSavedCharacter() || state);
     showScreen(creatorScreen);
