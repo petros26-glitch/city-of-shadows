@@ -46,7 +46,7 @@ export function createCityGame(container, controls, characterData, onShopInterac
     event.stopPropagation();
     if (playerHealth > 0) return;
     playerHealth = 100;
-    player.position.set(-4, 0, -4);
+    player.position.set(0, 0, -3.5);
     player.rotation.set(0, 0, 0);
     joystick = { x: 0, y: 0 };
     keys.clear();
@@ -812,6 +812,8 @@ export function createCityGame(container, controls, characterData, onShopInterac
       respawnButton.hidden = false;
       const readout=controls.querySelector("#combat-readout");
       if(readout)readout.textContent="YOU ARE DOWN · TAP RESPAWN TO CONTINUE";
+      const status=controls.querySelector(".city-status");
+      if(status)status.textContent="YOU ARE DOWN · TAP RESPAWN TO CONTINUE";
       renderer.render(scene,camera);
       return;
     }
@@ -977,7 +979,10 @@ export function createCityGame(container, controls, characterData, onShopInterac
           opponentPunchTime=0.34;
           opponentPunchSide=opponentPunchSide===0?1:0;
           const incomingDamage = blockHeld ? 2 : 8;
-          playerHealth=Math.max(0,playerHealth-incomingDamage);\n          if (playerHealth <= 0) respawnButton.hidden = false;
+          playerHealth=Math.max(0,playerHealth-incomingDamage);
+          const healthHud = document.querySelector("#needs-hud");
+          if (healthHud) healthHud.textContent = `HEALTH ${playerHealth}%  ·  HUNGER ${Math.round(survival.hunger)}%  ·  WATER ${Math.round(survival.hydration)}%  ·  ENERGY ${Math.round(survival.energy)}%`;
+          if (playerHealth <= 0) respawnButton.hidden = false;
           controls.querySelector("#combat-readout").textContent = playerHealth===0
             ? "YOU ARE DOWN · RESTART THE NEIGHBOURHOOD TO TRY AGAIN"
             : blockHeld
@@ -1107,6 +1112,7 @@ export function createCityGame(container, controls, characterData, onShopInterac
     stage.removeEventListener("pointercancel", cameraDragEnd);
 
     shopPrompt.remove();
+    respawnButton.remove();
     marketPrompt.remove();
     vehiclePrompt.remove();
     if(unbindForward)unbindForward(); if(unbindReverse)unbindReverse();
