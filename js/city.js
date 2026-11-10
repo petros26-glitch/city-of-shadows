@@ -213,6 +213,34 @@ export function createCityGame(container, controls, characterData, onShopInterac
   marketSign.position.set(-18,4.1,8.8);scene.add(marketSign);
   buildingColliders.push(...marketColliders);
   const marketDoorPoint = new THREE.Vector3(-15.7,1.2,0);
+
+  // A small open-roof safehouse the player can physically enter and use to rest.
+  const safehouseX = 38.5, safehouseZ = -18;
+  const safehouseWall = new THREE.MeshStandardMaterial({color:"#62534d",roughness:0.95});
+  const safehouseFloor = new THREE.MeshStandardMaterial({color:"#9a8b78",roughness:1});
+  block(new THREE.BoxGeometry(6.7,0.12,6.7),safehouseFloor,safehouseX,0.02,safehouseZ);
+  block(new THREE.BoxGeometry(7,3.5,0.35),safehouseWall,safehouseX,1.75,safehouseZ-3.5);
+  block(new THREE.BoxGeometry(0.35,3.5,7),safehouseWall,safehouseX-3.5,1.75,safehouseZ);
+  block(new THREE.BoxGeometry(0.35,3.5,7),safehouseWall,safehouseX+3.5,1.75,safehouseZ);
+  block(new THREE.BoxGeometry(2,3.5,0.35),safehouseWall,safehouseX-2.5,1.75,safehouseZ+3.5);
+  block(new THREE.BoxGeometry(2,3.5,0.35),safehouseWall,safehouseX+2.5,1.75,safehouseZ+3.5);
+  block(new THREE.BoxGeometry(2.1,0.22,0.5),shopTrimMat,safehouseX,3.25,safehouseZ+3.25);
+  block(new THREE.BoxGeometry(1.8,0.55,2.5),buildingMats[1],safehouseX-1.2,0.42,safehouseZ-0.8);
+  block(new THREE.BoxGeometry(1.1,0.7,0.8),shopTrimMat,safehouseX+1.7,0.42,safehouseZ+0.9);
+  buildingColliders.push(
+    {minX:safehouseX-3.5,maxX:safehouseX+3.5,minZ:safehouseZ-3.675,maxZ:safehouseZ-3.325},
+    {minX:safehouseX-3.675,maxX:safehouseX-3.325,minZ:safehouseZ-3.5,maxZ:safehouseZ+3.5},
+    {minX:safehouseX+3.325,maxX:safehouseX+3.675,minZ:safehouseZ-3.5,maxZ:safehouseZ+3.5},
+    {minX:safehouseX-3.5,maxX:safehouseX-1.5,minZ:safehouseZ+3.325,maxZ:safehouseZ+3.675},
+    {minX:safehouseX+1.5,maxX:safehouseX+3.5,minZ:safehouseZ+3.325,maxZ:safehouseZ+3.675}
+  );
+  const safehouseRestPoint = new THREE.Vector3(safehouseX-1.2,0,safehouseZ-0.8);
+  const safehousePrompt = document.createElement("button");
+  safehousePrompt.type = "button"; safehousePrompt.className = "door-interact-prompt";
+  safehousePrompt.textContent = "REST · RECOVER NEEDS"; safehousePrompt.hidden = true;
+  safehousePrompt.setAttribute("aria-label","Rest at the safehouse to recover energy and supplies");
+  safehousePrompt.addEventListener("click",event=>{event.preventDefault();event.stopPropagation();window.dispatchEvent(new CustomEvent("cos-rest-safehouse"));});
+  container.appendChild(safehousePrompt);
   const jobMarker = new THREE.Group();
   const markerRing = new THREE.Mesh(new THREE.TorusGeometry(1.15,0.12,6,18),new THREE.MeshBasicMaterial({color:"#e4bd70"}));
   markerRing.rotation.x = Math.PI/2;
@@ -365,7 +393,7 @@ export function createCityGame(container, controls, characterData, onShopInterac
     npc.position.set(route.a[0],0,route.a[1]);
     npc.rotation.y = Math.atan2(route.b[0]-route.a[0], route.b[1]-route.a[1]);
     scene.add(npc);
-    pedestrians.push({ npc, parts, route, progress:0, direction:1, phase:index*1.7, radius:pedestrianRadius, health:100, alive:true });
+    pedestrians.push({ npc, parts, route, progress:0, direction:1, phase:index*1.7, radius:pedestrianRadius, health:100, alive:true, respawnTime:0, shirtColor:["#31506a","#7b4a2d","#4c5940","#6c3540"][index%4] });
   });
 
   // A living sparring opponent with a complete low-poly body.
@@ -388,6 +416,17 @@ export function createCityGame(container, controls, characterData, onShopInterac
     if (readout) readout.textContent = "FIRST AID USED · HEALTH " + playerHealth + "%";
   };
   window.addEventListener("cos-use-medkit", useMedkit);
+  const restAtSafehouse = () => {
+    survival.energy = Math.min(100,survival.energy+45);
+    survival.hunger = Math.min(100,survival.hunger+12);
+    survival.hydration = Math.min(100,survival.hydration+12);
+    if (typeof onNeedsUpdate === "function") onNeedsUpdate({...survival});
+    const healthHud = document.querySelector("#needs-hud");
+    if (healthHud) healthHud.textContent = `HEALTH ${playerHealth}%  ·  HUNGER ${Math.round(survival.hunger)}%  ·  WATER ${Math.round(survival.hydration)}%  ·  ENERGY ${Math.round(survival.energy)}%`;
+    const readout = controls.querySelector("#combat-readout");
+    if (readout) readout.textContent = "SAFEHOUSE REST · ENERGY AND SUPPLIES RESTORED";
+  };
+  window.addEventListener("cos-rest-safehouse",restAtSafehouse);
   let vehicleHitCooldown = 0;
   let vehicleHitMessageTime = 0;
   let vehicleHitMessage = "";
@@ -472,6 +511,26 @@ export function createCityGame(container, controls, characterData, onShopInterac
   const driveForwardButton = controls.querySelector(".drive-forward");
   const driveReverseButton = controls.querySelector(".drive-reverse");
   const driveExitButton = controls.querySelector(".drive-exit");
+  const driveHornButton = controls.querySelector(".drive-horn");
+  let hornAudioContext = null;
+  function honkVehicle() {
+    if (!drivingVehicle) return;
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) { controls.querySelector("#combat-readout").textContent = "HORN SOUND IS NOT SUPPORTED IN THIS BROWSER"; return; }
+    try {
+      hornAudioContext ||= new AudioContextClass();
+      if (hornAudioContext.state === "suspended") hornAudioContext.resume();
+      const oscillator = hornAudioContext.createOscillator();
+      const gain = hornAudioContext.createGain();
+      oscillator.type = "square"; oscillator.frequency.setValueAtTime(310,hornAudioContext.currentTime);
+      gain.gain.setValueAtTime(0.12,hornAudioContext.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001,hornAudioContext.currentTime+0.24);
+      oscillator.connect(gain); gain.connect(hornAudioContext.destination);
+      oscillator.start(); oscillator.stop(hornAudioContext.currentTime+0.25);
+      controls.querySelector("#combat-readout").textContent = "HORN · CLEAR THE ROAD";
+    } catch { controls.querySelector("#combat-readout").textContent = "HORN UNAVAILABLE"; }
+  }
+  if (driveHornButton) driveHornButton.addEventListener("click",honkVehicle);
   const driveJoy = controls.querySelector(".drive-joystick");
   const driveKnob = controls.querySelector(".drive-joystick-knob");
   function setDriving(active, vehicle = null) {
@@ -646,7 +705,7 @@ export function createCityGame(container, controls, characterData, onShopInterac
       p.parts.body.material.color.set("#f3c0a5");
       p.npc.rotation.y=Math.atan2(player.position.x-p.npc.position.x,player.position.z-p.npc.position.z);
       if(hp<=0){
-        p.alive=false; p.npc.rotation.x=-0.95;
+        p.alive=false; p.respawnTime=18; p.npc.rotation.x=-0.95;
         p.parts.legs.forEach(leg=>leg.rotation.x=1.1);
         p.parts.arms.forEach(arm=>arm.rotation.x=-0.8);
         controls.querySelector("#combat-readout").textContent="PEDESTRIAN DEFEATED";
@@ -951,7 +1010,18 @@ export function createCityGame(container, controls, characterData, onShopInterac
 
     // Pedestrians walk along short street routes and turn around at each end.
     pedestrians.forEach(person => {
-      if (!person.alive) return;
+      if (!person.alive) {
+        person.respawnTime = Math.max(0,person.respawnTime-dt);
+        if (person.respawnTime === 0) {
+          person.alive = true; person.health = 100; person.progress = 0; person.direction = 1;
+          person.npc.position.set(person.route.a[0],0,person.route.a[1]);
+          person.npc.rotation.set(0,Math.atan2(person.route.b[0]-person.route.a[0],person.route.b[1]-person.route.a[1]),0);
+          person.parts.body.material.color.set(person.shirtColor);
+          person.parts.arms.forEach(arm=>{arm.rotation.x=0;arm.rotation.z=0;});
+          person.parts.legs.forEach(leg=>{leg.rotation.x=0;leg.rotation.z=0;});
+        }
+        return;
+      }
       const route = person.route;
       const start = person.direction > 0 ? route.a : route.b;
       const end = person.direction > 0 ? route.b : route.a;
@@ -1102,6 +1172,9 @@ export function createCityGame(container, controls, characterData, onShopInterac
       const onScreen=projected.z>-1&&projected.z<1&&px>12&&px<rect.width-12&&py>12&&py<rect.height-12;
       vehiclePrompt.hidden=!onScreen;if(onScreen){vehiclePrompt.style.left=px+"px";vehiclePrompt.style.top=py+"px";}
     }
+    const safehouseDistance = Math.hypot(player.position.x-safehouseRestPoint.x,player.position.z-safehouseRestPoint.z);
+    safehousePrompt.hidden = safehouseDistance > 2.5 || playerHealth <= 0 || !!drivingVehicle;
+    if (!safehousePrompt.hidden) { safehousePrompt.style.left = "50%"; safehousePrompt.style.top = "76%"; }
     const marketDistance = Math.hypot(player.position.x-marketDoorPoint.x, player.position.z-marketDoorPoint.z);
     // Keep the market action in a fixed, easy-to-tap position instead of
     // hiding it when the doorway is outside the camera's current view.
@@ -1147,6 +1220,7 @@ export function createCityGame(container, controls, characterData, onShopInterac
     window.removeEventListener("keydown",inventoryKey);
     window.removeEventListener("cos-equipment-changed", equipmentChanged);
     window.removeEventListener("cos-use-medkit", useMedkit);
+    window.removeEventListener("cos-rest-safehouse",restAtSafehouse);
     window.removeEventListener("cos-start-delivery-job", startDeliveryJob);
     joy.removeEventListener("pointerdown",joyStart);
     driveJoy.removeEventListener("pointerdown",driveJoyStart);
@@ -1175,11 +1249,14 @@ export function createCityGame(container, controls, characterData, onShopInterac
     stage.removeEventListener("pointercancel", cameraDragEnd);
 
     shopPrompt.remove();
+    safehousePrompt.remove();
     respawnButton.remove();
     marketPrompt.remove();
     vehiclePrompt.remove();
     if(unbindForward)unbindForward(); if(unbindReverse)unbindReverse();
     if(driveExitButton)driveExitButton.removeEventListener("click",exitVehicle);
+    if(driveHornButton)driveHornButton.removeEventListener("click",honkVehicle);
+    if(hornAudioContext)hornAudioContext.close().catch(()=>{});
     renderer.setAnimationLoop(null);
     const disposedGeometries = new Set();
     const disposedMaterials = new Set();
