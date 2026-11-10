@@ -185,6 +185,31 @@ function showScreen(screen) {
   }
 }
 
+function requestLandscapeMode() {
+  const fullscreenRequest = document.fullscreenElement
+    ? Promise.resolve(true)
+    : (document.documentElement.requestFullscreen
+        ? document.documentElement.requestFullscreen().then(() => true).catch(() => false)
+        : Promise.resolve(false));
+  if (screen.orientation && typeof screen.orientation.lock === "function") {
+    fullscreenRequest.then(() => screen.orientation.lock("landscape")).catch(() => {
+      notify("This browser cannot lock landscape automatically. Please rotate your phone sideways.");
+    });
+  }
+}
+
+function returnToMainMenu() {
+  $("#game-menu-panel").classList.add("hidden");
+  $("#shop-panel").classList.add("hidden");
+  $("#inventory-panel").classList.add("hidden");
+  if (destroyCity) {
+    destroyCity();
+    destroyCity = null;
+  }
+  showScreen(homeScreen);
+  updateContinueButton();
+}
+
 function loadSavedCharacter() {
   const data = readStoredJSON(STORAGE_KEY, null);
   if (!data || typeof data !== "object" || typeof data.name !== "string" || !data.name.trim()) return null;
@@ -384,14 +409,8 @@ function setView(view) {
 function bindEvents() {
   $("#home-brand-link").addEventListener("click", event => {
     event.preventDefault();
-    $("#game-menu-panel").classList.add("hidden");
-    $("#shop-panel").classList.add("hidden");
-    $("#inventory-panel").classList.add("hidden");
-    if (screen.orientation && typeof screen.orientation.unlock === "function") { try { screen.orientation.unlock(); } catch {} }
-    if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(() => {});
-    if (destroyCity) destroyCity();
-    destroyCity = null;
-    showScreen(homeScreen);
+    requestLandscapeMode();
+    returnToMainMenu();
   });
   $("#game-menu-panel").addEventListener("click", event => {
     if (event.target.id === "game-menu-panel") $("#game-menu-panel").classList.add("hidden");
@@ -404,39 +423,27 @@ function bindEvents() {
   $("#game-menu-resume-button").addEventListener("click", () => $("#game-menu-panel").classList.add("hidden"));
   $("#game-menu-inventory-button").addEventListener("click", () => { $("#game-menu-panel").classList.add("hidden"); openInventory(); });
   $("#game-menu-home-button").addEventListener("click", () => {
-    $("#game-menu-panel").classList.add("hidden");
-    if (screen.orientation && typeof screen.orientation.unlock === "function") { try { screen.orientation.unlock(); } catch {} }
-    if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(() => {});
-    if (destroyCity) destroyCity();
-    destroyCity = null;
-    showScreen(homeScreen);
+    returnToMainMenu();
   });
   $("#shop-panel").addEventListener("click", event => { if (event.target.id === "shop-panel") closeShop(); });
   document.querySelectorAll(".shop-buy-button").forEach(button => button.addEventListener("click", () => buyShopItem(button)));
   $("#new-game-button").addEventListener("click", () => {
+    requestLandscapeMode();
     const saved = loadSavedCharacter();
     fillForm(saved || { name: "", gender: "male", age: 20, skin: "#6f402d", hair: "short" });
     showScreen(creatorScreen);
   });
 
   $("#continue-button").addEventListener("click", () => {
+    requestLandscapeMode();
     const saved = loadSavedCharacter();
     if (saved) showSavedCharacter(saved);
   });
 
-  $("#back-home-button").addEventListener("click", () => showScreen(homeScreen));
-  $("#saved-home-button").addEventListener("click", () => showScreen(homeScreen));
+  $("#back-home-button").addEventListener("click", () => { requestLandscapeMode(); returnToMainMenu(); });
+  $("#saved-home-button").addEventListener("click", () => { requestLandscapeMode(); returnToMainMenu(); });
   $("#enter-city-button").addEventListener("click", () => {
-    // Android browsers may allow landscape locking only after entering fullscreen.
-    // Keep both requests inside this tap gesture; unsupported browsers can still rotate manually.
-    const fullscreenRequest = document.documentElement.requestFullscreen
-      ? document.documentElement.requestFullscreen().catch(() => null)
-      : Promise.resolve(null);
-    if (screen.orientation && typeof screen.orientation.lock === "function") {
-      fullscreenRequest.then(() => screen.orientation.lock("landscape")).catch(() => {
-        notify("For landscape play, please rotate your phone sideways.");
-      });
-    }
+    requestLandscapeMode();
 
     const saved = loadSavedCharacter();
     if (!saved) {
