@@ -943,3 +943,128 @@ body.in-city .topbar { display:none!important; }
 }
 
 
+
+
+/* Final button consistency pass: predictable hit areas, focus states and modal priority. */
+button {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid #f0d5a5;
+  outline-offset: 3px;
+}
+button:disabled {
+  cursor: not-allowed;
+}
+.button,
+.text-button,
+.view-button,
+.choice-button,
+.game-inventory-button,
+.shop-buy-button,
+.inventory-action,
+.drive-button,
+.door-interact-prompt {
+  position: relative;
+}
+.button,
+.shop-buy-button,
+.inventory-action,
+.game-inventory-button,
+.drive-button,
+.door-interact-prompt {
+  white-space: nowrap;
+}
+.text-button {
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.view-button,
+.choice-button {
+  min-height: 42px;
+}
+.swatch {
+  flex: 0 0 36px;
+  width: 36px;
+  height: 36px;
+}
+.shop-buy-button,
+.inventory-action {
+  min-height: 42px;
+}
+.shop-panel {
+  z-index: 200;
+}
+.toast {
+  z-index: 210;
+}
+.city-hud-actions {
+  align-items: center;
+  flex-wrap: nowrap;
+  min-width: 0;
+}
+.game-inventory-button {
+  min-height: 36px;
+  padding: 8px 10px;
+}
+@media (max-width: 1000px) {
+  #city-controls .mobile-actions {
+    grid-template-columns: repeat(3, 44px) !important;
+    grid-template-rows: repeat(2, 44px) !important;
+    gap: 4px !important;
+  }
+  #city-controls .mobile-actions .action-button {
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+    border-radius: 10px !important;
+    font-size: 16px !important;
+  }
+  #city-controls .action-button small {
+    font-size: 7px !important;
+  }
+  #city-controls .drive-button {
+    width: 46px !important;
+    min-width: 46px !important;
+    height: 46px !important;
+  }
+  #city-controls .drive-exit {
+    width: 46px !important;
+    min-width: 46px !important;
+    height: 36px !important;
+  }
+}
+@media (max-width: 420px) {
+  #city-controls .mobile-actions {
+    grid-template-columns: repeat(3, 42px) !important;
+    grid-template-rows: repeat(2, 42px) !important;
+    gap: 3px !important;
+  }
+  #city-controls .mobile-actions .action-button {
+    width: 42px !important;
+    height: 42px !important;
+    min-width: 42px !important;
+  }
+}
+@media (orientation: landscape) and (max-width: 1000px) {
+  #city-controls .mobile-actions {
+    grid-template-columns: repeat(3, 44px) !important;
+    grid-template-rows: repeat(2, 44px) !important;
+    gap: 4px !important;
+  }
+  #city-controls .mobile-actions .action-button {
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+  }
+  #city-controls .joystick,
+  #city-controls .drive-joystick {
+    width: 68px !important;
+    height: 68px !important;
+    flex-basis: 68px !important;
+  }
+}
