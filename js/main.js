@@ -130,7 +130,10 @@ function renderInventory() {
         if (item === "meal") needs.energy = Math.min(100, needs.energy + 8);
         savePlayerData();
         const needsHud = $("#needs-hud");
-        if (needsHud) needsHud.textContent = `HUNGER ${Math.round(needs.hunger)}%  ·  WATER ${Math.round(needs.hydration)}%  ·  ENERGY ${Math.round(needs.energy)}%`;
+        if (needsHud) {
+          const healthLabel = needsHud.textContent.match(/HEALTH\s+\d+%\s*·\s*/)?.[0] || "";
+          needsHud.textContent = `${healthLabel}HUNGER ${Math.round(needs.hunger)}%  ·  WATER ${Math.round(needs.hydration)}%  ·  ENERGY ${Math.round(needs.energy)}%`;
+        }
         $("#inventory-message").textContent = itemName(item) + " used. Your needs have been restored.";
       } else {
         const slot = ["hoodie","jacket"].includes(item) ? "top" : item === "jeans" ? "pants" : item === "sneakers" ? "shoes" : "";
