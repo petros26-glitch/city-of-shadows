@@ -199,15 +199,24 @@ function requestLandscapeMode() {
 }
 
 function returnToMainMenu() {
+  // Always reveal the original opening screen, even if a game cleanup step fails.
   $("#game-menu-panel").classList.add("hidden");
   $("#shop-panel").classList.add("hidden");
   $("#inventory-panel").classList.add("hidden");
-  if (destroyCity) {
-    destroyCity();
-    destroyCity = null;
+
+  const cleanupCity = destroyCity;
+  destroyCity = null;
+
+  try {
+    if (typeof cleanupCity === "function") cleanupCity();
+  } catch (error) {
+    console.error("City cleanup failed while returning to the main menu:", error);
+  } finally {
+    document.body.classList.remove("in-city");
+    showScreen(homeScreen);
+    updateContinueButton();
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
   }
-  showScreen(homeScreen);
-  updateContinueButton();
 }
 
 function loadSavedCharacter() {
@@ -465,11 +474,7 @@ function bindEvents() {
         loadShopData();
         saved.equipment = { ...equipment };
         saved.needs = { ...needs };
-        destroyCity = createCityGame(cityStage, $("#city-controls"), saved, () => {
-          if (destroyCity) destroyCity();
-          destroyCity = null;
-          showScreen(homeScreen);
-        }, openShop, openInventory, updatedNeeds => {
+        destroyCity = createCityGame(cityStage, $("#city-controls"), saved, openShop, openInventory, updatedNeeds => {
           needs = { ...updatedNeeds };
           savePlayerData();
         });
