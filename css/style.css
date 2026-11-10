@@ -1109,3 +1109,7 @@ button:disabled {
     flex-basis: 68px !important;
   }
 }
+
+
+/* Keep the shop directly accessible from the gameplay HUD on every screen size. */
+#game-shop-button { border-color:rgba(199,155,85,.8)!important; color:#f0d5a5!important; background:rgba(143,106,49,.22)!important; }
