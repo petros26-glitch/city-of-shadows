@@ -189,9 +189,15 @@ export function createCityGame(container, controls, characterData, onShopInterac
     const dx=x-car.position.x,dz=z-car.position.z;
     const cos=Math.cos(car.rotation.y),sin=Math.sin(car.rotation.y);
     const localX=dx*cos-dz*sin,localZ=dx*sin+dz*cos;
-    const closestX=THREE.MathUtils.clamp(localX,-1.075,1.075);
-    const closestZ=THREE.MathUtils.clamp(localZ,-2,2);
+    // Include the wheel/body overhang and a small safety margin so the
+    // player collider cannot slip through the sides or ends of a vehicle.
+    const closestX=THREE.MathUtils.clamp(localX,-1.22,1.22);
+    const closestZ=THREE.MathUtils.clamp(localZ,-2.2,2.2);
     return Math.hypot(localX-closestX,localZ-closestZ)<radius+extra;
+  }
+  function playerBlockedByVehicle(x,z,radius){
+    if(vehicles.some(entry=>overlapsCar(x,z,radius,entry.car,0.08))) return true;
+    return trafficCars.some(entry=>!entry.hijacked&&overlapsCar(x,z,radius,entry.car,0.08));
   }
   function parkedCar(x,z,index,rotation=0){
     const car=buildCar(x,z,index,rotation); vehicles.push({car,drivable:true});
@@ -778,11 +784,10 @@ export function createCityGame(container, controls, characterData, onShopInterac
       nextX+radius>b.minX && nextX-radius<b.maxX &&
       player.position.z+radius>b.minZ && player.position.z-radius<b.maxZ
     );
-    const blockedTreeX = environmentColliders.some(o => o.vehicle
-      ? overlapsCar(nextX,player.position.z,radius,o.vehicle)
-      : Math.hypot(nextX-o.x,player.position.z-o.z)<o.radius+radius
+    const blockedTreeX = environmentColliders.some(o => !o.vehicle &&
+      Math.hypot(nextX-o.x,player.position.z-o.z)<o.radius+radius
     );
-    const blockedVehicleX = trafficCars.some(t => !t.hijacked && overlapsCar(nextX,player.position.z,radius,t.car));
+    const blockedVehicleX = playerBlockedByVehicle(nextX,player.position.z,radius);
     if (!blockedBuildingX && !blockedTreeX && !blockedVehicleX && !blockedByPedestrianX && !blockedByOpponentX) player.position.x=nextX;
     const blockedByPedestrianZ = pedestrians.some(person => person.alive &&
       Math.hypot(player.position.x-person.npc.position.x, nextZ-person.npc.position.z) < radius + person.radius
@@ -792,11 +797,10 @@ export function createCityGame(container, controls, characterData, onShopInterac
       player.position.x+radius>b.minX && player.position.x-radius<b.maxX &&
       nextZ+radius>b.minZ && nextZ-radius<b.maxZ
     );
-    const blockedTreeZ = environmentColliders.some(o => o.vehicle
-      ? overlapsCar(player.position.x,nextZ,radius,o.vehicle)
-      : Math.hypot(player.position.x-o.x,nextZ-o.z)<o.radius+radius
+    const blockedTreeZ = environmentColliders.some(o => !o.vehicle &&
+      Math.hypot(player.position.x-o.x,nextZ-o.z)<o.radius+radius
     );
-    const blockedVehicleZ = trafficCars.some(t => !t.hijacked && overlapsCar(player.position.x,nextZ,radius,t.car));
+    const blockedVehicleZ = playerBlockedByVehicle(player.position.x,nextZ,radius);
     if (!blockedBuildingZ && !blockedTreeZ && !blockedVehicleZ && !blockedByPedestrianZ && !blockedByOpponentZ) player.position.z=nextZ;
     if(moving) player.rotation.y=Math.atan2(dx,dz);
 
