@@ -1,6 +1,6 @@
 import * as THREE from "three";
 
-export function createCityGame(container, controls, characterData, onExit, onShopInteract, onInventoryInteract, onNeedsUpdate) {
+export function createCityGame(container, controls, characterData, onShopInteract, onInventoryInteract, onNeedsUpdate) {
   const scene = new THREE.Scene();
   scene.background = new THREE.Color("#171923");
   scene.fog = new THREE.Fog("#171923", 22, 95);
