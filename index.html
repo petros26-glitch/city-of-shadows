@@ -190,18 +190,23 @@
   <section id="shop-panel" class="shop-panel hidden" aria-label="Neighbourhood shop">
     <div class="shop-card">
       <div class="shop-heading">
-        <div><p class="eyebrow"><span></span> NEIGHBOURHOOD STORE</p><h2>THE <em>SHOP.</em></h2></div>
+        <div><p class="eyebrow"><span></span> NEIGHBOURHOOD STORE</p><h2 id="shop-title">THE <em>SHOP.</em></h2></div>
         <button id="shop-close-button" class="text-button">CLOSE ✕</button>
       </div>
       <div class="shop-wallet">YOUR CASH <strong id="shop-cash">₦500</strong></div>
-      <p class="shop-intro">Buy useful supplies and streetwear with money earned in the city.</p>
+      <p id="shop-intro" class="shop-intro">Buy useful supplies and streetwear with money earned in the city.</p>
       <div class="shop-items">
-        <article class="shop-item"><div><strong>Street Meal</strong><span>Food supply · ₦25</span></div><button class="shop-buy-button" data-item="meal" data-price="25">BUY</button></article>
-        <article class="shop-item"><div><strong>Bottled Water</strong><span>Drink supply · ₦10</span></div><button class="shop-buy-button" data-item="water" data-price="10">BUY</button></article>
-        <article class="shop-item"><div><strong>Street Hoodie</strong><span>Clothing · ₦120</span></div><button class="shop-buy-button" data-item="hoodie" data-price="120">BUY</button></article>
-        <article class="shop-item"><div><strong>Denim Jacket</strong><span>Outerwear · ₦180</span></div><button class="shop-buy-button" data-item="jacket" data-price="180">BUY</button></article>
-        <article class="shop-item"><div><strong>Blue Jeans</strong><span>Trousers · ₦150</span></div><button class="shop-buy-button" data-item="jeans" data-price="150">BUY</button></article>
-        <article class="shop-item"><div><strong>Fresh Sneakers</strong><span>Footwear · ₦90</span></div><button class="shop-buy-button" data-item="sneakers" data-price="90">BUY</button></article>
+        <article class="shop-item" data-store="corner"><div><strong>Street Meal</strong><span>Food supply · ₦25</span></div><button class="shop-buy-button" data-item="meal" data-price="25">BUY</button></article>
+        <article class="shop-item" data-store="corner"><div><strong>Bottled Water</strong><span>Drink supply · ₦10</span></div><button class="shop-buy-button" data-item="water" data-price="10">BUY</button></article>
+        <article class="shop-item" data-store="corner"><div><strong>Street Hoodie</strong><span>Clothing · ₦120</span></div><button class="shop-buy-button" data-item="hoodie" data-price="120">BUY</button></article>
+        <article class="shop-item" data-store="corner"><div><strong>Denim Jacket</strong><span>Outerwear · ₦180</span></div><button class="shop-buy-button" data-item="jacket" data-price="180">BUY</button></article>
+        <article class="shop-item" data-store="corner"><div><strong>Blue Jeans</strong><span>Trousers · ₦150</span></div><button class="shop-buy-button" data-item="jeans" data-price="150">BUY</button></article>
+        <article class="shop-item" data-store="corner"><div><strong>Fresh Sneakers</strong><span>Footwear · ₦90</span></div><button class="shop-buy-button" data-item="sneakers" data-price="90">BUY</button></article>
+        <article class="shop-item" data-store="corner"><div><strong>First Aid Kit</strong><span>Restores 45 health · ₦80</span></div><button class="shop-buy-button" data-item="medkit" data-price="80">BUY</button></article>
+        <article class="shop-item" data-store="market"><div><strong>Fresh Fruit</strong><span>Food supply · ₦15</span></div><button class="shop-buy-button" data-item="fruit" data-price="15">BUY</button></article>
+        <article class="shop-item" data-store="market"><div><strong>Rice Bowl</strong><span>Food supply · ₦35</span></div><button class="shop-buy-button" data-item="rice" data-price="35">BUY</button></article>
+        <article class="shop-item" data-store="market"><div><strong>Fresh Vegetables</strong><span>Food supply · ₦20</span></div><button class="shop-buy-button" data-item="vegetables" data-price="20">BUY</button></article>
+        <article class="shop-item" data-store="market"><div><strong>Grilled Fish</strong><span>Food supply · ₦45</span></div><button class="shop-buy-button" data-item="fish" data-price="45">BUY</button></article>
       </div>
       <p id="shop-message" class="shop-message" aria-live="polite">Your purchases will be saved on this device.</p>
       <div class="shop-inventory">YOUR BAG <span id="shop-inventory">No items yet</span></div>
