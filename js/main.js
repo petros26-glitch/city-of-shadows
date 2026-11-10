@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { createCityGame } from "./city.js?v=30";
+import { createCityGame } from "./city.js?v=31";
 
 const STORAGE_KEY = "cos-player-character-v1";
 const state = {
