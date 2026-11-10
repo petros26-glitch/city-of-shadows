@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { createCityGame } from "./city.js?v=31";
+import { createCityGame } from "./city.js?v=32";
 
 const STORAGE_KEY = "cos-player-character-v1";
 const state = {
@@ -430,7 +430,8 @@ function bindEvents() {
   $("#shop-close-button").addEventListener("click", closeShop);
   $("#inventory-close-button").addEventListener("click", closeInventory);
   $("#inventory-panel").addEventListener("click", event => { if (event.target.id === "inventory-panel") closeInventory(); });
-  $("#game-inventory-button").addEventListener("click", openInventory);
+  $("#game-shop-button").addEventListener("click", openShop);
+   $("#game-inventory-button").addEventListener("click", openInventory);
   $("#game-menu-button").addEventListener("click", () => $("#game-menu-panel").classList.remove("hidden"));
   $("#game-menu-resume-button").addEventListener("click", () => $("#game-menu-panel").classList.add("hidden"));
   $("#game-menu-inventory-button").addEventListener("click", () => { $("#game-menu-panel").classList.add("hidden"); openInventory(); });
