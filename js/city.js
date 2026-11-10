@@ -36,6 +36,37 @@ export function createCityGame(container, controls, characterData, onShopInterac
   });
   container.appendChild(marketPrompt);
 
+  const respawnButton = document.createElement("button");
+  respawnButton.type = "button";
+  respawnButton.className = "city-respawn-button";
+  respawnButton.textContent = "RESPAWN";
+  respawnButton.hidden = true;
+  respawnButton.addEventListener("click", event => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (playerHealth > 0) return;
+    playerHealth = 100;
+    player.position.set(-4, 0, -4);
+    player.rotation.set(0, 0, 0);
+    joystick = { x: 0, y: 0 };
+    keys.clear();
+    sprint = false;
+    dodgeTime = 0;
+    dodgeDistance = 0;
+    vehicleHitCooldown = 2.5;
+    opponent.position.set(0, 0, 6.5);
+    opponentAttackCooldown = 4;
+    opponentPunchTime = 0;
+    const healthHud = document.querySelector("#needs-hud");
+    if (healthHud) healthHud.textContent = `HEALTH ${playerHealth}%  ·  HUNGER ${Math.round(survival.hunger)}%  ·  WATER ${Math.round(survival.hydration)}%  ·  ENERGY ${Math.round(survival.energy)}%`;
+    const readout = controls.querySelector("#combat-readout");
+    if (readout) readout.textContent = "YOU'RE BACK · KEEP AN EYE ON TRAFFIC";
+    const status = controls.querySelector(".city-status");
+    if (status) status.textContent = "RESPAWNED · KEEP EXPLORING";
+    respawnButton.hidden = true;
+  });
+  controls.appendChild(respawnButton);
+
   scene.add(new THREE.HemisphereLight(0xc8d4e5, 0x40352e, 2));
   const sun = new THREE.DirectionalLight(0xffd2a0, 1.5);
   sun.position.set(-18, 28, 12);
@@ -716,8 +747,8 @@ export function createCityGame(container, controls, characterData, onShopInterac
     if(!drivingVehicle && playerHealth>0 && vehicleHitCooldown===0){
       const hitCar=trafficCars.find(t=>!t.hijacked&&overlapsCar(player.position.x,player.position.z,playerRadius,t.car,0.15));
       if(hitCar){
-        playerHealth=Math.max(0,playerHealth-10);
-        vehicleHitCooldown=1.15;
+        playerHealth=Math.max(0,playerHealth-3);
+        vehicleHitCooldown=2.5;
         const healthHud=document.querySelector("#needs-hud");
         if(healthHud)healthHud.textContent=`HEALTH ${playerHealth}%  ·  HUNGER ${Math.round(survival.hunger)}%  ·  WATER ${Math.round(survival.hydration)}%  ·  ENERGY ${Math.round(survival.energy)}%`;
         const status=controls.querySelector(".city-status");
@@ -945,7 +976,7 @@ export function createCityGame(container, controls, characterData, onShopInterac
           opponentPunchTime=0.34;
           opponentPunchSide=opponentPunchSide===0?1:0;
           const incomingDamage = blockHeld ? 2 : 8;
-          playerHealth=Math.max(0,playerHealth-incomingDamage);
+          playerHealth=Math.max(0,playerHealth-incomingDamage);\n          if (playerHealth <= 0) respawnButton.hidden = false;
           controls.querySelector("#combat-readout").textContent = playerHealth===0
             ? "YOU ARE DOWN · RESTART THE NEIGHBOURHOOD TO TRY AGAIN"
             : blockHeld
