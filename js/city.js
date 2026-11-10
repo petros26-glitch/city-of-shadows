@@ -408,8 +408,8 @@ export function createCityGame(container, controls, characterData, onShopInterac
   let opponentRespawnTime = 0;
   let playerHealth = 100;
   const useMedkit = () => {
-    if (playerHealth <= 0) return;
     playerHealth = Math.min(100, playerHealth + 45);
+    respawnButton.hidden = playerHealth > 0;
     const healthHud = document.querySelector("#needs-hud");
     if (healthHud) healthHud.textContent = `HEALTH ${playerHealth}%  ·  HUNGER ${Math.round(survival.hunger)}%  ·  WATER ${Math.round(survival.hydration)}%  ·  ENERGY ${Math.round(survival.energy)}%`;
     const readout = controls.querySelector("#combat-readout");
