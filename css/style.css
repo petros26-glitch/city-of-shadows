@@ -775,3 +775,7 @@ h2 { font-size: clamp(48px, 6vw, 76px); }
  .drive-button { width:48px!important; min-width:48px!important; height:48px!important; }
  .drive-exit { width:46px!important; min-width:46px!important; height:32px!important; }
 }
+
+
+/* Hide the site masthead while the full-screen gameplay view is active. */
+body.in-city .topbar { display:none!important; }
