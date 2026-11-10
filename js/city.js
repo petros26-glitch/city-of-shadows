@@ -125,7 +125,7 @@ export function createCityGame(container, controls, characterData, onShopInterac
   block(new THREE.BoxGeometry(1.15,4.2,0.35),shopWallMat,10.925,2.1,-0.775);
   block(new THREE.BoxGeometry(3.95,4.2,0.35),shopWallMat,14.175,2.1,-0.775);
   block(new THREE.BoxGeometry(5.4,0.35,5.2),shopWallMat,13.2,4.025,-3.2);
-  block(new THREE.BoxGeometry(1.25,2.35,0.12),shopGlassMat,11.65,1.2,-0.52);
+  // Keep the front doorway physically open; the previous glass panel blocked entry.
   block(new THREE.BoxGeometry(1.4,1.15,0.12),shopGlassMat,14.25,2.15,-0.52);
   block(new THREE.BoxGeometry(4.7,0.78,0.22), shopTrimMat, 13.2,3.35,-0.48);
   const shopSignCanvas = document.createElement("canvas");
@@ -198,7 +198,7 @@ export function createCityGame(container, controls, characterData, onShopInterac
     const dx=x-car.position.x,dz=z-car.position.z;
     const cos=Math.cos(car.rotation.y),sin=Math.sin(car.rotation.y);
     const localX=dx*cos-dz*sin,localZ=dx*sin+dz*cos;
-    const halfWidth=1.28,halfLength=2.24;
+    const halfWidth=1.38,halfLength=2.34;
     const closestX=THREE.MathUtils.clamp(localX,-halfWidth,halfWidth);
     const closestZ=THREE.MathUtils.clamp(localZ,-halfLength,halfLength);
     const outsideX=localX-closestX,outsideZ=localZ-closestZ;
@@ -212,7 +212,7 @@ export function createCityGame(container, controls, characterData, onShopInterac
   }
   function overlapsVehicleBuilding(x,z,car,b){
     const cos=Math.abs(Math.cos(car.rotation.y)),sin=Math.abs(Math.sin(car.rotation.y));
-    const halfX=cos*1.22+sin*2.2,halfZ=sin*1.22+cos*2.2;
+    const halfX=cos*1.38+sin*2.34,halfZ=sin*1.38+cos*2.34;
     return x+halfX>b.minX && x-halfX<b.maxX && z+halfZ>b.minZ && z-halfZ<b.maxZ;
   }
   function playerBlockedByVehicle(x,z,radius){
@@ -971,18 +971,12 @@ export function createCityGame(container, controls, characterData, onShopInterac
 
     // Display the shop interaction over the actual doorway when the player is close.
     const shopDistance = Math.hypot(player.position.x-shopDoorPoint.x, player.position.z-shopDoorPoint.z);
-    shopPrompt.hidden = shopDistance > 5.2;
+    // Keep a large, reliably clickable shop action visible whenever the player
+    // is near the storefront; do not hide it based on 3D camera projection.
+    shopPrompt.hidden = shopDistance > 9;
     if (!shopPrompt.hidden) {
-      const projected = shopDoorPoint.clone().project(camera);
-      const rect = container.getBoundingClientRect();
-      const px = (projected.x * 0.5 + 0.5) * rect.width;
-      const py = (-projected.y * 0.5 + 0.5) * rect.height;
-      const onScreen = projected.z > -1 && projected.z < 1 && px > 12 && px < rect.width-12 && py > 12 && py < rect.height-12;
-      shopPrompt.hidden = !onScreen;
-      if (onScreen) {
-        shopPrompt.style.left = px + "px";
-        shopPrompt.style.top = py + "px";
-      }
+      shopPrompt.style.left = "50%";
+      shopPrompt.style.top = "76%";
     }
     let nearestVehicle=null,nearestVehicleDistance=5.6;
     for(const entry of vehicles){
