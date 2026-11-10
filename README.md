@@ -26,6 +26,8 @@ The browser build uses JavaScript and Three.js and is designed with low-memory A
 - A local wallet and inventory, food and water use, and clothing purchases.
 - Separate corner-shop and City Market catalogues, with fresh food, first-aid kits and different item effects.
 - A repeatable Market Delivery job that rewards ₦120 when the player reaches the marked market on foot; job earnings are saved locally.
+- A physically enterable safehouse with a rest point that restores energy, hunger and hydration.
+- A working vehicle horn on the in-car controls, plus pedestrians who return to their routes after a cooldown.
 - First-aid kits restore up to 45 health, and defeated sparring opponents return after a short cooldown.
 - A survival-needs HUD for hunger, hydration and energy. Hunger and hydration gradually decrease during play; energy drains while running and recovers while walking or standing. Low energy reduces movement speed, and food/water restore needs.
 - Wardrobe slots for tops, trousers and shoes. Hoodie, denim jacket, blue jeans and sneakers can be purchased; equipped items change the prototype character's material colours.
