@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { createCityGame } from "./city.js?v=38";
+import { createCityGame } from "./city.js?v=39";
 
 const STORAGE_KEY = "cos-player-character-v1";
 const state = {
@@ -163,6 +163,30 @@ function openShop(store = "corner") {
   $("#shop-panel").classList.remove("hidden");
 }
 function closeShop() { $("#shop-panel").classList.add("hidden"); }
+let deliveryJobActive = false;
+function openJobs() {
+  $("#jobs-message").textContent = deliveryJobActive ? "DELIVERY ACTIVE · Reach the City Market on foot." : "Complete jobs to earn money for supplies and clothes.";
+  $("#start-delivery-job-button").textContent = deliveryJobActive ? "IN PROGRESS" : "ACCEPT";
+  $("#start-delivery-job-button").disabled = deliveryJobActive;
+  $("#jobs-panel").classList.remove("hidden");
+}
+function closeJobs() { $("#jobs-panel").classList.add("hidden"); }
+function startDeliveryJob() {
+  if (deliveryJobActive) return;
+  deliveryJobActive = true;
+  closeJobs();
+  window.dispatchEvent(new CustomEvent("cos-start-delivery-job"));
+  notify("Delivery accepted. Reach the CITY MARKET on foot to earn ₦120.");
+}
+function completeDeliveryJob() {
+  if (!deliveryJobActive) return;
+  deliveryJobActive = false;
+  wallet += 120;
+  savePlayerData();
+  renderShop();
+  renderInventory();
+  notify("DELIVERY COMPLETE · ₦120 added to your wallet.");
+}
 function buyShopItem(button) {
   const item = button.dataset.item;
   const price = Number(button.dataset.price);
@@ -211,6 +235,7 @@ function requestLandscapeMode() {
 function returnToMainMenu() {
   // Always reveal the original opening screen, even if a game cleanup step fails.
   $("#game-menu-panel").classList.add("hidden");
+  $("#jobs-panel").classList.add("hidden");
   $("#shop-panel").classList.add("hidden");
   $("#inventory-panel").classList.add("hidden");
 
@@ -435,6 +460,10 @@ function bindEvents() {
     if (event.target.id === "game-menu-panel") $("#game-menu-panel").classList.add("hidden");
   });
   $("#shop-close-button").addEventListener("click", closeShop);
+  $("#game-jobs-button").addEventListener("click", openJobs);
+  $("#jobs-close-button").addEventListener("click", closeJobs);
+  $("#jobs-panel").addEventListener("click", event => { if (event.target.id === "jobs-panel") closeJobs(); });
+  $("#start-delivery-job-button").addEventListener("click", startDeliveryJob);
   $("#inventory-close-button").addEventListener("click", closeInventory);
   $("#inventory-panel").addEventListener("click", event => { if (event.target.id === "inventory-panel") closeInventory(); });
   $("#game-shop-button").addEventListener("click", openShop);
@@ -488,7 +517,7 @@ function bindEvents() {
         destroyCity = createCityGame(cityStage, $("#city-controls"), saved, openShop, openInventory, updatedNeeds => {
           needs = { ...updatedNeeds };
           savePlayerData();
-        });
+        }, completeDeliveryJob);
       } catch (error) {
         console.error("City could not start:", error);
         cityStage.textContent = "THE CITY COULD NOT LOAD. PLEASE REFRESH AND TRY AGAIN.";
