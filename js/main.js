@@ -179,6 +179,7 @@ function notify(message) {
 function showScreen(screen) {
   [homeScreen, creatorScreen, savedScreen, $("#city-screen")].forEach((item) => item.classList.add("hidden"));
   screen.classList.remove("hidden");
+  document.body.classList.toggle("in-city", screen === $("#city-screen"));
   if (screen === creatorScreen) {
     requestAnimationFrame(() => resizePreview());
   }
