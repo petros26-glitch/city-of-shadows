@@ -688,7 +688,7 @@ export function createCityGame(container, controls, characterData, onShopInterac
     vehicleHitMessageTime=Math.max(0,vehicleHitMessageTime-dt);
     if(vehicleHitMessageTime===0)vehicleHitMessage="";
     if(!drivingVehicle && playerHealth>0 && vehicleHitCooldown===0){
-      const hitCar=trafficCars.find(t=>!t.hijacked&&Math.hypot(player.position.x-t.car.position.x,player.position.z-t.car.position.z)<2.15);
+      const hitCar=trafficCars.find(t=>!t.hijacked&&overlapsCar(player.position.x,player.position.z,playerRadius,t.car,0.15));
       if(hitCar){
         playerHealth=Math.max(0,playerHealth-10);
         vehicleHitCooldown=1.15;
