@@ -881,3 +881,63 @@ body.in-city .topbar { display:none!important; }
   #city-controls .action-button small { font-size:6px!important; }
   #city-controls .drive-button { width:40px!important; min-width:40px!important; height:40px!important; }
 }
+
+
+/* CITY OF SHADOWS is landscape-only on phones and small tablets.
+   Portrait blocks the gameplay view and all gameplay controls, without
+   changing the home screen or desktop layout. */
+@media screen and (orientation: portrait) and (max-width: 1000px) {
+  body.in-city .city-screen {
+    position:fixed!important;
+    inset:0!important;
+    z-index:999!important;
+    display:flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    width:100vw!important;
+    height:100vh!important;
+    height:100dvh!important;
+    min-height:0!important;
+    margin:0!important;
+    padding:24px!important;
+    overflow:hidden!important;
+    background:#08090d!important;
+  }
+  body.in-city .city-screen > * {
+    visibility:hidden!important;
+    pointer-events:none!important;
+  }
+  body.in-city .city-screen::before {
+    content:""!important;
+    display:block!important;
+    position:absolute!important;
+    inset:0!important;
+    background:radial-gradient(ellipse at center,rgba(139,37,44,.22),transparent 65%)!important;
+    pointer-events:none!important;
+  }
+  body.in-city .city-screen::after {
+    content:"CITY OF SHADOWS\\A\\A PLEASE ROTATE YOUR PHONE\\A TO LANDSCAPE MODE TO PLAY"!important;
+    white-space:pre!important;
+    display:flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    position:absolute!important;
+    inset:0!important;
+    padding:28px!important;
+    color:#f0d5a4!important;
+    font-family:Arial,sans-serif!important;
+    font-size:clamp(17px,5vw,25px)!important;
+    font-weight:900!important;
+    letter-spacing:1.5px!important;
+    line-height:1.7!important;
+    text-align:center!important;
+    text-shadow:0 2px 16px rgba(0,0,0,.9)!important;
+    pointer-events:auto!important;
+  }
+  body.in-city #city-controls,
+  body.in-city .drive-controls {
+    display:none!important;
+    visibility:hidden!important;
+    pointer-events:none!important;
+  }
+}
