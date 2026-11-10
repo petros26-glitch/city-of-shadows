@@ -288,6 +288,8 @@ export function createCityGame(container, controls, characterData, onShopInterac
   let opponentHealth = 100;
   let playerHealth = 100;
   let vehicleHitCooldown = 0;
+  let vehicleHitMessageTime = 0;
+  let vehicleHitMessage = "";
   const survival = { hunger: characterData?.needs?.hunger ?? 100, hydration: characterData?.needs?.hydration ?? 100, energy: characterData?.needs?.energy ?? 100 };
   let needsClock = 0;
   const initialNeedsHud = document.querySelector("#needs-hud");
@@ -663,6 +665,8 @@ export function createCityGame(container, controls, characterData, onShopInterac
     // Moving traffic can injure the player on impact, with a short cooldown
     // so one continuous overlap does not drain the entire health bar.
     vehicleHitCooldown=Math.max(0,vehicleHitCooldown-dt);
+    vehicleHitMessageTime=Math.max(0,vehicleHitMessageTime-dt);
+    if(vehicleHitMessageTime===0)vehicleHitMessage="";
     if(!drivingVehicle && playerHealth>0 && vehicleHitCooldown===0){
       const hitCar=trafficCars.find(t=>!t.hijacked&&Math.hypot(player.position.x-t.car.position.x,player.position.z-t.car.position.z)<2.15);
       if(hitCar){
@@ -671,7 +675,9 @@ export function createCityGame(container, controls, characterData, onShopInterac
         const healthHud=document.querySelector("#needs-hud");
         if(healthHud)healthHud.textContent=`HEALTH ${playerHealth}%  ·  HUNGER ${Math.round(survival.hunger)}%  ·  WATER ${Math.round(survival.hydration)}%  ·  ENERGY ${Math.round(survival.energy)}%`;
         const status=controls.querySelector(".city-status");
-        if(status)status.textContent=playerHealth>0?`HIT BY CAR · HEALTH ${playerHealth}%`:"YOU WERE HIT BY A CAR · YOU ARE DOWN";
+        vehicleHitMessage=playerHealth>0?`HIT BY CAR · HEALTH ${playerHealth}%`:"YOU WERE HIT BY A CAR · YOU ARE DOWN";
+        vehicleHitMessageTime=1.15;
+        if(status)status.textContent=vehicleHitMessage;
       }
     }
     const runningInput = sprint||keys.has("shift")||keys.has("m");
@@ -969,7 +975,7 @@ export function createCityGame(container, controls, characterData, onShopInterac
     opponent.visible = true;
     renderer.render(scene,camera);
     const status=controls.querySelector(".city-status");
-    status.textContent=moving?(fast?"RUNNING":"WALKING"):"EXPLORE THE NEIGHBOURHOOD";
+    status.textContent=vehicleHitMessageTime>0?vehicleHitMessage:(moving?(fast?"RUNNING":"WALKING"):"EXPLORE THE NEIGHBOURHOOD");
   }
   animationId=requestAnimationFrame(loop);
 
