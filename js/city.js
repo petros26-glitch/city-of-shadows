@@ -54,6 +54,13 @@ export function createCityGame(container, controls, characterData, onShopInterac
     dodgeTime = 0;
     dodgeDistance = 0;
     vehicleHitCooldown = 2.5;
+    vehicleHitMessageTime = 0;
+    vehicleHitMessage = "";
+    attackCooldown = 0;
+    blockHeld = false;
+    playerAttackTime = 0;
+    playerKickTime = 0;
+    if (knob) knob.style.transform = "translate(0,0)";
     opponent.position.set(0, 0, 6.5);
     opponentAttackCooldown = 4;
     opponentPunchTime = 0;
