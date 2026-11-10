@@ -1113,3 +1113,26 @@ button:disabled {
 
 /* Keep the shop directly accessible from the gameplay HUD on every screen size. */
 #game-shop-button { border-color:rgba(199,155,85,.8)!important; color:#f0d5a5!important; background:rgba(143,106,49,.22)!important; }
+
+
+/* Death recovery: keep the respawn action reachable on touch and desktop. */
+.city-respawn-button {
+  position:fixed;
+  left:50%;
+  top:50%;
+  transform:translate(-50%,-50%);
+  z-index:180;
+  min-width:150px;
+  min-height:52px;
+  padding:14px 24px;
+  border:1px solid #e0bd7e;
+  border-radius:10px;
+  background:linear-gradient(135deg,#a83b32,#6f2024);
+  color:#fff;
+  font:900 14px/1 Arial,sans-serif;
+  letter-spacing:1.5px;
+  box-shadow:0 12px 36px rgba(0,0,0,.55);
+  pointer-events:auto!important;
+  touch-action:manipulation;
+}
+.city-respawn-button[hidden] { display:none!important; }
