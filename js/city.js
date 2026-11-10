@@ -1,6 +1,6 @@
 import * as THREE from "three";
 
-export function createCityGame(container, controls, characterData, onShopInteract, onInventoryInteract, onNeedsUpdate) {
+export function createCityGame(container, controls, characterData, onShopInteract, onInventoryInteract, onNeedsUpdate, onJobComplete) {
   const scene = new THREE.Scene();
   scene.background = new THREE.Color("#171923");
   scene.fog = new THREE.Fog("#171923", 22, 95);
@@ -213,6 +213,25 @@ export function createCityGame(container, controls, characterData, onShopInterac
   marketSign.position.set(-18,4.1,8.8);scene.add(marketSign);
   buildingColliders.push(...marketColliders);
   const marketDoorPoint = new THREE.Vector3(-15.7,1.2,0);
+  const jobMarker = new THREE.Group();
+  const markerRing = new THREE.Mesh(new THREE.TorusGeometry(1.15,0.12,6,18),new THREE.MeshBasicMaterial({color:"#e4bd70"}));
+  markerRing.rotation.x = Math.PI/2;
+  markerRing.position.y = 0.18;
+  jobMarker.add(markerRing);
+  const markerBeam = new THREE.Mesh(new THREE.CylinderGeometry(0.12,0.42,2.4,7,1,true),new THREE.MeshBasicMaterial({color:"#e4bd70",transparent:true,opacity:0.35,side:THREE.DoubleSide}));
+  markerBeam.position.y = 1.35;
+  jobMarker.add(markerBeam);
+  jobMarker.position.set(marketDoorPoint.x,0,marketDoorPoint.z);
+  jobMarker.visible = false;
+  scene.add(jobMarker);
+  let deliveryJobActive = false;
+  const startDeliveryJob = () => {
+    deliveryJobActive = true;
+    jobMarker.visible = true;
+    const status = controls.querySelector(".city-status");
+    if (status) status.textContent = "DELIVERY JOB · FOLLOW THE GOLD MARKER TO CITY MARKET";
+  };
+  window.addEventListener("cos-start-delivery-job", startDeliveryJob);
 
   // Lightweight low-poly vehicles share one builder for parked cars and moving traffic.
   const vehicles = [];
@@ -745,7 +764,8 @@ export function createCityGame(container, controls, characterData, onShopInterac
     const inventoryOpen = !document.querySelector("#inventory-panel").classList.contains("hidden");
     const shopOpen = !document.querySelector("#shop-panel").classList.contains("hidden");
     const gameMenuOpen = !document.querySelector("#game-menu-panel").classList.contains("hidden");
-    if (inventoryOpen || shopOpen || gameMenuOpen) {
+    const jobsOpen = !document.querySelector("#jobs-panel").classList.contains("hidden");
+    if (inventoryOpen || shopOpen || gameMenuOpen || jobsOpen) {
       renderer.render(scene,camera);
       return;
     }
@@ -1015,6 +1035,15 @@ export function createCityGame(container, controls, characterData, onShopInterac
         }
       }
     }
+    if (deliveryJobActive && !drivingVehicle && Math.hypot(player.position.x-marketDoorPoint.x,player.position.z-marketDoorPoint.z) < 3.8) {
+      deliveryJobActive = false;
+      jobMarker.visible = false;
+      const status = controls.querySelector(".city-status");
+      if (status) status.textContent = "DELIVERY COMPLETE · ₦120 EARNED";
+      const readout = controls.querySelector("#combat-readout");
+      if (readout) readout.textContent = "JOB COMPLETE · RETURN TO THE CITY TO TAKE ANOTHER JOB";
+      if (typeof onJobComplete === "function") onJobComplete({ reward: 120, job: "market-delivery" });
+    }
     if (opponentHealth <= 0 && opponentRespawnTime > 0) {
       opponentRespawnTime = Math.max(0, opponentRespawnTime - dt);
       if (opponentRespawnTime === 0) {
@@ -1118,6 +1147,7 @@ export function createCityGame(container, controls, characterData, onShopInterac
     window.removeEventListener("keydown",inventoryKey);
     window.removeEventListener("cos-equipment-changed", equipmentChanged);
     window.removeEventListener("cos-use-medkit", useMedkit);
+    window.removeEventListener("cos-start-delivery-job", startDeliveryJob);
     joy.removeEventListener("pointerdown",joyStart);
     driveJoy.removeEventListener("pointerdown",driveJoyStart);
     window.removeEventListener("pointermove",driveJoyMove);
