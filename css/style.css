@@ -943,28 +943,3 @@ body.in-city .topbar { display:none!important; }
 }
 
 
-/* Whole-game landscape lock: show the rotate instruction on every screen
-   when a phone or small tablet is held in portrait orientation. */
-@media screen and (orientation: portrait) and (max-width: 1000px) {
-  body::after {
-    content: "CITY OF SHADOWS\\A\\A PLEASE ROTATE YOUR PHONE\\A TO LANDSCAPE MODE TO PLAY";
-    white-space: pre;
-    position: fixed;
-    inset: 0;
-    z-index: 100000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 28px;
-    background: radial-gradient(ellipse at center, rgba(139,37,44,.22), transparent 65%), #08090d;
-    color: #f0d5a4;
-    font-family: Arial, sans-serif;
-    font-size: clamp(17px, 5vw, 25px);
-    font-weight: 900;
-    letter-spacing: 1.5px;
-    line-height: 1.7;
-    text-align: center;
-    text-shadow: 0 2px 16px rgba(0,0,0,.9);
-    pointer-events: auto;
-  }
-}
