@@ -116,14 +116,14 @@ export function createCityGame(container, controls, characterData, onShopInterac
 
 
   // A clearly marked corner store beside the main road, visible from the starting area.
-  const shopDoorPoint = new THREE.Vector3(11.65,1.25,-0.72);
+  const shopDoorPoint = new THREE.Vector3(12.05,1.25,-0.72);
   // Build the store from separate walls so the front entrance is a real opening,
   // not merely a gap in the invisible collision rectangle.
   block(new THREE.BoxGeometry(5.4,4.2,0.35),shopWallMat,13.2,2.1,-5.625);
   block(new THREE.BoxGeometry(0.35,4.2,4.9),shopWallMat,10.575,2.1,-3.2);
   block(new THREE.BoxGeometry(0.35,4.2,4.9),shopWallMat,15.825,2.1,-3.2);
-  block(new THREE.BoxGeometry(1.15,4.2,0.35),shopWallMat,10.925,2.1,-0.775);
-  block(new THREE.BoxGeometry(3.95,4.2,0.35),shopWallMat,14.175,2.1,-0.775);
+  block(new THREE.BoxGeometry(1.0,4.2,0.35),shopWallMat,10.8,2.1,-0.775);
+  block(new THREE.BoxGeometry(3.3,4.2,0.35),shopWallMat,14.45,2.1,-0.775);
   block(new THREE.BoxGeometry(5.4,0.35,5.2),shopWallMat,13.2,4.025,-3.2);
   // Keep the front doorway physically open; the previous glass panel blocked entry.
   block(new THREE.BoxGeometry(1.4,1.15,0.12),shopGlassMat,14.25,2.15,-0.52);
@@ -207,12 +207,12 @@ export function createCityGame(container, controls, characterData, onShopInterac
   function overlapsBuilding(x,z,radius,b){
     // Leave a real opening in the shop's front wall so the player can reach
     // the door; vehicles still use the full solid building footprint.
-    if(b.shop && x+radius>10.92 && x-radius<12.38 && z>-1.75 && z<0.15) return false;
+    if(b.shop && x-radius>11.3 && x+radius<12.8 && z<0.15) return false;
     return x+radius>b.minX && x-radius<b.maxX && z+radius>b.minZ && z-radius<b.maxZ;
   }
   function overlapsVehicleBuilding(x,z,car,b){
     const cos=Math.abs(Math.cos(car.rotation.y)),sin=Math.abs(Math.sin(car.rotation.y));
-    const halfX=cos*1.38+sin*2.34,halfZ=sin*1.38+cos*2.34;
+    const halfX=cos*1.5+sin*2.5,halfZ=sin*1.5+cos*2.5;
     return x+halfX>b.minX && x-halfX<b.maxX && z+halfZ>b.minZ && z-halfZ<b.maxZ;
   }
   function playerBlockedByVehicle(x,z,radius){
@@ -1005,15 +1005,12 @@ export function createCityGame(container, controls, characterData, onShopInterac
       vehiclePrompt.hidden=!onScreen;if(onScreen){vehiclePrompt.style.left=px+"px";vehiclePrompt.style.top=py+"px";}
     }
     const marketDistance = Math.hypot(player.position.x-marketDoorPoint.x, player.position.z-marketDoorPoint.z);
-    marketPrompt.hidden = marketDistance > 5.2;
+    // Keep the market action in a fixed, easy-to-tap position instead of
+    // hiding it when the doorway is outside the camera's current view.
+    marketPrompt.hidden = marketDistance > 6.5;
     if (!marketPrompt.hidden) {
-      const projected = marketDoorPoint.clone().project(camera);
-      const rect = container.getBoundingClientRect();
-      const px = (projected.x * 0.5 + 0.5) * rect.width;
-      const py = (-projected.y * 0.5 + 0.5) * rect.height;
-      const onScreen = projected.z > -1 && projected.z < 1 && px > 12 && px < rect.width-12 && py > 12 && py < rect.height-12;
-      marketPrompt.hidden = !onScreen;
-      if (onScreen) { marketPrompt.style.left = px + "px"; marketPrompt.style.top = py + "px"; }
+      marketPrompt.style.left = "50%";
+      marketPrompt.style.top = "76%";
     }
     if (opponentFlash > 0) {
       opponentFlash -= dt;
