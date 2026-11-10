@@ -19,7 +19,7 @@ export function createCityGame(container, controls, characterData, onShopInterac
   shopPrompt.addEventListener("click", event => {
     event.preventDefault();
     event.stopPropagation();
-    if (typeof onShopInteract === "function") onShopInteract();
+    if (typeof onShopInteract === "function") onShopInteract("corner");
   });
   container.appendChild(shopPrompt);
   const vehiclePrompt = document.createElement("button");
@@ -32,7 +32,7 @@ export function createCityGame(container, controls, characterData, onShopInterac
   marketPrompt.setAttribute("aria-label", "Browse the city market");
   marketPrompt.hidden = true;
   marketPrompt.addEventListener("click", () => {
-    if (typeof onShopInteract === "function") onShopInteract();
+    if (typeof onShopInteract === "function") onShopInteract("market");
   });
   container.appendChild(marketPrompt);
 
@@ -358,7 +358,17 @@ export function createCityGame(container, controls, characterData, onShopInterac
   opponent.position.set(0,0,6.5);
   scene.add(opponent);
   let opponentHealth = 100;
+  let opponentRespawnTime = 0;
   let playerHealth = 100;
+  const useMedkit = () => {
+    if (playerHealth <= 0) return;
+    playerHealth = Math.min(100, playerHealth + 45);
+    const healthHud = document.querySelector("#needs-hud");
+    if (healthHud) healthHud.textContent = `HEALTH ${playerHealth}%  ·  HUNGER ${Math.round(survival.hunger)}%  ·  WATER ${Math.round(survival.hydration)}%  ·  ENERGY ${Math.round(survival.energy)}%`;
+    const readout = controls.querySelector("#combat-readout");
+    if (readout) readout.textContent = "FIRST AID USED · HEALTH " + playerHealth + "%";
+  };
+  window.addEventListener("cos-use-medkit", useMedkit);
   let vehicleHitCooldown = 0;
   let vehicleHitMessageTime = 0;
   let vehicleHitMessage = "";
@@ -608,6 +618,7 @@ export function createCityGame(container, controls, characterData, onShopInterac
     const hp=Math.max(0,target.health-damage);
     if(target.kind==="opponent"){
       opponentHealth=hp; updateOpponentHealthBar();
+      if (hp <= 0) opponentRespawnTime = 16;
       opponentHitReaction=kind==="kick"?0.3:0.22; opponentFlash=kind==="kick"?0.18:0.16;
       opponentTorso.material.color.set("#f3c0a5");
       controls.querySelector("#combat-readout").textContent=hp>0?kind.toUpperCase()+" CONNECTED · OPPONENT "+hp+"%":"OPPONENT DEFEATED · 0% HEALTH";
@@ -1004,6 +1015,20 @@ export function createCityGame(container, controls, characterData, onShopInterac
         }
       }
     }
+    if (opponentHealth <= 0 && opponentRespawnTime > 0) {
+      opponentRespawnTime = Math.max(0, opponentRespawnTime - dt);
+      if (opponentRespawnTime === 0) {
+        opponentHealth = 100;
+        opponent.position.set(0, 0, 6.5);
+        opponent.rotation.set(0, 0, 0);
+        opponentTorso.material.color.set("#8e3438");
+        opponentParts.arms.forEach(arm => { arm.rotation.x = 0; arm.rotation.z = 0; });
+        opponentParts.legs.forEach(leg => { leg.rotation.x = 0; leg.rotation.z = 0; });
+        updateOpponentHealthBar();
+        const readout = controls.querySelector("#combat-readout");
+        if (readout) readout.textContent = "A NEW CHALLENGER HAS ARRIVED · OPPONENT HEALTH 100%";
+      }
+    }
     if (opponentHitReaction > 0) {
       opponentHitReaction = Math.max(0, opponentHitReaction - dt);
       const recoil = Math.sin((opponentHitReaction / 0.3) * Math.PI);
@@ -1092,6 +1117,7 @@ export function createCityGame(container, controls, characterData, onShopInterac
     window.removeEventListener("keyup",keyUp);
     window.removeEventListener("keydown",inventoryKey);
     window.removeEventListener("cos-equipment-changed", equipmentChanged);
+    window.removeEventListener("cos-use-medkit", useMedkit);
     joy.removeEventListener("pointerdown",joyStart);
     driveJoy.removeEventListener("pointerdown",driveJoyStart);
     window.removeEventListener("pointermove",driveJoyMove);
