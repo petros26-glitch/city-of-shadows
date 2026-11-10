@@ -360,6 +360,13 @@ export function createCityGame(container, controls, characterData, onShopInterac
   let drivingVehicle = null;
   let driveForward = false, driveReverse = false;
   let vehicleSpeed = 0;
+  let destroyed = false;
+  const pendingUiTimers = new Set();
+  function scheduleUiReset(callback, delay) {
+    const timer = window.setTimeout(() => { pendingUiTimers.delete(timer); if (!destroyed) callback(); }, delay);
+    pendingUiTimers.add(timer);
+    return timer;
+  }
   const driveControls = controls.querySelector(".drive-controls");
   const driveForwardButton = controls.querySelector(".drive-forward");
   const driveReverseButton = controls.querySelector(".drive-reverse");
@@ -398,14 +405,17 @@ export function createCityGame(container, controls, characterData, onShopInterac
       vehicles.push({car:nearest.car,drivable:true,hijacked:true});
       environmentColliders.push({x:nearest.car.position.x,z:nearest.car.position.z,radius:1.55,vehicle:nearest.car});
     }
-    player.position.set(nearest.car.position.x,0,nearest.car.position.z-2.7);
+    const forward = new THREE.Vector3(Math.sin(nearest.car.rotation.y),0,Math.cos(nearest.car.rotation.y));
+    player.position.copy(nearest.car.position).addScaledVector(forward,-2.7);
+    player.position.y = 0;
     setDriving(true,nearest.car);
   }
   function exitVehicle() {
     if (!drivingVehicle) return;
     const car = drivingVehicle;
     const side = new THREE.Vector3(Math.cos(car.rotation.y),0,-Math.sin(car.rotation.y));
-    const candidates = [side.clone().multiplyScalar(2.7), side.clone().multiplyScalar(-2.7), new THREE.Vector3(0,0,3.2), new THREE.Vector3(0,0,-3.2)];
+    const forward = new THREE.Vector3(Math.sin(car.rotation.y),0,Math.cos(car.rotation.y));
+    const candidates = [side.clone().multiplyScalar(2.7), side.clone().multiplyScalar(-2.7), forward.clone().multiplyScalar(3.2), forward.clone().multiplyScalar(-3.2)];
     const isBlocked = position => {
       if (Math.abs(position.x)>42 || Math.abs(position.z)>42) return true;
       if (buildingColliders.some(b=>position.x+playerRadius>b.minX&&position.x-playerRadius<b.maxX&&position.z+playerRadius>b.minZ&&position.z-playerRadius<b.maxZ)) return true;
@@ -543,16 +553,16 @@ export function createCityGame(container, controls, characterData, onShopInterac
     return true;
   }
   function attack(e){
-    e.preventDefault();e.stopPropagation();if(attackCooldown>0)return;
+    e.preventDefault();e.stopPropagation();if(drivingVehicle || playerHealth<=0 || attackCooldown>0)return;
     attackButton.classList.add("pressed");attackCooldown=0.48;playerAttackTime=0.34;playerAttackSide=playerAttackSide===0?1:0;
     if(!hitMeleeTarget(findMeleeTarget(3.35),20,"punch"))controls.querySelector("#combat-readout").textContent="PUNCH MISSED · FACE A PERSON AND GET CLOSER";
-    setTimeout(()=>attackButton.classList.remove("pressed"),140);
+    scheduleUiReset(()=>attackButton.classList.remove("pressed"),140);
   }
   function kick(e){
-    e.preventDefault();e.stopPropagation();if(attackCooldown>0)return;
+    e.preventDefault();e.stopPropagation();if(drivingVehicle || playerHealth<=0 || attackCooldown>0)return;
     kickButton.classList.add("pressed");attackCooldown=0.72;playerKickTime=0.48;
     if(!hitMeleeTarget(findMeleeTarget(3.8),35,"kick"))controls.querySelector("#combat-readout").textContent="KICK MISSED · FACE A PERSON AND GET CLOSER";
-    setTimeout(()=>kickButton.classList.remove("pressed"),180);
+    scheduleUiReset(()=>kickButton.classList.remove("pressed"),180);
   }
 
   function runStart(e) {
@@ -562,6 +572,7 @@ export function createCityGame(container, controls, characterData, onShopInterac
 
   function blockStart(e) {
     e.preventDefault();
+    if (drivingVehicle || playerHealth<=0) return;
     e.stopPropagation();
     blockHeld = true;
     blockButton.classList.add("pressed");
@@ -574,6 +585,7 @@ export function createCityGame(container, controls, characterData, onShopInterac
 
   function dodge(e) {
     e.preventDefault();
+    if (drivingVehicle || playerHealth<=0) return;
     e.stopPropagation();
     let moveX = joystick.x
       + (keys.has("d") || keys.has("arrowright") ? 1 : 0)
@@ -595,7 +607,7 @@ export function createCityGame(container, controls, characterData, onShopInterac
     dodgeTime = 0.28;
     dodgeDistance = 2.2;
     dodgeButton.classList.add("pressed");
-    setTimeout(() => dodgeButton.classList.remove("pressed"), 260);
+    scheduleUiReset(() => dodgeButton.classList.remove("pressed"), 260);
   }
 
   attackButton.addEventListener("pointerdown", attack);
@@ -980,7 +992,17 @@ export function createCityGame(container, controls, characterData, onShopInterac
   animationId=requestAnimationFrame(loop);
 
   return function destroy(){
+    if (destroyed) return;
+    destroyed = true;
     cancelAnimationFrame(animationId);
+    pendingUiTimers.forEach(timer => clearTimeout(timer));
+    pendingUiTimers.clear();
+    keys.clear();
+    joystick = { x: 0, y: 0 };
+    driveJoystick = { x: 0, y: 0 };
+    driveForward = false;
+    driveReverse = false;
+    drivingVehicle = null;
     observer.disconnect();
     window.removeEventListener("keydown",keyDown);
     window.removeEventListener("keyup",keyUp);
@@ -1018,8 +1040,24 @@ export function createCityGame(container, controls, characterData, onShopInterac
     vehiclePrompt.remove();
     if(unbindForward)unbindForward(); if(unbindReverse)unbindReverse();
     if(driveExitButton)driveExitButton.removeEventListener("click",exitVehicle);
+    renderer.setAnimationLoop(null);
+    const disposedGeometries = new Set();
+    const disposedMaterials = new Set();
+    const disposedTextures = new Set();
+    scene.traverse(obj => {
+      if (obj.geometry && !disposedGeometries.has(obj.geometry)) { disposedGeometries.add(obj.geometry); obj.geometry.dispose(); }
+      const materials = obj.material ? (Array.isArray(obj.material) ? obj.material : [obj.material]) : [];
+      materials.forEach(material => {
+        if (!material || disposedMaterials.has(material)) return;
+        disposedMaterials.add(material);
+        Object.values(material).forEach(value => {
+          if (value && value.isTexture && !disposedTextures.has(value)) { disposedTextures.add(value); value.dispose(); }
+        });
+        material.dispose();
+      });
+    });
     renderer.dispose();
-    scene.traverse(obj=>{if(obj.geometry)obj.geometry.dispose();if(obj.material){if(Array.isArray(obj.material))obj.material.forEach(m=>m.dispose());else obj.material.dispose();}});
+    renderer.forceContextLoss();
     container.replaceChildren();
   };
 }
