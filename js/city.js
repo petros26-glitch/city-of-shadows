@@ -287,10 +287,11 @@ export function createCityGame(container, controls, characterData, onShopInterac
   scene.add(opponent);
   let opponentHealth = 100;
   let playerHealth = 100;
+  let vehicleHitCooldown = 0;
   const survival = { hunger: characterData?.needs?.hunger ?? 100, hydration: characterData?.needs?.hydration ?? 100, energy: characterData?.needs?.energy ?? 100 };
   let needsClock = 0;
   const initialNeedsHud = document.querySelector("#needs-hud");
-  if (initialNeedsHud) initialNeedsHud.textContent = `HUNGER ${Math.round(survival.hunger)}%  ·  WATER ${Math.round(survival.hydration)}%  ·  ENERGY ${Math.round(survival.energy)}%`;
+  if (initialNeedsHud) initialNeedsHud.textContent = `HEALTH ${playerHealth}%  ·  HUNGER ${Math.round(survival.hunger)}%  ·  WATER ${Math.round(survival.hydration)}%  ·  ENERGY ${Math.round(survival.energy)}%`;
   let attackCooldown = 0;
   let opponentAttackCooldown = 0;
   let dodgeTime = 0;
@@ -659,6 +660,20 @@ export function createCityGame(container, controls, characterData, onShopInterac
       if(t.car.position[axis]>52)t.car.position[axis]=-52;
       if(t.car.position[axis]<-52)t.car.position[axis]=52;
     });
+    // Moving traffic can injure the player on impact, with a short cooldown
+    // so one continuous overlap does not drain the entire health bar.
+    vehicleHitCooldown=Math.max(0,vehicleHitCooldown-dt);
+    if(!drivingVehicle && playerHealth>0 && vehicleHitCooldown===0){
+      const hitCar=trafficCars.find(t=>!t.hijacked&&Math.hypot(player.position.x-t.car.position.x,player.position.z-t.car.position.z)<2.15);
+      if(hitCar){
+        playerHealth=Math.max(0,playerHealth-10);
+        vehicleHitCooldown=1.15;
+        const healthHud=document.querySelector("#needs-hud");
+        if(healthHud)healthHud.textContent=`HEALTH ${playerHealth}%  ·  HUNGER ${Math.round(survival.hunger)}%  ·  WATER ${Math.round(survival.hydration)}%  ·  ENERGY ${Math.round(survival.energy)}%`;
+        const status=controls.querySelector(".city-status");
+        if(status)status.textContent=playerHealth>0?`HIT BY CAR · HEALTH ${playerHealth}%`:"YOU WERE HIT BY A CAR · YOU ARE DOWN";
+      }
+    }
     const runningInput = sprint||keys.has("shift")||keys.has("m");
     needsClock += dt;
     if (needsClock >= 5) {
@@ -668,7 +683,7 @@ export function createCityGame(container, controls, characterData, onShopInterac
       survival.energy = Math.max(0, Math.min(100, survival.energy + (drivingVehicle ? elapsed * 0.25 : (joystick.x!==0 || joystick.y!==0 || ["w","a","s","d","arrowup","arrowdown","arrowleft","arrowright"].some(key=>keys.has(key))) ? (runningInput ? -elapsed * 1.7 : elapsed * 0.18) : elapsed * 1.1)));
       if (typeof onNeedsUpdate === "function") onNeedsUpdate({ ...survival });
       const needsHud = document.querySelector("#needs-hud");
-      if (needsHud) needsHud.textContent = `HUNGER ${Math.round(survival.hunger)}%  ·  WATER ${Math.round(survival.hydration)}%  ·  ENERGY ${Math.round(survival.energy)}%`;
+      if (needsHud) needsHud.textContent = `HEALTH ${playerHealth}%  ·  HUNGER ${Math.round(survival.hunger)}%  ·  WATER ${Math.round(survival.hydration)}%  ·  ENERGY ${Math.round(survival.energy)}%`;
     }
     if (drivingVehicle) {
       const car=drivingVehicle;
