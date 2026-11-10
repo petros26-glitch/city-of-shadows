@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#09090d">
   <meta name="description" content="CITY OF SHADOWS — a 3D African open-world gangster survival game created by Dsquare.">
   <title>CITY OF SHADOWS — Created by Dsquare</title>
-  <link rel="stylesheet" href="./css/style.css?v=23">
+  <link rel="stylesheet" href="./css/style.css?v=24">
   <script type="importmap">
     {
       "imports": {
@@ -14,7 +14,7 @@
       }
     }
   </script>
-  <script type="module" src="./js/main.js?v=39"></script>
+  <script type="module" src="./js/main.js?v=40"></script>
 </head>
 <body>
   <div class="ambient ambient-one"></div>
@@ -164,7 +164,7 @@
       <div class="city-hud">
         <div class="city-status-row">
           <div class="city-status">EXPLORE THE NEIGHBOURHOOD</div>
-          <div class="city-hud-actions"><button id="game-shop-button" class="game-inventory-button" type="button">SHOP</button><button id="game-inventory-button" class="game-inventory-button" type="button">BAG / WARDROBE</button><button id="game-menu-button" class="game-inventory-button" type="button">GAME MENU ☰</button></div>
+          <div class="city-hud-actions"><button id="game-shop-button" class="game-inventory-button" type="button">SHOP</button><button id="game-jobs-button" class="game-inventory-button" type="button">JOBS</button><button id="game-inventory-button" class="game-inventory-button" type="button">BAG / WARDROBE</button><button id="game-menu-button" class="game-inventory-button" type="button">GAME MENU ☰</button></div>
         </div>
         <div id="needs-hud" class="needs-hud">HUNGER 100% · WATER 100% · ENERGY 100%</div>
         <div class="city-controls" id="city-controls">
@@ -187,6 +187,7 @@
   </main>
 
   <section id="game-menu-panel" class="shop-panel hidden" aria-label="In-game menu"><div class="shop-card game-menu-card"><div class="shop-heading"><div><p class="eyebrow"><span></span> CITY OF SHADOWS</p><h2>GAME <em>MENU.</em></h2></div></div><div class="game-menu-actions"><button id="game-menu-resume-button" class="button button-primary">RESUME GAME</button><button id="game-menu-inventory-button" class="button button-secondary">BAG / WARDROBE</button><button id="game-menu-home-button" class="button button-secondary">RETURN TO MAIN MENU</button></div></div></section>
+  <section id="jobs-panel" class="shop-panel hidden" aria-label="City jobs"><div class="shop-card game-menu-card"><div class="shop-heading"><div><p class="eyebrow"><span></span> EARN YOUR KEEP</p><h2>CITY <em>JOBS.</em></h2></div><button id="jobs-close-button" class="text-button">CLOSE ✕</button></div><p class="shop-intro">Take a local delivery job and earn cash by reaching the market.</p><article class="shop-item job-card"><div><strong>Market Delivery</strong><span>Reach the City Market on foot · Reward ₦120</span></div><button id="start-delivery-job-button" class="shop-buy-button">ACCEPT</button></article><p id="jobs-message" class="shop-message" aria-live="polite">Complete jobs to earn money for supplies and clothes.</p></div></section>
   <section id="shop-panel" class="shop-panel hidden" aria-label="Neighbourhood shop">
     <div class="shop-card">
       <div class="shop-heading">
