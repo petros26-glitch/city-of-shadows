@@ -1048,7 +1048,6 @@ export function createCityGame(container, controls, characterData, onShopInterac
     window.removeEventListener("keyup",keyUp);
     window.removeEventListener("keydown",inventoryKey);
     window.removeEventListener("cos-equipment-changed", equipmentChanged);
-    if (inventoryButton) inventoryButton.removeEventListener("click", openInventory);
     joy.removeEventListener("pointerdown",joyStart);
     driveJoy.removeEventListener("pointerdown",driveJoyStart);
     window.removeEventListener("pointermove",driveJoyMove);
