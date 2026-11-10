@@ -747,7 +747,13 @@ export function createCityGame(container, controls, characterData, onShopInterac
       else vehicleSpeed*=Math.max(0,1-2.8*dt);
       if(Math.abs(vehicleSpeed)<0.08)vehicleSpeed=0;
       if(Math.abs(vehicleSpeed)>0.12){
-        car.rotation.y+=steer*dt*1.35*Math.sign(vehicleSpeed);
+        const oldRotation=car.rotation.y;
+        const nextRotation=oldRotation+steer*dt*1.35*Math.sign(vehicleSpeed);
+        // Do not let steering rotate the car's body through a wall while it
+        // is stopped against a building; test the full rotated footprint first.
+        car.rotation.y=nextRotation;
+        const rotationBlocked=buildingColliders.some(b=>overlapsVehicleBuilding(car.position.x,car.position.z,car,b));
+        if(rotationBlocked)car.rotation.y=oldRotation;
         const oldX=car.position.x,oldZ=car.position.z;
         const nx=THREE.MathUtils.clamp(oldX+Math.sin(car.rotation.y)*vehicleSpeed*dt,-44,44);
         const nz=THREE.MathUtils.clamp(oldZ+Math.cos(car.rotation.y)*vehicleSpeed*dt,-44,44);
