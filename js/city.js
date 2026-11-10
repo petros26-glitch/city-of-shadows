@@ -356,6 +356,7 @@ export function createCityGame(container, controls, characterData, onShopInterac
   let driveJoystick = { x: 0, y: 0 };
   let drivingVehicle = null;
   let driveForward = false, driveReverse = false;
+  let vehicleSpeed = 0;
   const driveControls = controls.querySelector(".drive-controls");
   const driveForwardButton = controls.querySelector(".drive-forward");
   const driveReverseButton = controls.querySelector(".drive-reverse");
@@ -370,6 +371,7 @@ export function createCityGame(container, controls, characterData, onShopInterac
     if (vehiclePrompt) vehiclePrompt.hidden = active;
     player.visible = !active;
     driveForward = false; driveReverse = false;
+    vehicleSpeed = 0;
     driveJoystick = { x: 0, y: 0 };
     driveKnob.style.transform = "translate(0,0)";
     if (active) controls.querySelector("#combat-readout").textContent = "DRIVING · JOYSTICK / A-D TO STEER · HOLD ACCELERATE OR REVERSE";
@@ -377,7 +379,7 @@ export function createCityGame(container, controls, characterData, onShopInterac
   }
   function enterNearestVehicle() {
     if (drivingVehicle) return;
-    let nearest = null, distance = 8.5;
+    let nearest = null, distance = 5.6;
     for (const entry of vehicles) {
       const d = Math.hypot(player.position.x-entry.car.position.x, player.position.z-entry.car.position.z);
       if (d < distance) { nearest = {car:entry.car,traffic:false}; distance = d; }
@@ -670,24 +672,28 @@ export function createCityGame(container, controls, characterData, onShopInterac
     }
     if (drivingVehicle) {
       const car=drivingVehicle;
-      const steer=driveJoystick.x+(keys.has("d")||keys.has("arrowright")?1:0)-(keys.has("a")||keys.has("arrowleft")?1:0);
+      const steer=THREE.MathUtils.clamp(driveJoystick.x+(keys.has("d")||keys.has("arrowright")?1:0)-(keys.has("a")||keys.has("arrowleft")?1:0),-1,1);
       const analogThrottle=-driveJoystick.y;
       const throttle=Math.abs(analogThrottle)>.18?Math.sign(analogThrottle):(driveForward||keys.has("w")||keys.has("arrowup")?1:0)-(driveReverse||keys.has("s")||keys.has("arrowdown")?1:0);
-      if(throttle!==0){
-        car.rotation.y += steer*dt*1.05*Math.sign(throttle);
-        const velocity=throttle*8.2*dt;
-        const nx=THREE.MathUtils.clamp(car.position.x+Math.sin(car.rotation.y)*velocity,-44,44);
-        const nz=THREE.MathUtils.clamp(car.position.z+Math.cos(car.rotation.y)*velocity,-44,44);
+      // Horizontal joystick input steers; vertical input accelerates or reverses.
+      if(throttle!==0) vehicleSpeed=THREE.MathUtils.clamp(vehicleSpeed+throttle*14*dt,-9,11);
+      else vehicleSpeed*=Math.max(0,1-2.8*dt);
+      if(Math.abs(vehicleSpeed)<0.08)vehicleSpeed=0;
+      if(Math.abs(vehicleSpeed)>0.12){
+        car.rotation.y+=steer*dt*1.35*Math.sign(vehicleSpeed);
+        const nx=THREE.MathUtils.clamp(car.position.x+Math.sin(car.rotation.y)*vehicleSpeed*dt,-44,44);
+        const nz=THREE.MathUtils.clamp(car.position.z+Math.cos(car.rotation.y)*vehicleSpeed*dt,-44,44);
         const blockedBuilding=buildingColliders.some(b=>nx+1.15>b.minX&&nx-1.15<b.maxX&&nz+2.1>b.minZ&&nz-2.1<b.maxZ);
         const blockedStatic=environmentColliders.some(o=>!o.vehicle&&Math.hypot(nx-o.x,nz-o.z)<o.radius+1.2);
         const blockedParked=vehicles.some(v=>v.car!==car&&Math.hypot(nx-v.car.position.x,nz-v.car.position.z)<3.3);
         const blockedTraffic=trafficCars.some(t=>t.car!==car&&!t.hijacked&&Math.hypot(nx-t.car.position.x,nz-t.car.position.z)<3.3);
         if(!blockedBuilding&&!blockedStatic&&!blockedParked&&!blockedTraffic){car.position.x=nx;car.position.z=nz;}
+        else vehicleSpeed=0;
       }
       const behind=new THREE.Vector3(-Math.sin(car.rotation.y)*8,4.2,-Math.cos(car.rotation.y)*8).add(car.position);
       camera.position.lerp(behind,0.14);camera.lookAt(car.position.x,1.1,car.position.z);
       renderer.render(scene,camera);
-      controls.querySelector(".city-status").textContent=throttle>0?"DRIVING FORWARD":throttle<0?"REVERSING":"VEHICLE STOPPED";
+      controls.querySelector(".city-status").textContent=vehicleSpeed>0.15?"DRIVING FORWARD":vehicleSpeed< -0.15?"REVERSING":"VEHICLE STOPPED";
       const readout=controls.querySelector("#combat-readout");if(readout)readout.textContent="STEER WITH JOYSTICK · HOLD ▲ TO ACCELERATE · HOLD ▼ TO REVERSE";
       return;
     }
@@ -734,7 +740,10 @@ export function createCityGame(container, controls, characterData, onShopInterac
     const blockedTreeX = environmentColliders.some(o =>
       Math.hypot(nextX-o.x, player.position.z-o.z) < o.radius + radius
     );
-    if (!blockedBuildingX && !blockedTreeX && !blockedByPedestrianX && !blockedByOpponentX) player.position.x=nextX;
+    const blockedVehicleX = trafficCars.some(t => !t.hijacked &&
+      Math.hypot(nextX-t.car.position.x, player.position.z-t.car.position.z) < 2.05
+    );
+    if (!blockedBuildingX && !blockedTreeX && !blockedVehicleX && !blockedByPedestrianX && !blockedByOpponentX) player.position.x=nextX;
     const blockedByPedestrianZ = pedestrians.some(person => person.alive &&
       Math.hypot(player.position.x-person.npc.position.x, nextZ-person.npc.position.z) < radius + person.radius
     );
@@ -746,7 +755,10 @@ export function createCityGame(container, controls, characterData, onShopInterac
     const blockedTreeZ = environmentColliders.some(o =>
       Math.hypot(player.position.x-o.x, nextZ-o.z) < o.radius + radius
     );
-    if (!blockedBuildingZ && !blockedTreeZ && !blockedByPedestrianZ && !blockedByOpponentZ) player.position.z=nextZ;
+    const blockedVehicleZ = trafficCars.some(t => !t.hijacked &&
+      Math.hypot(player.position.x-t.car.position.x, nextZ-t.car.position.z) < 2.05
+    );
+    if (!blockedBuildingZ && !blockedTreeZ && !blockedVehicleZ && !blockedByPedestrianZ && !blockedByOpponentZ) player.position.z=nextZ;
     if(moving) player.rotation.y=Math.atan2(dx,dz);
 
     // Animate arms and legs while walking or running.
@@ -896,7 +908,7 @@ export function createCityGame(container, controls, characterData, onShopInterac
         shopPrompt.style.top = py + "px";
       }
     }
-    let nearestVehicle=null,nearestVehicleDistance=8.5;
+    let nearestVehicle=null,nearestVehicleDistance=5.6;
     for(const entry of vehicles){
       const d=Math.hypot(player.position.x-entry.car.position.x,player.position.z-entry.car.position.z);
       if(d<nearestVehicleDistance){nearestVehicle={car:entry.car,traffic:false};nearestVehicleDistance=d;}
