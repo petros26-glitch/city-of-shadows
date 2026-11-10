@@ -1013,20 +1013,30 @@ button:disabled {
 }
 @media (max-width: 1000px) {
   #city-controls .mobile-actions {
-    grid-template-columns: repeat(3, 44px) !important;
-    grid-template-rows: repeat(2, 44px) !important;
-    gap: 4px !important;
+    display: block !important;
+    position: relative !important;
+    width: 144px !important;
+    height: 144px !important;
+    flex: 0 0 144px !important;
   }
   #city-controls .mobile-actions .action-button {
+    position: absolute !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
     width: 44px !important;
     height: 44px !important;
     min-width: 44px !important;
-    border-radius: 10px !important;
-    font-size: 16px !important;
+    padding: 0 !important;
+    border-radius: 50% !important;
+    font-size: 17px !important;
   }
-  #city-controls .action-button small {
-    font-size: 7px !important;
-  }
+  #city-controls .mobile-actions .attack-button { left: 50px !important; top: 0 !important; }
+  #city-controls .mobile-actions .kick-button { right: 0 !important; top: 50px !important; }
+  #city-controls .mobile-actions .run-action-button { right: 0 !important; bottom: 0 !important; }
+  #city-controls .mobile-actions .dodge-button { left: 50px !important; bottom: 0 !important; }
+  #city-controls .mobile-actions .block-button { left: 0 !important; top: 50px !important; }
+  #city-controls .action-button small { display: none !important; }
   #city-controls .drive-button {
     width: 46px !important;
     min-width: 46px !important;
@@ -1040,27 +1050,36 @@ button:disabled {
 }
 @media (max-width: 420px) {
   #city-controls .mobile-actions {
-    grid-template-columns: repeat(3, 42px) !important;
-    grid-template-rows: repeat(2, 42px) !important;
-    gap: 3px !important;
+    width: 136px !important;
+    height: 136px !important;
+    flex-basis: 136px !important;
   }
   #city-controls .mobile-actions .action-button {
     width: 42px !important;
     height: 42px !important;
     min-width: 42px !important;
   }
+  #city-controls .mobile-actions .attack-button,
+  #city-controls .mobile-actions .dodge-button { left: 47px !important; }
+  #city-controls .mobile-actions .kick-button,
+  #city-controls .mobile-actions .block-button { top: 47px !important; }
+  #city-controls .mobile-actions .run-action-button { right: 0 !important; bottom: 0 !important; }
 }
 @media (orientation: landscape) and (max-width: 1000px) {
   #city-controls .mobile-actions {
-    grid-template-columns: repeat(3, 44px) !important;
-    grid-template-rows: repeat(2, 44px) !important;
-    gap: 4px !important;
+    width: 136px !important;
+    height: 136px !important;
+    flex-basis: 136px !important;
   }
   #city-controls .mobile-actions .action-button {
     width: 44px !important;
     height: 44px !important;
     min-width: 44px !important;
   }
+  #city-controls .mobile-actions .attack-button,
+  #city-controls .mobile-actions .dodge-button { left: 46px !important; }
+  #city-controls .mobile-actions .kick-button,
+  #city-controls .mobile-actions .block-button { top: 46px !important; }
   #city-controls .joystick,
   #city-controls .drive-joystick {
     width: 68px !important;
