@@ -809,8 +809,9 @@ export function createCityGame(container, controls, characterData, onShopInterac
       return;
     }
     if (playerHealth <= 0) {
+      respawnButton.hidden = false;
       const readout=controls.querySelector("#combat-readout");
-      if(readout)readout.textContent="YOU ARE DOWN · RETURN TO MAIN MENU AND START AGAIN";
+      if(readout)readout.textContent="YOU ARE DOWN · TAP RESPAWN TO CONTINUE";
       renderer.render(scene,camera);
       return;
     }
