@@ -50,7 +50,7 @@ function loadShopData() {
   inventory = {};
   if (storedInventory && typeof storedInventory === "object" && !Array.isArray(storedInventory)) {
     for (const [item, count] of Object.entries(storedInventory)) {
-      if (["meal","water","hoodie","jacket","jeans","sneakers"].includes(item) && Number.isFinite(Number(count)) && Number(count) > 0) inventory[item] = Math.floor(Number(count));
+      if (["meal","water","hoodie","jacket","jeans","sneakers","medkit","fruit","rice","vegetables","fish"].includes(item) && Number.isFinite(Number(count)) && Number(count) > 0) inventory[item] = Math.floor(Number(count));
     }
   }
   const storedEquipment = readStoredJSON(EQUIPMENT_KEY, {});
@@ -74,7 +74,7 @@ function renderShop() {
     : "No items yet";
 }
 function itemName(item) {
-  return ({ meal:"Street Meal", water:"Bottled Water", hoodie:"Street Hoodie", jacket:"Denim Jacket", jeans:"Blue Jeans", sneakers:"Fresh Sneakers" })[item] || item;
+  return ({ meal:"Street Meal", water:"Bottled Water", hoodie:"Street Hoodie", jacket:"Denim Jacket", jeans:"Blue Jeans", sneakers:"Fresh Sneakers", medkit:"First Aid Kit", fruit:"Fresh Fruit", rice:"Rice Bowl", vegetables:"Fresh Vegetables", fish:"Grilled Fish" })[item] || item;
 }
 function savePlayerData() {
   try {
@@ -120,14 +120,17 @@ function renderInventory() {
     info.append(name, quantity);
     const action = document.createElement("button");
     action.className = "inventory-action";
-    const consumable = item === "meal" || item === "water";
+    const consumable = ["meal","water","medkit","fruit","rice","vegetables","fish"].includes(item);
     action.textContent = consumable ? "USE" : (Object.values(equipment).includes(item) ? "REMOVE" : "WEAR");
     action.addEventListener("click", () => {
       if (consumable) {
         inventory[item] = Math.max(0, (inventory[item] || 0) - 1);
-        if (item === "meal") needs.hunger = Math.min(100, needs.hunger + 35);
+        if (["meal","rice","fish"].includes(item)) needs.hunger = Math.min(100, needs.hunger + (item === "rice" ? 42 : item === "fish" ? 38 : 35));
+        if (item === "fruit") { needs.hunger = Math.min(100, needs.hunger + 20); needs.hydration = Math.min(100, needs.hydration + 8); }
+        if (item === "vegetables") needs.hunger = Math.min(100, needs.hunger + 25);
         if (item === "water") needs.hydration = Math.min(100, needs.hydration + 40);
-        if (item === "meal") needs.energy = Math.min(100, needs.energy + 8);
+        if (["meal","rice","fish"].includes(item)) needs.energy = Math.min(100, needs.energy + 8);
+        if (item === "medkit") window.dispatchEvent(new CustomEvent("cos-use-medkit"));
         savePlayerData();
         const needsHud = $("#needs-hud");
         if (needsHud) {
@@ -149,10 +152,14 @@ function renderInventory() {
     $("#inventory-list").appendChild(row);
   });
 }
-function openShop() {
+function openShop(store = "corner") {
   loadShopData();
   renderShop();
-  $("#shop-message").textContent = "Choose an item to buy. Purchases go into your inventory.";
+  const market = store === "market";
+  $("#shop-title").innerHTML = market ? 'CITY <em>MARKET.</em>' : 'THE <em>SHOP.</em>';
+  $("#shop-intro").textContent = market ? "Fresh food and market supplies from local traders." : "Buy useful supplies, first aid and streetwear.";
+  document.querySelectorAll(".shop-item[data-store]").forEach(row => { row.hidden = row.dataset.store !== (market ? "market" : "corner"); });
+  $("#shop-message").textContent = market ? "Choose fresh goods from the market stalls." : "Choose an item to buy. Purchases go into your inventory.";
   $("#shop-panel").classList.remove("hidden");
 }
 function closeShop() { $("#shop-panel").classList.add("hidden"); }
