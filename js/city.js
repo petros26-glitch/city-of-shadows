@@ -744,7 +744,11 @@ export function createCityGame(container, controls, characterData, onShopInterac
   }
 
   function runStart(e) {
-    e.preventDefault(); e.stopPropagation(); sprint = true; runButton.classList.add("pressed");
+    e.preventDefault();
+    e.stopPropagation();
+    try { runButton.setPointerCapture(e.pointerId); } catch {}
+    sprint = true;
+    runButton.classList.add("pressed");
   }
   function runEnd() { sprint = false; runButton.classList.remove("pressed"); }
 
@@ -752,6 +756,7 @@ export function createCityGame(container, controls, characterData, onShopInterac
     e.preventDefault();
     if (drivingVehicle || playerHealth<=0) return;
     e.stopPropagation();
+    try { blockButton.setPointerCapture(e.pointerId); } catch {}
     blockHeld = true;
     blockButton.classList.add("pressed");
     controls.querySelector("#combat-readout").textContent = "BLOCKING · HOLD TO DEFEND";
