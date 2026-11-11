@@ -234,7 +234,7 @@ export function createCityGame(container, controls, characterData, onShopInterac
     {minX:safehouseX-3.5,maxX:safehouseX-1.5,minZ:safehouseZ+3.325,maxZ:safehouseZ+3.675},
     {minX:safehouseX+1.5,maxX:safehouseX+3.5,minZ:safehouseZ+3.325,maxZ:safehouseZ+3.675}
   );
-  const safehouseRestPoint = new THREE.Vector3(safehouseX-1.2,0,safehouseZ-0.8);
+  const safehouseRestPoint = new THREE.Vector3(safehouseX,0,safehouseZ+2.0);
   const safehousePrompt = document.createElement("button");
   safehousePrompt.type = "button"; safehousePrompt.className = "door-interact-prompt";
   safehousePrompt.textContent = "REST · RECOVER NEEDS"; safehousePrompt.hidden = true;
@@ -1175,9 +1175,10 @@ export function createCityGame(container, controls, characterData, onShopInterac
 
     // Display the shop interaction over the actual doorway when the player is close.
     const shopDistance = Math.hypot(player.position.x-shopDoorPoint.x, player.position.z-shopDoorPoint.z);
-    // Keep a large, reliably clickable shop action visible whenever the player
-    // is near the storefront; do not hide it based on 3D camera projection.
-    shopPrompt.hidden = shopDistance > 9;
+    // The shop entrance is on the south/front side; do not offer entry from behind or through side walls.
+    const atShopFront = player.position.z > -2.2 && player.position.z < 2.8 &&
+      player.position.x > 10.2 && player.position.x < 13.9;
+    shopPrompt.hidden = !atShopFront || shopDistance > 4.2;
     if (!shopPrompt.hidden) {
       shopPrompt.style.left = "50%";
       shopPrompt.style.top = "76%";
