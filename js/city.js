@@ -432,11 +432,18 @@ export function createCityGame(container, controls, characterData, onShopInterac
     const readout = controls.querySelector("#combat-readout");
     if (readout) readout.textContent = "FIRST AID USED · HEALTH " + playerHealth + "%";
   };
+  const restoreHealth = event => {
+    const amount = Math.max(0, Math.min(30, Number(event.detail?.amount) || 0));
+    playerHealth = Math.min(100, playerHealth + amount);
+    if (playerHealth > 0) respawnButton.hidden = true;
+  };
+  window.addEventListener("cos-restore-health", restoreHealth);
   window.addEventListener("cos-use-medkit", useMedkit);
   const restAtSafehouse = () => {
+    playerHealth = Math.min(100, playerHealth + 35);
     survival.energy = Math.min(100,survival.energy+45);
-    survival.hunger = Math.min(100,survival.hunger+12);
-    survival.hydration = Math.min(100,survival.hydration+12);
+    survival.hunger = 100;
+    survival.hydration = 100;
     if (typeof onNeedsUpdate === "function") onNeedsUpdate({...survival});
     const healthHud = document.querySelector("#needs-hud");
     if (healthHud) healthHud.textContent = `HEALTH ${playerHealth}%  ·  HUNGER ${Math.round(survival.hunger)}%  ·  WATER ${Math.round(survival.hydration)}%  ·  ENERGY ${Math.round(survival.energy)}%`;
@@ -898,7 +905,7 @@ export function createCityGame(container, controls, characterData, onShopInterac
       if(Math.abs(vehicleSpeed)<0.08)vehicleSpeed=0;
       if(Math.abs(vehicleSpeed)>0.12){
         const oldRotation=car.rotation.y;
-        const nextRotation=oldRotation+steer*dt*1.35*Math.sign(vehicleSpeed);
+        const nextRotation=oldRotation-steer*dt*1.35*Math.sign(vehicleSpeed);
         // Do not let steering rotate the car's body through a wall while it
         // is stopped against a building; test the full rotated footprint first.
         car.rotation.y=nextRotation;
@@ -938,10 +945,11 @@ export function createCityGame(container, controls, characterData, onShopInterac
     }
     let x=joystick.x+(keys.has("d")||keys.has("arrowright")?1:0)-(keys.has("a")||keys.has("arrowleft")?1:0);
     let z=joystick.y+(keys.has("s")||keys.has("arrowdown")?1:0)-(keys.has("w")||keys.has("arrowup")?1:0);
-    const length=Math.hypot(x,z);
-    if(length>1){x/=length;z/=length;}
-    const moving=length>0.08;
+    let length=Math.hypot(x,z);
+    if(length>1){x/=length;z/=length;length=1;}
     const fast=sprint||keys.has("shift")||keys.has("m");
+    if(fast && length<0.08 && playerHealth>0 && !drivingVehicle){x=Math.sin(player.rotation.y);z=Math.cos(player.rotation.y);length=1;}
+    const moving=length>0.08;
 
     if (survival.energy < 8 && fast) sprint = false;
     attackCooldown = Math.max(0, attackCooldown - dt);
@@ -1219,6 +1227,12 @@ export function createCityGame(container, controls, characterData, onShopInterac
     }
     opponent.visible = true;
     renderer.render(scene,camera);
+    const menuHealth=document.querySelector("#menu-health-value"),menuEnergy=document.querySelector("#menu-energy-value");
+    const menuHealthFill=document.querySelector("#menu-health-fill"),menuEnergyFill=document.querySelector("#menu-energy-fill");
+    if(menuHealth)menuHealth.textContent=Math.round(playerHealth)+"%";
+    if(menuEnergy)menuEnergy.textContent=Math.round(survival.energy)+"%";
+    if(menuHealthFill)menuHealthFill.style.width=Math.max(0,Math.min(100,playerHealth))+"%";
+    if(menuEnergyFill)menuEnergyFill.style.width=Math.max(0,Math.min(100,survival.energy))+"%";
     const status=controls.querySelector(".city-status");
     status.textContent=vehicleHitMessageTime>0?vehicleHitMessage:(moving?(fast?"RUNNING":"WALKING"):"EXPLORE THE NEIGHBOURHOOD");
   }
@@ -1242,6 +1256,7 @@ export function createCityGame(container, controls, characterData, onShopInterac
     window.removeEventListener("keydown",inventoryKey);
     window.removeEventListener("cos-equipment-changed", equipmentChanged);
     window.removeEventListener("cos-use-medkit", useMedkit);
+    window.removeEventListener("cos-restore-health", restoreHealth);
     window.removeEventListener("cos-rest-safehouse",restAtSafehouse);
     window.removeEventListener("cos-start-delivery-job", startDeliveryJob);
     joy.removeEventListener("pointerdown",joyStart);
