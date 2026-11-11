@@ -127,12 +127,14 @@ function renderInventory() {
       if (consumable) {
         inventory[item] = Math.max(0, (inventory[item] || 0) - 1);
         if (["meal","rice","fish"].includes(item)) {
-          needs.energy = Math.min(100, needs.energy + (item === "rice" ? 24 : item === "fish" ? 20 : 18));
+          const energy = item === "rice" ? 24 : item === "fish" ? 20 : 18;
+          needs.energy = Math.min(100, needs.energy + energy);
+          window.dispatchEvent(new CustomEvent("cos-restore-energy", { detail: { amount: energy } }));
           window.dispatchEvent(new CustomEvent("cos-restore-health", { detail: { amount: item === "rice" ? 8 : 10 } }));
         }
-        if (item === "fruit") needs.energy = Math.min(100, needs.energy + 12);
-        if (item === "vegetables") needs.energy = Math.min(100, needs.energy + 16);
-        if (item === "water") needs.energy = Math.min(100, needs.energy + 10);
+        if (item === "fruit") { needs.energy = Math.min(100, needs.energy + 12); window.dispatchEvent(new CustomEvent("cos-restore-energy", { detail: { amount: 12 } })); }
+        if (item === "vegetables") { needs.energy = Math.min(100, needs.energy + 16); window.dispatchEvent(new CustomEvent("cos-restore-energy", { detail: { amount: 16 } })); }
+        if (item === "water") { needs.energy = Math.min(100, needs.energy + 10); window.dispatchEvent(new CustomEvent("cos-restore-energy", { detail: { amount: 10 } })); }
         if (item === "medkit") window.dispatchEvent(new CustomEvent("cos-use-medkit"));
         savePlayerData();
         const needsHud = $("#needs-hud");
