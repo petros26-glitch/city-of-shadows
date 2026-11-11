@@ -358,6 +358,23 @@ export function createCityGame(container, controls, characterData, onShopInterac
 
   const player = new THREE.Group();
   const playerParts = makeHumanoid(player,shirt,skin,pants,playerShoes,hair,characterData?.hair || "short");
+  const wornAccessories = characterData?.accessories || {};
+  const accessoryGold = new THREE.MeshStandardMaterial({ color:"#d6ad55", metalness:0.78, roughness:0.28 });
+  const accessoryDark = new THREE.MeshStandardMaterial({ color:"#17191f", metalness:0.25, roughness:0.35 });
+  const addPlayerAccessory = (geometry,material,x,y,z) => block(geometry,material,x,y,z,player);
+  if (wornAccessories.glasses) {
+    addPlayerAccessory(new THREE.TorusGeometry(0.078,0.012,6,20),accessoryDark,-0.09,2.1,0.205);
+    addPlayerAccessory(new THREE.TorusGeometry(0.078,0.012,6,20),accessoryDark,0.09,2.1,0.205);
+    addPlayerAccessory(new THREE.BoxGeometry(0.045,0.012,0.014),accessoryDark,0,2.1,0.205);
+  }
+  if (wornAccessories.chain) {
+    const chain = addPlayerAccessory(new THREE.TorusGeometry(0.18,0.016,6,32),accessoryGold,0,1.72,0.1);
+    chain.rotation.x = Math.PI / 2;
+  }
+  if (wornAccessories.watch) {
+    addPlayerAccessory(new THREE.BoxGeometry(0.13,0.075,0.105),accessoryGold,-0.49,1.02,0.015);
+    addPlayerAccessory(new THREE.BoxGeometry(0.15,0.035,0.12),accessoryDark,-0.49,1.02,0.015);
+  }
   const equipmentChanged = event => {
     const current = event.detail || {};
     shirt.color.set(current.top === "jacket" ? "#343b45" : current.top === "hoodie" ? "#7b2630" : (characterData?.gender === "female" ? "#55242c" : "#292a31"));
