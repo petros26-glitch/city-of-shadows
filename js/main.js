@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { createCityGame } from "./city.js?v=45";
+import { createCityGame } from "./city.js?v=46";
 
 const STORAGE_KEY = "cos-player-character-v1";
 const state = {
@@ -500,14 +500,11 @@ function bindEvents() {
     if (event.target.id === "game-menu-panel") $("#game-menu-panel").classList.add("hidden");
   });
   $("#shop-close-button").addEventListener("click", closeShop);
-  $("#game-jobs-button").addEventListener("click", openJobs);
   $("#jobs-close-button").addEventListener("click", closeJobs);
   $("#jobs-panel").addEventListener("click", event => { if (event.target.id === "jobs-panel") closeJobs(); });
   $("#start-delivery-job-button").addEventListener("click", startDeliveryJob);
   $("#inventory-close-button").addEventListener("click", closeInventory);
   $("#inventory-panel").addEventListener("click", event => { if (event.target.id === "inventory-panel") closeInventory(); });
-  $("#game-shop-button").addEventListener("click", openShop);
-   $("#game-inventory-button").addEventListener("click", openInventory);
   $("#game-menu-button").addEventListener("click", () => {
     $("#game-menu-panel").classList.remove("hidden");
     $("#game-menu-button").setAttribute("aria-expanded", "true");
