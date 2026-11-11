@@ -393,6 +393,10 @@ export function createCityGame(container, controls, characterData, onShopInterac
     state.flames.visible=state.damage>=76;
     if(drivingVehicle===car&&impactSpeed>2){
       playerHealth=Math.max(0,playerHealth-Math.max(2,Math.round(Math.abs(impactSpeed)*1.45)));
+      if(playerHealth<=0){
+        player.position.copy(car.position);player.position.y=0;player.visible=true;
+        setDriving(false);
+      }
     }
     if(drivingVehicle===car)updateVehicleCondition(car);
     const readout=controls.querySelector("#combat-readout");
@@ -1192,6 +1196,7 @@ export function createCityGame(container, controls, characterData, onShopInterac
 
     // Pedestrians walk along short street routes and turn around at each end.
     pedestrians.forEach(person => {
+      person.vehicleHitCooldown=Math.max(0,(person.vehicleHitCooldown||0)-dt);
       if (!person.alive) {
         person.respawnTime = Math.max(0,person.respawnTime-dt);
         if (person.respawnTime === 0) {
