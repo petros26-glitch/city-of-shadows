@@ -1214,3 +1214,6 @@ button:disabled {
 .orientation-choice>span{grid-column:1/-1;color:var(--muted);font-size:10px;font-weight:800;letter-spacing:1.5px}
 .layout-choice-button{min-height:42px;border:1px solid var(--line);border-radius:8px;background:rgba(255,255,255,.04);color:var(--text);font-size:11px;font-weight:800;letter-spacing:1px}
 .layout-choice-button.active{border-color:var(--gold);color:var(--gold);background:rgba(199,155,85,.12)}
+
+/* Keep the three-line menu pinned to the top edge above gameplay controls. */
+.city-hud-actions{position:fixed;top:88px;right:clamp(12px,3vw,28px);z-index:80}
