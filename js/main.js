@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { createCityGame } from "./city.js?v=40";
+import { createCityGame } from "./city.js?v=41";
 
 const STORAGE_KEY = "cos-player-character-v1";
 const state = {
@@ -7,7 +7,8 @@ const state = {
   gender: "male",
   age: 20,
   skin: "#6f402d",
-  hair: "short"
+  hair: "short",
+  accessories: { glasses: false, chain: false, watch: false }
 };
 
 const $ = (selector) => document.querySelector(selector);
@@ -263,7 +264,12 @@ function loadSavedCharacter() {
     gender: data.gender === "female" ? "female" : "male",
     age: Number.isFinite(Number(data.age)) ? Math.min(25,Math.max(18,Math.round(Number(data.age)))) : 20,
     skin: ["#6f402d","#965d40","#bd805d","#d49b78"].includes(data.skin) ? data.skin : "#6f402d",
-    hair: ["short","afro","shaved"].includes(data.hair) ? data.hair : "short"
+    hair: ["short","afro","shaved"].includes(data.hair) ? data.hair : "short",
+    accessories: {
+      glasses: data.accessories?.glasses === true,
+      chain: data.accessories?.chain === true,
+      watch: data.accessories?.watch === true
+    }
   };
 }
 
@@ -281,7 +287,7 @@ function readForm() {
   state.name = $("#character-name").value.trim();
   state.age = Math.min(25, Math.max(18, Number($("#age-input").value) || 20));
   state.name = state.name.slice(0,18);
-  return { ...state };
+  return { ...state, accessories: { ...state.accessories } };
 }
 
 function fillForm(data) {
@@ -291,7 +297,12 @@ function fillForm(data) {
     gender: safe.gender === "female" ? "female" : "male",
     age: Number.isFinite(Number(safe.age)) ? Math.min(25,Math.max(18,Math.round(Number(safe.age)))) : 20,
     skin: ["#6f402d","#965d40","#bd805d","#d49b78"].includes(safe.skin) ? safe.skin : "#6f402d",
-    hair: ["short","afro","shaved"].includes(safe.hair) ? safe.hair : "short"
+    hair: ["short","afro","shaved"].includes(safe.hair) ? safe.hair : "short",
+    accessories: {
+      glasses: safe.accessories?.glasses === true,
+      chain: safe.accessories?.chain === true,
+      watch: safe.accessories?.watch === true
+    }
   });
   $("#character-name").value = state.name;
   $("#age-input").value = state.age;
@@ -299,12 +310,18 @@ function fillForm(data) {
   setActive("[data-gender]", "data-gender", state.gender);
   setActive("[data-hair]", "data-hair", state.hair);
   setActive("[data-skin]", "data-skin", state.skin);
+  document.querySelectorAll("[data-accessory]").forEach(button => {
+    const active = state.accessories[button.dataset.accessory] === true;
+    button.classList.toggle("selected", active);
+    button.setAttribute("aria-pressed", String(active));
+  });
   updateCharacterAppearance();
 }
 
 function showSavedCharacter(data) {
   $("#saved-name").textContent = data.name.toUpperCase();
-  $("#saved-details").textContent = `${data.gender === "male" ? "Male" : "Female"} · Age ${data.age} · ${data.hair} hairstyle`;
+  const accessories = Object.entries(data.accessories || {}).filter(([,active]) => active).map(([name]) => ({glasses:"Glasses",chain:"Gold chain",watch:"Wristwatch"}[name]));
+  $("#saved-details").textContent = `${data.gender === "male" ? "Male" : "Female"} · Age ${data.age} · ${data.hair} hairstyle` + (accessories.length ? " · " + accessories.join(", ") : "");
   showScreen(savedScreen);
 }
 
@@ -366,7 +383,21 @@ function buildCharacter() {
 
   hairMesh = new THREE.Group();
   character.add(hairMesh);
-  character.add(new THREE.Group());
+  const accessoryGold = new THREE.MeshStandardMaterial({ color: "#d6ad55", metalness: 0.78, roughness: 0.28 });
+  const accessoryDark = new THREE.MeshStandardMaterial({ color: "#17191f", metalness: 0.25, roughness: 0.35 });
+  if (state.accessories.glasses) {
+    addMesh(character, new THREE.TorusGeometry(0.078,0.012,6,20), accessoryDark, [-0.09,2.2,0.218]);
+    addMesh(character, new THREE.TorusGeometry(0.078,0.012,6,20), accessoryDark, [0.09,2.2,0.218]);
+    addMesh(character, new THREE.BoxGeometry(0.045,0.012,0.014), accessoryDark, [0,2.2,0.218]);
+  }
+  if (state.accessories.chain) {
+    const chain = addMesh(character, new THREE.TorusGeometry(0.18,0.016,6,32), accessoryGold, [0,1.78,0.1]);
+    chain.rotation.x = Math.PI / 2;
+  }
+  if (state.accessories.watch) {
+    addMesh(character, new THREE.BoxGeometry(0.13,0.075,0.105), accessoryGold, [-0.49,1.08,0.015]);
+    addMesh(character, new THREE.BoxGeometry(0.15,0.035,0.12), accessoryDark, [-0.49,1.08,0.015]);
+  }
   scene.add(character);
   updateHair(hairMaterial);
 }
@@ -480,7 +511,7 @@ function bindEvents() {
   $("#new-game-button").addEventListener("click", () => {
     requestLandscapeMode();
     const saved = loadSavedCharacter();
-    fillForm(saved || { name: "", gender: "male", age: 20, skin: "#6f402d", hair: "short" });
+    fillForm({ name: "", gender: "male", age: 20, skin: "#6f402d", hair: "short", accessories: { glasses:false, chain:false, watch:false } });
     showScreen(creatorScreen);
   });
 
@@ -550,6 +581,14 @@ function bindEvents() {
   document.querySelectorAll("[data-skin]").forEach((button) => button.addEventListener("click", () => {
     state.skin = button.dataset.skin;
     setActive("[data-skin]", "data-skin", state.skin);
+    updateCharacterAppearance();
+  }));
+  document.querySelectorAll("[data-accessory]").forEach(button => button.addEventListener("click", () => {
+    const key = button.dataset.accessory;
+    if (!Object.prototype.hasOwnProperty.call(state.accessories, key)) return;
+    state.accessories[key] = !state.accessories[key];
+    button.classList.toggle("selected", state.accessories[key]);
+    button.setAttribute("aria-pressed", String(state.accessories[key]));
     updateCharacterAppearance();
   }));
   document.querySelectorAll("[data-view]").forEach((button) => button.addEventListener("click", () => setView(button.dataset.view)));
