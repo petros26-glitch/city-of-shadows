@@ -1112,7 +1112,7 @@ export function createCityGame(container, controls, characterData, onShopInterac
           const parkedHit=vehicles.find(v=>v.car!==car&&overlapsCar(testX,testZ,1.0,v.car,0.2));
           const trafficHit=trafficCars.find(t=>t.car!==car&&!t.hijacked&&!vehicleStates.get(t.car)?.destroyed&&overlapsCar(testX,testZ,1.0,t.car,0.2));
           const pedestrianHit=pedestrians.find(person=>person.alive&&Math.hypot(testX-person.npc.position.x,testZ-person.npc.position.z)<person.radius+0.72);
-          const playerHit=!pedestrianHit&&playerHealth>0&&Math.hypot(testX-player.position.x,testZ-player.position.z)<playerRadius+0.92;
+          const playerHit=!drivingVehicle&&!pedestrianHit&&playerHealth>0&&Math.hypot(testX-player.position.x,testZ-player.position.z)<playerRadius+0.92;
           const opponentHit=!pedestrianHit&&!playerHit&&opponentHealth>0&&Math.hypot(testX-opponent.position.x,testZ-opponent.position.z)<0.62+0.92;
           if(pedestrianHit){hitPedestrianWithVehicle(pedestrianHit,car,vehicleSpeed);clear=false;collisionReason="pedestrian";}
           else if(playerHit){hitPlayerWithVehicle(car,vehicleSpeed);clear=false;collisionReason="player";}
