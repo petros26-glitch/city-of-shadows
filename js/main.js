@@ -126,19 +126,18 @@ function renderInventory() {
     action.addEventListener("click", () => {
       if (consumable) {
         inventory[item] = Math.max(0, (inventory[item] || 0) - 1);
-        if (["meal","rice","fish"].includes(item)) needs.hunger = Math.min(100, needs.hunger + (item === "rice" ? 42 : item === "fish" ? 38 : 35));
-        if (item === "fruit") { needs.hunger = Math.min(100, needs.hunger + 20); needs.hydration = Math.min(100, needs.hydration + 8); }
-        if (item === "vegetables") needs.hunger = Math.min(100, needs.hunger + 25);
-        if (item === "water") needs.hydration = Math.min(100, needs.hydration + 40);
-        if (["meal","rice","fish"].includes(item)) needs.energy = Math.min(100, needs.energy + 8);
+        if (["meal","rice","fish"].includes(item)) {
+          needs.energy = Math.min(100, needs.energy + (item === "rice" ? 24 : item === "fish" ? 20 : 18));
+          window.dispatchEvent(new CustomEvent("cos-restore-health", { detail: { amount: item === "rice" ? 8 : 10 } }));
+        }
+        if (item === "fruit") needs.energy = Math.min(100, needs.energy + 12);
+        if (item === "vegetables") needs.energy = Math.min(100, needs.energy + 16);
+        if (item === "water") needs.energy = Math.min(100, needs.energy + 10);
         if (item === "medkit") window.dispatchEvent(new CustomEvent("cos-use-medkit"));
         savePlayerData();
         const needsHud = $("#needs-hud");
-        if (needsHud) {
-          const healthLabel = needsHud.textContent.match(/HEALTH\s+\d+%\s*·\s*/)?.[0] || "";
-          needsHud.textContent = `${healthLabel}HUNGER ${Math.round(needs.hunger)}%  ·  WATER ${Math.round(needs.hydration)}%  ·  ENERGY ${Math.round(needs.energy)}%`;
-        }
-        $("#inventory-message").textContent = itemName(item) + " used. Your needs have been restored.";
+        if (needsHud) needsHud.textContent = "HEALTH · ENERGY " + Math.round(needs.energy) + "%";
+        $("#inventory-message").textContent = itemName(item) + " used. Health and/or energy restored.";
       } else {
         const slot = ["hoodie","jacket"].includes(item) ? "top" : item === "jeans" ? "pants" : item === "sneakers" ? "shoes" : "";
         if (!slot) return;
@@ -220,17 +219,24 @@ function showScreen(screen) {
   }
 }
 
-function requestLandscapeMode() {
-  const fullscreenRequest = document.fullscreenElement
-    ? Promise.resolve(true)
-    : (document.documentElement.requestFullscreen
-        ? document.documentElement.requestFullscreen().then(() => true).catch(() => false)
-        : Promise.resolve(false));
-  if (screen.orientation && typeof screen.orientation.lock === "function") {
-    fullscreenRequest.then(() => screen.orientation.lock("landscape")).catch(() => {
-      notify("This browser cannot lock landscape automatically. Please rotate your phone sideways.");
-    });
+const LAYOUT_KEY = "cos-screen-layout-v1";
+function applyScreenLayout(layout, requestLock = false) {
+  const chosen = layout === "portrait" ? "portrait" : "landscape";
+  document.body.classList.toggle("layout-portrait", chosen === "portrait");
+  document.body.classList.toggle("layout-landscape", chosen === "landscape");
+  try { localStorage.setItem(LAYOUT_KEY, chosen); } catch {}
+  $("#layout-landscape-button")?.classList.toggle("active", chosen === "landscape");
+  $("#layout-portrait-button")?.classList.toggle("active", chosen === "portrait");
+  if (requestLock && screen.orientation && typeof screen.orientation.lock === "function") {
+    const fullscreen = document.documentElement.requestFullscreen
+      ? document.documentElement.requestFullscreen().catch(() => null) : Promise.resolve(null);
+    fullscreen.then(() => screen.orientation.lock(chosen)).catch(() => notify("Layout saved. Rotate your device to " + chosen + " if it does not rotate automatically."));
   }
+}
+function requestLandscapeMode() {
+  let saved = "landscape";
+  try { saved = localStorage.getItem(LAYOUT_KEY) || "landscape"; } catch {}
+  applyScreenLayout(saved, false);
 }
 
 function returnToMainMenu() {
@@ -500,9 +506,18 @@ function bindEvents() {
   $("#inventory-panel").addEventListener("click", event => { if (event.target.id === "inventory-panel") closeInventory(); });
   $("#game-shop-button").addEventListener("click", openShop);
    $("#game-inventory-button").addEventListener("click", openInventory);
-  $("#game-menu-button").addEventListener("click", () => $("#game-menu-panel").classList.remove("hidden"));
-  $("#game-menu-resume-button").addEventListener("click", () => $("#game-menu-panel").classList.add("hidden"));
-  $("#game-menu-inventory-button").addEventListener("click", () => { $("#game-menu-panel").classList.add("hidden"); openInventory(); });
+  $("#game-menu-button").addEventListener("click", () => {
+    $("#game-menu-panel").classList.remove("hidden");
+    $("#game-menu-button").setAttribute("aria-expanded", "true");
+    let saved = "landscape"; try { saved = localStorage.getItem(LAYOUT_KEY) || "landscape"; } catch {}
+    applyScreenLayout(saved, false);
+  });
+  $("#game-menu-shop-button").addEventListener("click", () => { $("#game-menu-panel").classList.add("hidden"); openShop(); });
+  $("#game-menu-jobs-button").addEventListener("click", () => { $("#game-menu-panel").classList.add("hidden"); openJobs(); });
+  $("#layout-landscape-button").addEventListener("click", () => applyScreenLayout("landscape", true));
+  $("#layout-portrait-button").addEventListener("click", () => applyScreenLayout("portrait", true));
+  $("#game-menu-resume-button").addEventListener("click", () => { $("#game-menu-panel").classList.add("hidden"); $("#game-menu-button").setAttribute("aria-expanded", "false"); });
+  $("#game-menu-inventory-button").addEventListener("click", () => { $("#game-menu-panel").classList.add("hidden"); $("#game-menu-button").setAttribute("aria-expanded", "false"); openInventory(); });
   $("#game-menu-home-button").addEventListener("click", () => {
     returnToMainMenu();
   });
