@@ -437,6 +437,12 @@ export function createCityGame(container, controls, characterData, onShopInterac
     playerHealth = Math.min(100, playerHealth + amount);
     if (playerHealth > 0) respawnButton.hidden = true;
   };
+  const restoreEnergy = event => {
+    const amount = Math.max(0, Math.min(40, Number(event.detail?.amount) || 0));
+    survival.energy = Math.min(100, survival.energy + amount);
+    if (typeof onNeedsUpdate === "function") onNeedsUpdate({ ...survival });
+  };
+  window.addEventListener("cos-restore-energy", restoreEnergy);
   window.addEventListener("cos-restore-health", restoreHealth);
   window.addEventListener("cos-use-medkit", useMedkit);
   const restAtSafehouse = () => {
@@ -1258,6 +1264,7 @@ export function createCityGame(container, controls, characterData, onShopInterac
     window.removeEventListener("cos-equipment-changed", equipmentChanged);
     window.removeEventListener("cos-use-medkit", useMedkit);
     window.removeEventListener("cos-restore-health", restoreHealth);
+    window.removeEventListener("cos-restore-energy", restoreEnergy);
     window.removeEventListener("cos-rest-safehouse",restAtSafehouse);
     window.removeEventListener("cos-start-delivery-job", startDeliveryJob);
     joy.removeEventListener("pointerdown",joyStart);
