@@ -334,26 +334,61 @@ export function createCityGame(container, controls, characterData, onShopInterac
     explosionEffects.push({mesh,material,age:0,duration:0.72});
   }
   function hitPedestrianWithVehicle(person,car,speed){
-    if(!person.alive||(person.vehicleHitCooldown||0)>0)return;
-    person.vehicleHitCooldown=0.9;
-    const damage=Math.max(18,Math.round(Math.abs(speed)*12));
+    if(!person.alive||(person.vehicleHitCooldown||0)>0)return false;
+    person.vehicleHitCooldown=1.05;
+    const impact=Math.abs(speed);
+    const damage=Math.max(8,Math.round(impact*7));
     person.health=Math.max(0,person.health-damage);
     const dx=person.npc.position.x-car.position.x,dz=person.npc.position.z-car.position.z;
     const length=Math.hypot(dx,dz)||1;
+    const push=impact>6?2.0:1.45;
+    person.npc.position.x+=dx/length*push;
+    person.npc.position.z+=dz/length*push;
+    person.progress=0;
     if(person.health<=0){
       person.alive=false;person.respawnTime=18;person.npc.rotation.x=-0.95;
       person.parts.legs.forEach(leg=>leg.rotation.x=1.1);
       person.parts.arms.forEach(arm=>arm.rotation.x=-0.8);
     }else{
-      person.npc.position.x+=dx/length*1.35;
-      person.npc.position.z+=dz/length*1.35;
-      person.progress=0;
       person.parts.body.material.color.set("#f3c0a5");
     }
-    const state=vehicleStates.get(car);
-    if(state&&!state.destroyed)damageCar(car,Math.max(1,Math.abs(speed)*0.22),0,"pedestrian");
     const status=controls.querySelector(".city-status");
     if(status)status.textContent=person.health<=0?"PEDESTRIAN HIT · VEHICLE IMPACT":"PEDESTRIAN KNOCKED ASIDE";
+    return true;
+  }
+  function hitPlayerWithVehicle(car,speed){
+    if(playerHealth<=0||vehicleHitCooldown>0)return false;
+    const impact=Math.abs(speed);
+    vehicleHitCooldown=1.15;
+    playerHealth=Math.max(0,playerHealth-Math.max(8,Math.round(impact*1.8)));
+    const dx=player.position.x-car.position.x,dz=player.position.z-car.position.z;
+    const length=Math.hypot(dx,dz)||1;
+    player.position.x+=dx/length*1.45;
+    player.position.z+=dz/length*1.45;
+    const status=controls.querySelector(".city-status");
+    if(status)status.textContent=playerHealth>0?"PLAYER HIT BY VEHICLE · HEALTH "+playerHealth+"%":"YOU WERE HIT BY A VEHICLE · YOU ARE DOWN";
+    if(playerHealth<=0)respawnButton.hidden=false;
+    return true;
+  }
+  function hitOpponentWithVehicle(car,speed){
+    if(opponentHealth<=0||opponentVehicleHitCooldown>0)return false;
+    const impact=Math.abs(speed);
+    opponentVehicleHitCooldown=1.15;
+    opponentHealth=Math.max(0,opponentHealth-Math.max(10,Math.round(impact*2.2)));
+    const dx=opponent.position.x-car.position.x,dz=opponent.position.z-car.position.z;
+    const length=Math.hypot(dx,dz)||1;
+    opponent.position.x+=dx/length*1.55;
+    opponent.position.z+=dz/length*1.55;
+    opponentFlash=0.35;
+    const status=controls.querySelector(".city-status");
+    if(status)status.textContent=opponentHealth>0?"OPPONENT HIT BY VEHICLE":"OPPONENT KNOCKED DOWN";
+    return true;
+  }
+  function vehicleImpactDamage(speed,kind="obstacle"){
+    const impact=Math.abs(speed);
+    if(impact<2.2)return 0.25;
+    if(kind==="vehicle")return Math.min(3.2,0.35+(impact-2.2)*0.32);
+    return Math.min(4.5,0.45+(impact-2.2)*0.42);
   }
   function explodeCar(car){
     const state=vehicleStates.get(car);
@@ -385,7 +420,7 @@ export function createCityGame(container, controls, characterData, onShopInterac
     const state=vehicleStates.get(car);
     if(!state||state.destroyed)return;
     if(state.hitCooldown>0)return;
-    state.hitCooldown=0.65;
+    state.hitCooldown=0.85;
     state.damage=Math.min(100,state.damage+Math.max(0,amount));
     const darken=state.damage/100*0.72;
     state.bodyMaterial.color.copy(state.baseColor).lerp(new THREE.Color("#211f1e"),darken);
@@ -580,6 +615,7 @@ export function createCityGame(container, controls, characterData, onShopInterac
   if (initialNeedsHud) initialNeedsHud.textContent = `HEALTH ${playerHealth}%  ·  HUNGER ${Math.round(survival.hunger)}%  ·  WATER ${Math.round(survival.hydration)}%  ·  ENERGY ${Math.round(survival.energy)}%`;
   let attackCooldown = 0;
   let opponentAttackCooldown = 0;
+  let opponentVehicleHitCooldown = 0;
   let dodgeTime = 0;
   let dodgeDistance = 0;
   let dodgeDirX = 0;
@@ -997,18 +1033,28 @@ export function createCityGame(container, controls, characterData, onShopInterac
     trafficCars.forEach(t=>{
       if(t.hijacked || (drivingVehicle && t.car===drivingVehicle) || vehicleStates.get(t.car)?.destroyed) return;
       const axis=t.horizontal?"x":"z";
+      const previous=t.car.position[axis];
       t.car.position[axis]+=t.speed*t.direction*dt;
       if(t.car.position[axis]>52)t.car.position[axis]=-52;
       if(t.car.position[axis]<-52)t.car.position[axis]=52;
+      let blockedByCharacter=false;
       pedestrians.forEach(person=>{
         if(person.alive&&overlapsCar(person.npc.position.x,person.npc.position.z,person.radius,t.car,0.08)){
-          hitPedestrianWithVehicle(person,t.car,t.speed);
+          hitPedestrianWithVehicle(person,t.car,t.speed);blockedByCharacter=true;
         }
       });
+      if(playerHealth>0&&!drivingVehicle&&overlapsCar(player.position.x,player.position.z,playerRadius,t.car,0.12)){
+        hitPlayerWithVehicle(t.car,t.speed);blockedByCharacter=true;
+      }
+      if(opponentHealth>0&&overlapsCar(opponent.position.x,opponent.position.z,0.62,t.car,0.12)){
+        hitOpponentWithVehicle(t.car,t.speed);blockedByCharacter=true;
+      }
+      if(blockedByCharacter)t.car.position[axis]=previous;
     });
     // Moving traffic can injure the player on impact, with a short cooldown
     // so one continuous overlap does not drain the entire health bar.
     vehicleHitCooldown=Math.max(0,vehicleHitCooldown-dt);
+    opponentVehicleHitCooldown=Math.max(0,opponentVehicleHitCooldown-dt);
     vehicleHitMessageTime=Math.max(0,vehicleHitMessageTime-dt);
     if(vehicleHitMessageTime===0)vehicleHitMessage="";
     if(!drivingVehicle && playerHealth>0 && vehicleHitCooldown===0){
@@ -1057,28 +1103,33 @@ export function createCityGame(container, controls, characterData, onShopInterac
         const oldX=car.position.x,oldZ=car.position.z;
         const nx=THREE.MathUtils.clamp(oldX+Math.sin(car.rotation.y)*vehicleSpeed*dt,-44,44);
         const nz=THREE.MathUtils.clamp(oldZ+Math.cos(car.rotation.y)*vehicleSpeed*dt,-44,44);
-        const travel=Math.hypot(nx-oldX,nz-oldZ),steps=Math.max(1,Math.ceil(travel/0.28));
-        let clear=true,collisionReason="";
+        const travel=Math.hypot(nx-oldX,nz-oldZ),steps=Math.max(1,Math.ceil(travel/0.22));
+        let clear=true,collisionReason="",vehicleCollision=false;
         for(let step=1;step<=steps&&clear;step++){
           const testX=oldX+(nx-oldX)*step/steps,testZ=oldZ+(nz-oldZ)*step/steps;
           const blockedBuilding=buildingColliders.some(b=>overlapsVehicleBuilding(testX,testZ,car,b));
           const blockedStatic=environmentColliders.some(o=>!o.vehicle&&Math.hypot(testX-o.x,testZ-o.z)<o.radius+1.25);
           const parkedHit=vehicles.find(v=>v.car!==car&&overlapsCar(testX,testZ,1.0,v.car,0.2));
-          const trafficHit=trafficCars.find(t=>t.car!==car&&!t.hijacked&&overlapsCar(testX,testZ,1.0,t.car,0.2));
+          const trafficHit=trafficCars.find(t=>t.car!==car&&!t.hijacked&&!vehicleStates.get(t.car)?.destroyed&&overlapsCar(testX,testZ,1.0,t.car,0.2));
           const pedestrianHit=pedestrians.find(person=>person.alive&&Math.hypot(testX-person.npc.position.x,testZ-person.npc.position.z)<person.radius+0.72);
-          if(pedestrianHit){
-            hitPedestrianWithVehicle(pedestrianHit,car,vehicleSpeed);
-          }
+          const playerHit=!pedestrianHit&&playerHealth>0&&Math.hypot(testX-player.position.x,testZ-player.position.z)<playerRadius+0.92;
+          const opponentHit=!pedestrianHit&&!playerHit&&opponentHealth>0&&Math.hypot(testX-opponent.position.x,testZ-opponent.position.z)<0.62+0.92;
+          if(pedestrianHit){hitPedestrianWithVehicle(pedestrianHit,car,vehicleSpeed);clear=false;collisionReason="pedestrian";}
+          else if(playerHit){hitPlayerWithVehicle(car,vehicleSpeed);clear=false;collisionReason="player";}
+          else if(opponentHit){hitOpponentWithVehicle(car,vehicleSpeed);clear=false;collisionReason="opponent";}
           if(blockedBuilding||blockedStatic||parkedHit||trafficHit){
             clear=false;
-            collisionReason=blockedBuilding||blockedStatic?"obstacle":parkedHit?"parked vehicle":"traffic vehicle";
-            if(parkedHit)damageCar(parkedHit.car,Math.max(5,Math.abs(vehicleSpeed)*2.6),0,"vehicle");
-            if(trafficHit)damageCar(trafficHit.car,Math.max(5,Math.abs(vehicleSpeed)*2.6),0,"vehicle");
+            vehicleCollision=!!(parkedHit||trafficHit);
+            collisionReason=blockedBuilding||blockedStatic?"obstacle":"vehicle";
+            if(parkedHit)damageCar(parkedHit.car,vehicleImpactDamage(vehicleSpeed,"vehicle"),0,"vehicle");
+            if(trafficHit)damageCar(trafficHit.car,vehicleImpactDamage(vehicleSpeed,"vehicle"),0,"vehicle");
           }
         }
         if(clear){car.position.x=nx;car.position.z=nz;}
         else{
-          damageCar(car,Math.max(5,Math.abs(vehicleSpeed)*3.2),Math.abs(vehicleSpeed),collisionReason);
+          if(collisionReason==="obstacle"||collisionReason==="vehicle"){
+            damageCar(car,vehicleImpactDamage(vehicleSpeed,vehicleCollision?"vehicle":"obstacle"),Math.abs(vehicleSpeed),collisionReason);
+          }
           vehicleSpeed=0;
         }
         updateVehicleCondition(car);
