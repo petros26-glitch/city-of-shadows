@@ -1140,3 +1140,60 @@ button:disabled {
   touch-action:manipulation;
 }
 .city-respawn-button[hidden] { display:none!important; }
+
+
+/* Main menu and character accessories refinement. */
+.home-screen{gap:clamp(20px,4vw,64px);min-height:calc(100svh - 76px);padding-top:clamp(28px,6vh,64px);padding-bottom:clamp(52px,9vh,100px)}
+.home-copy{max-width:590px}
+.home-actions .button{min-width:154px;min-height:52px}
+.home-art{min-height:clamp(300px,48vw,560px);border:1px solid rgba(199,155,85,.14);background:linear-gradient(180deg,rgba(39,28,31,.12),rgba(9,9,13,.3));}
+.home-footer{left:0;right:0}
+.accessory-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin-top:12px}
+.accessory-choice{min-height:104px;padding:12px 8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;border:1px solid var(--line);border-radius:5px;background:#19181e;color:#f3f0ec;cursor:pointer}
+.accessory-choice>span{font-size:24px;line-height:1.2}
+.accessory-choice strong{font-size:9px;letter-spacing:.8px}
+.accessory-choice small{font-size:8px;color:var(--muted)}
+.accessory-choice.selected{border-color:var(--gold);background:rgba(143,106,49,.22);box-shadow:inset 0 0 0 1px rgba(199,155,85,.18)}
+.accessory-choice:focus-visible{outline:2px solid #f0d5a5;outline-offset:3px}
+@media(max-width:800px){
+ .home-screen{grid-template-columns:1fr;min-height:auto;padding:32px 0 78px;gap:12px}
+ .home-copy{padding:20px 0 0}
+ .home-art{min-height:260px;grid-row:1}
+ .home-copy h1{font-size:clamp(62px,17vw,100px)}
+ .home-description{font-size:14px}
+ .home-actions{margin-top:24px}
+ .home-actions .button{flex:1 1 145px;min-width:0}
+ .home-footer{bottom:18px}
+ .accessory-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+ .accessory-choice{min-height:92px;padding:8px 4px}
+ .accessory-choice strong{font-size:8px}
+}
+@media(max-width:380px){
+ .accessory-choice>span{font-size:20px}
+ .accessory-choice small{font-size:7px}
+ .home-art{min-height:220px}
+}
+
+/* Keep the five on-foot actions visible in portrait as well as landscape.
+   The joystick remains left; action buttons remain grouped on the right. */
+@media screen and (orientation:portrait) and (max-width:1000px){
+ body.in-city .city-screen{align-items:stretch!important;justify-content:flex-start!important;padding:8px 8px 0!important}
+ body.in-city .city-screen>*{visibility:visible!important;pointer-events:auto!important}
+ body.in-city .city-screen::before,body.in-city .city-screen::after{display:none!important;content:none!important}
+ body.in-city #city-controls{display:flex!important;visibility:visible!important;pointer-events:none!important;position:fixed!important;left:6px!important;right:6px!important;bottom:max(8px,env(safe-area-inset-bottom))!important;top:auto!important;z-index:150!important;align-items:flex-end!important;justify-content:space-between!important}
+ body.in-city #city-controls .movement-controls,body.in-city #city-controls .mobile-actions{display:flex!important;visibility:visible!important;pointer-events:auto!important}
+ body.in-city #city-controls .joystick{display:grid!important;width:78px!important;height:78px!important;flex:0 0 78px!important}
+ body.in-city #city-controls .mobile-actions{display:grid!important;grid-template-columns:repeat(3,42px)!important;grid-template-rows:repeat(2,44px)!important;gap:4px!important;width:134px!important;height:92px!important;flex:0 0 134px!important;position:relative!important}
+ body.in-city #city-controls .mobile-actions .action-button{display:flex!important;position:static!important;width:42px!important;height:44px!important;min-width:42px!important;border-radius:9px!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;font-size:16px!important;padding:1px!important}
+ body.in-city #city-controls .action-button small{display:block!important;font-size:6px!important;line-height:1!important}
+ body.in-city #city-controls .drive-steering-controls,body.in-city #city-controls .drive-controls{display:none!important}
+ body.in-city #city-controls.driving-mode .movement-controls,body.in-city #city-controls.driving-mode .mobile-actions{display:none!important}
+ body.in-city #city-controls.driving-mode .drive-steering-controls{display:flex!important;visibility:visible!important;pointer-events:auto!important}
+ body.in-city #city-controls.driving-mode .drive-controls{display:flex!important;visibility:visible!important;pointer-events:auto!important;flex-direction:column!important}
+ body.in-city .city-hud{margin-bottom:100px!important}
+}
+@media screen and (orientation:portrait) and (max-width:390px){
+ body.in-city #city-controls .joystick{width:68px!important;height:68px!important;flex-basis:68px!important}
+ body.in-city #city-controls .mobile-actions{grid-template-columns:repeat(3,38px)!important;grid-template-rows:repeat(2,40px)!important;width:122px!important;height:84px!important;flex-basis:122px!important}
+ body.in-city #city-controls .mobile-actions .action-button{width:38px!important;height:40px!important;min-width:38px!important}
+}
