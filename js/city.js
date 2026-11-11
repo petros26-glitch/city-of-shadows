@@ -25,6 +25,11 @@ export function createCityGame(container, controls, characterData, onShopInterac
   const vehiclePrompt = document.createElement("button");
   vehiclePrompt.type = "button"; vehiclePrompt.className = "door-interact-prompt"; vehiclePrompt.textContent = "ENTER VEHICLE"; vehiclePrompt.hidden = true;
   container.appendChild(vehiclePrompt);
+  const vehicleConditionHud = document.createElement("div");
+  vehicleConditionHud.className = "vehicle-condition-hud";
+  vehicleConditionHud.hidden = true;
+  vehicleConditionHud.innerHTML = '<div class="vehicle-condition-heading"><span>VEHICLE CONDITION</span><strong>100%</strong></div><div class="vehicle-condition-track"><i></i></div><small>ENGINE HEALTH</small>';
+  container.appendChild(vehicleConditionHud);
   const marketPrompt = document.createElement("button");
   marketPrompt.type = "button";
   marketPrompt.className = "door-interact-prompt";
@@ -264,18 +269,40 @@ export function createCityGame(container, controls, characterData, onShopInterac
   // Lightweight low-poly vehicles share one builder for parked cars and moving traffic.
   const vehicles = [];
   const trafficCars = [];
+  const vehicleStates = new WeakMap();
+  const explosionEffects = [];
   const vehicleMaterials=["#8b252c","#263b50","#b18a42"].map(color=>new THREE.MeshStandardMaterial({color,roughness:0.72}));
   const tyreMaterial=new THREE.MeshStandardMaterial({color:"#111216",roughness:1});
   function buildCar(x,z,index,rotation=0){
     const car=new THREE.Group();
     const paint=vehicleMaterials[index%vehicleMaterials.length];
-    block(new THREE.BoxGeometry(2.15,0.68,4.0),paint,0,0.68,0,car);
+    const bodyMaterial=paint.clone();
+    const body=block(new THREE.BoxGeometry(2.15,0.68,4.0),bodyMaterial,0,0.68,0,car);
     block(new THREE.BoxGeometry(1.72,0.7,1.9),shopGlassMat,0,1.32,-0.15,car);
     for(const side of [-1,1])for(const end of [-1,1]){
       const wheel=block(new THREE.CylinderGeometry(0.34,0.34,0.2,8),tyreMaterial,side*1.08,0.43,end*1.28,car);
       wheel.rotation.z=Math.PI/2;
     }
+    const smoke=new THREE.Group();
+    const smokeMat=new THREE.MeshBasicMaterial({color:"#34383d",transparent:true,opacity:0.48});
+    for(let i=0;i<3;i++){
+      const puff=new THREE.Mesh(new THREE.SphereGeometry(0.22+i*0.07,7,6),smokeMat);
+      puff.position.set((i-1)*0.2,0.15+i*0.2,0);
+      smoke.add(puff);
+    }
+    smoke.position.set(0,1.18,1.05);smoke.visible=false;car.add(smoke);
+    const flames=new THREE.Group();
+    const flameMat=new THREE.MeshBasicMaterial({color:"#ff762e"});
+    const flameCoreMat=new THREE.MeshBasicMaterial({color:"#ffd16a"});
+    for(let i=0;i<3;i++){
+      const flame=new THREE.Mesh(new THREE.ConeGeometry(0.18,0.72,6),i===1?flameCoreMat:flameMat);
+      flame.position.set((i-1)*0.38,0.32,0);
+      flame.rotation.z=(i-1)*0.18;
+      flames.add(flame);
+    }
+    flames.position.set(0,1.18,1.05);flames.visible=false;car.add(flames);
     car.position.set(x,0,z);car.rotation.y=rotation;scene.add(car);
+    vehicleStates.set(car,{damage:0,destroyed:false,hitCooldown:0,body,bodyMaterial,baseColor:bodyMaterial.color.clone(),smoke,flames});
     return car;
   }
   function overlapsCar(x,z,radius,car,extra=0){
@@ -288,6 +315,89 @@ export function createCityGame(container, controls, characterData, onShopInterac
     const closestZ=THREE.MathUtils.clamp(localZ,-halfLength,halfLength);
     const outsideX=localX-closestX,outsideZ=localZ-closestZ;
     return outsideX*outsideX+outsideZ*outsideZ < (radius+extra)*(radius+extra);
+  }
+  function updateVehicleCondition(car){
+    const state=vehicleStates.get(car);
+    if(!state||drivingVehicle!==car){vehicleConditionHud.hidden=true;return;}
+    const value=Math.max(0,100-Math.round(state.damage));
+    vehicleConditionHud.hidden=false;
+    vehicleConditionHud.querySelector("strong").textContent=value+"%";
+    vehicleConditionHud.querySelector(".vehicle-condition-track i").style.width=value+"%";
+    vehicleConditionHud.classList.toggle("warning",value<=60&&value>25);
+    vehicleConditionHud.classList.toggle("critical",value<=25);
+    vehicleConditionHud.querySelector("small").textContent=state.destroyed?"VEHICLE DESTROYED":value<=25?"CRITICAL · ENGINE FAILURE RISK":value<=60?"DAMAGED · REDUCED PERFORMANCE":"ENGINE HEALTH";
+  }
+  function createExplosion(position){
+    const material=new THREE.MeshBasicMaterial({color:"#ff8a32",transparent:true,opacity:0.9});
+    const mesh=new THREE.Mesh(new THREE.SphereGeometry(1,12,10),material);
+    mesh.position.copy(position);mesh.position.y=1.1;mesh.scale.setScalar(0.5);scene.add(mesh);
+    explosionEffects.push({mesh,material,age:0,duration:0.72});
+  }
+  function hitPedestrianWithVehicle(person,car,speed){
+    if(!person.alive||(person.vehicleHitCooldown||0)>0)return;
+    person.vehicleHitCooldown=0.9;
+    const damage=Math.max(18,Math.round(Math.abs(speed)*12));
+    person.health=Math.max(0,person.health-damage);
+    const dx=person.npc.position.x-car.position.x,dz=person.npc.position.z-car.position.z;
+    const length=Math.hypot(dx,dz)||1;
+    if(person.health<=0){
+      person.alive=false;person.respawnTime=18;person.npc.rotation.x=-0.95;
+      person.parts.legs.forEach(leg=>leg.rotation.x=1.1);
+      person.parts.arms.forEach(arm=>arm.rotation.x=-0.8);
+    }else{
+      person.npc.position.x+=dx/length*1.35;
+      person.npc.position.z+=dz/length*1.35;
+      person.progress=0;
+      person.parts.body.material.color.set("#f3c0a5");
+    }
+    const state=vehicleStates.get(car);
+    if(state&&!state.destroyed)damageCar(car,Math.max(1,Math.abs(speed)*0.22),0,"pedestrian");
+    const status=controls.querySelector(".city-status");
+    if(status)status.textContent=person.health<=0?"PEDESTRIAN HIT · VEHICLE IMPACT":"PEDESTRIAN KNOCKED ASIDE";
+  }
+  function explodeCar(car){
+    const state=vehicleStates.get(car);
+    if(!state||state.destroyed)return;
+    state.destroyed=true;state.damage=100;state.smoke.visible=true;state.flames.visible=true;
+    state.bodyMaterial.color.set("#25201e");
+    createExplosion(car.position.clone());
+    const occupied=drivingVehicle===car;
+    if(occupied){
+      player.position.copy(car.position);player.position.y=0;player.visible=true;
+      drivingVehicle=null;setDriving(false);
+      playerHealth=0;
+      const readout=controls.querySelector("#combat-readout");
+      if(readout)readout.textContent="VEHICLE EXPLODED · YOU ARE DOWN";
+    }else{
+      const distance=Math.hypot(player.position.x-car.position.x,player.position.z-car.position.z);
+      if(distance<6&&playerHealth>0)playerHealth=Math.max(0,playerHealth-Math.max(15,Math.round(90-distance*13)));
+    }
+    pedestrians.forEach(person=>{
+      if(!person.alive)return;
+      const distance=Math.hypot(person.npc.position.x-car.position.x,person.npc.position.z-car.position.z);
+      if(distance<5)hitPedestrianWithVehicle(person,car,9);
+    });
+    vehicleConditionHud.hidden=true;
+    const status=controls.querySelector(".city-status");
+    if(status)status.textContent="VEHICLE DESTROYED · EXPLOSION";
+  }
+  function damageCar(car,amount,impactSpeed=0,reason="impact"){
+    const state=vehicleStates.get(car);
+    if(!state||state.destroyed)return;
+    if(state.hitCooldown>0)return;
+    state.hitCooldown=0.65;
+    state.damage=Math.min(100,state.damage+Math.max(0,amount));
+    const darken=state.damage/100*0.72;
+    state.bodyMaterial.color.copy(state.baseColor).lerp(new THREE.Color("#211f1e"),darken);
+    state.smoke.visible=state.damage>=30;
+    state.flames.visible=state.damage>=76;
+    if(drivingVehicle===car&&impactSpeed>2){
+      playerHealth=Math.max(0,playerHealth-Math.max(2,Math.round(Math.abs(impactSpeed)*1.45)));
+    }
+    if(drivingVehicle===car)updateVehicleCondition(car);
+    const readout=controls.querySelector("#combat-readout");
+    if(readout&&drivingVehicle===car)readout.textContent=state.damage>=76?"ENGINE CRITICAL · VEHICLE ON FIRE":"VEHICLE DAMAGED · "+Math.round(state.damage)+"% DAMAGE";
+    if(state.damage>=100)explodeCar(car);
   }
   function overlapsBuilding(x,z,radius,b){
     // Leave a real opening in the shop's front wall so the player can reach
@@ -565,6 +675,8 @@ export function createCityGame(container, controls, characterData, onShopInterac
   const driveKnob = controls.querySelector(".drive-joystick-knob");
   function setDriving(active, vehicle = null) {
     drivingVehicle = active ? vehicle : null;
+    vehicleConditionHud.hidden=!active;
+    if(active)updateVehicleCondition(vehicle);
     if (driveControls) driveControls.classList.toggle("active", active);
     const cityControls = document.querySelector("#city-controls");
     if (cityControls) cityControls.classList.toggle("driving-mode", active);
@@ -581,11 +693,12 @@ export function createCityGame(container, controls, characterData, onShopInterac
     if (drivingVehicle) return;
     let nearest = null, distance = 5.6;
     for (const entry of vehicles) {
+      if(vehicleStates.get(entry.car)?.destroyed)continue;
       const d = Math.hypot(player.position.x-entry.car.position.x, player.position.z-entry.car.position.z);
       if (d < distance) { nearest = {car:entry.car,traffic:false}; distance = d; }
     }
     for (const entry of trafficCars) {
-      if (entry.hijacked) continue;
+      if (entry.hijacked||vehicleStates.get(entry.car)?.destroyed) continue;
       const d = Math.hypot(player.position.x-entry.car.position.x, player.position.z-entry.car.position.z);
       if (d < distance) { nearest = {car:entry.car,traffic:true,trafficEntry:entry}; distance = d; }
     }
@@ -859,17 +972,35 @@ export function createCityGame(container, controls, characterData, onShopInterac
     const shopOpen = !document.querySelector("#shop-panel").classList.contains("hidden");
     const gameMenuOpen = !document.querySelector("#game-menu-panel").classList.contains("hidden");
     const jobsOpen = !document.querySelector("#jobs-panel").classList.contains("hidden");
+    explosionEffects.forEach(effect=>{
+      effect.age+=dt;
+      const progress=Math.min(1,effect.age/effect.duration);
+      effect.mesh.scale.setScalar(0.5+progress*5.5);
+      effect.material.opacity=0.9*(1-progress);
+      if(progress>=1){scene.remove(effect.mesh);effect.mesh.geometry.dispose();effect.material.dispose();}
+    });
+    for(let i=explosionEffects.length-1;i>=0;i--)if(explosionEffects[i].age>=explosionEffects[i].duration)explosionEffects.splice(i,1);
+    vehicleStates && vehicles.concat(trafficCars).forEach(entry=>{
+      const car=entry.car||entry;
+      const state=vehicleStates.get(car);
+      if(state){state.hitCooldown=Math.max(0,state.hitCooldown-dt);if(state.smoke.visible)state.smoke.rotation.y+=dt*0.8;if(state.flames.visible)state.flames.scale.setScalar(0.92+Math.sin(time*0.025)*0.12);}
+    });
     if (inventoryOpen || shopOpen || gameMenuOpen || jobsOpen) {
       renderer.render(scene,camera);
       return;
     }
-    // Ambient traffic keeps moving even while the player is driving.
+    // Ambient traffic keeps moving and can strike pedestrians.
     trafficCars.forEach(t=>{
-      if(t.hijacked || (drivingVehicle && t.car===drivingVehicle)) return;
+      if(t.hijacked || (drivingVehicle && t.car===drivingVehicle) || vehicleStates.get(t.car)?.destroyed) return;
       const axis=t.horizontal?"x":"z";
       t.car.position[axis]+=t.speed*t.direction*dt;
       if(t.car.position[axis]>52)t.car.position[axis]=-52;
       if(t.car.position[axis]<-52)t.car.position[axis]=52;
+      pedestrians.forEach(person=>{
+        if(person.alive&&overlapsCar(person.npc.position.x,person.npc.position.z,person.radius,t.car,0.08)){
+          hitPedestrianWithVehicle(person,t.car,t.speed);
+        }
+      });
     });
     // Moving traffic can injure the player on impact, with a short cooldown
     // so one continuous overlap does not drain the entire health bar.
@@ -906,8 +1037,10 @@ export function createCityGame(container, controls, characterData, onShopInterac
       const analogThrottle=-driveJoystick.y;
       const throttle=Math.abs(analogThrottle)>.18?Math.sign(analogThrottle):(driveForward||keys.has("w")||keys.has("arrowup")?1:0)-(driveReverse||keys.has("s")||keys.has("arrowdown")?1:0);
       // Horizontal joystick input steers; vertical input accelerates or reverses.
-      if(throttle!==0) vehicleSpeed=THREE.MathUtils.clamp(vehicleSpeed+throttle*14*dt,-9,11);
-      else vehicleSpeed*=Math.max(0,1-2.8*dt);
+      const carState=vehicleStates.get(car);
+      const performance=carState?Math.max(0.38,1-carState.damage/165):1;
+      if(throttle!==0) vehicleSpeed=THREE.MathUtils.clamp(vehicleSpeed+throttle*14*performance*dt,-9,11*performance);
+      else vehicleSpeed*=Math.max(0,1-(2.8+(carState?.damage||0)/45)*dt);
       if(Math.abs(vehicleSpeed)<0.08)vehicleSpeed=0;
       if(Math.abs(vehicleSpeed)>0.12){
         const oldRotation=car.rotation.y;
@@ -921,17 +1054,30 @@ export function createCityGame(container, controls, characterData, onShopInterac
         const nx=THREE.MathUtils.clamp(oldX+Math.sin(car.rotation.y)*vehicleSpeed*dt,-44,44);
         const nz=THREE.MathUtils.clamp(oldZ+Math.cos(car.rotation.y)*vehicleSpeed*dt,-44,44);
         const travel=Math.hypot(nx-oldX,nz-oldZ),steps=Math.max(1,Math.ceil(travel/0.28));
-        let clear=true;
+        let clear=true,collisionReason="";
         for(let step=1;step<=steps&&clear;step++){
           const testX=oldX+(nx-oldX)*step/steps,testZ=oldZ+(nz-oldZ)*step/steps;
           const blockedBuilding=buildingColliders.some(b=>overlapsVehicleBuilding(testX,testZ,car,b));
           const blockedStatic=environmentColliders.some(o=>!o.vehicle&&Math.hypot(testX-o.x,testZ-o.z)<o.radius+1.25);
-          const blockedParked=vehicles.some(v=>v.car!==car&&overlapsCar(testX,testZ,1.0,v.car,0.2));
-          const blockedTraffic=trafficCars.some(t=>t.car!==car&&!t.hijacked&&overlapsCar(testX,testZ,1.0,t.car,0.2));
-          if(blockedBuilding||blockedStatic||blockedParked||blockedTraffic)clear=false;
+          const parkedHit=vehicles.find(v=>v.car!==car&&overlapsCar(testX,testZ,1.0,v.car,0.2));
+          const trafficHit=trafficCars.find(t=>t.car!==car&&!t.hijacked&&overlapsCar(testX,testZ,1.0,t.car,0.2));
+          const pedestrianHit=pedestrians.find(person=>person.alive&&Math.hypot(testX-person.npc.position.x,testZ-person.npc.position.z)<person.radius+0.72);
+          if(pedestrianHit){
+            hitPedestrianWithVehicle(pedestrianHit,car,vehicleSpeed);
+          }
+          if(blockedBuilding||blockedStatic||parkedHit||trafficHit){
+            clear=false;
+            collisionReason=blockedBuilding||blockedStatic?"obstacle":parkedHit?"parked vehicle":"traffic vehicle";
+            if(parkedHit)damageCar(parkedHit.car,Math.max(5,Math.abs(vehicleSpeed)*2.6),0,"vehicle");
+            if(trafficHit)damageCar(trafficHit.car,Math.max(5,Math.abs(vehicleSpeed)*2.6),0,"vehicle");
+          }
         }
         if(clear){car.position.x=nx;car.position.z=nz;}
-        else vehicleSpeed=0;
+        else{
+          damageCar(car,Math.max(5,Math.abs(vehicleSpeed)*3.2),Math.abs(vehicleSpeed),collisionReason);
+          vehicleSpeed=0;
+        }
+        updateVehicleCondition(car);
       }
       const behind=new THREE.Vector3(-Math.sin(car.rotation.y)*8,4.2,-Math.cos(car.rotation.y)*8).add(car.position);
       camera.position.lerp(behind,0.14);camera.lookAt(car.position.x,1.1,car.position.z);
@@ -1191,11 +1337,12 @@ export function createCityGame(container, controls, characterData, onShopInterac
     }
     let nearestVehicle=null,nearestVehicleDistance=5.6;
     for(const entry of vehicles){
+      if(vehicleStates.get(entry.car)?.destroyed)continue;
       const d=Math.hypot(player.position.x-entry.car.position.x,player.position.z-entry.car.position.z);
       if(d<nearestVehicleDistance){nearestVehicle={car:entry.car,traffic:false};nearestVehicleDistance=d;}
     }
     for(const entry of trafficCars){
-      if(entry.hijacked)continue;
+      if(entry.hijacked||vehicleStates.get(entry.car)?.destroyed)continue;
       const d=Math.hypot(player.position.x-entry.car.position.x,player.position.z-entry.car.position.z);
       if(d<nearestVehicleDistance){nearestVehicle={car:entry.car,traffic:true};nearestVehicleDistance=d;}
     }
@@ -1295,6 +1442,7 @@ export function createCityGame(container, controls, characterData, onShopInterac
 
     shopPrompt.remove();
     safehousePrompt.remove();
+    vehicleConditionHud.remove();
     respawnButton.remove();
     marketPrompt.remove();
     vehiclePrompt.remove();
