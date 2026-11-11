@@ -12,6 +12,15 @@ const state = {
 };
 
 const $ = (selector) => document.querySelector(selector);
+function bind(selector, eventName, handler) {
+  const element = $(selector);
+  if (!element) {
+    console.error(`CITY OF SHADOWS: cannot bind ${eventName}; missing element ${selector}`);
+    return null;
+  }
+  element.addEventListener(eventName, handler);
+  return element;
+}
 const homeScreen = $("#home-screen");
 const creatorScreen = $("#creator-screen");
 const savedScreen = $("#saved-screen");
@@ -491,53 +500,53 @@ function setView(view) {
 }
 
 function bindEvents() {
-  $("#home-brand-link").addEventListener("click", event => {
+  bind("#home-brand-link", "click", event => {
     event.preventDefault();
     requestLandscapeMode();
     returnToMainMenu();
   });
-  $("#game-menu-panel").addEventListener("click", event => {
+  bind("#game-menu-panel", "click", event => {
     if (event.target.id === "game-menu-panel") $("#game-menu-panel").classList.add("hidden");
   });
-  $("#shop-close-button").addEventListener("click", closeShop);
-  $("#jobs-close-button").addEventListener("click", closeJobs);
-  $("#jobs-panel").addEventListener("click", event => { if (event.target.id === "jobs-panel") closeJobs(); });
-  $("#start-delivery-job-button").addEventListener("click", startDeliveryJob);
-  $("#inventory-close-button").addEventListener("click", closeInventory);
-  $("#inventory-panel").addEventListener("click", event => { if (event.target.id === "inventory-panel") closeInventory(); });
-  $("#game-menu-button").addEventListener("click", () => {
+  bind("#shop-close-button", "click", closeShop);
+  bind("#jobs-close-button", "click", closeJobs);
+  bind("#jobs-panel", "click", event => { if (event.target.id === "jobs-panel") closeJobs(); });
+  bind("#start-delivery-job-button", "click", startDeliveryJob);
+  bind("#inventory-close-button", "click", closeInventory);
+  bind("#inventory-panel", "click", event => { if (event.target.id === "inventory-panel") closeInventory(); });
+  bind("#game-menu-button", "click", () => {
     $("#game-menu-panel").classList.remove("hidden");
     $("#game-menu-button").setAttribute("aria-expanded", "true");
     let saved = "landscape"; try { saved = localStorage.getItem(LAYOUT_KEY) || "landscape"; } catch {}
     applyScreenLayout(saved, false);
   });
-  $("#game-menu-shop-button").addEventListener("click", () => { $("#game-menu-panel").classList.add("hidden"); openShop(); });
-  $("#game-menu-jobs-button").addEventListener("click", () => { $("#game-menu-panel").classList.add("hidden"); openJobs(); });
-  $("#layout-landscape-button").addEventListener("click", () => applyScreenLayout("landscape", true));
-  $("#layout-portrait-button").addEventListener("click", () => applyScreenLayout("portrait", true));
-  $("#game-menu-resume-button").addEventListener("click", () => { $("#game-menu-panel").classList.add("hidden"); $("#game-menu-button").setAttribute("aria-expanded", "false"); });
-  $("#game-menu-inventory-button").addEventListener("click", () => { $("#game-menu-panel").classList.add("hidden"); $("#game-menu-button").setAttribute("aria-expanded", "false"); openInventory(); });
-  $("#game-menu-home-button").addEventListener("click", () => {
+  bind("#game-menu-shop-button", "click", () => { $("#game-menu-panel").classList.add("hidden"); openShop(); });
+  bind("#game-menu-jobs-button", "click", () => { $("#game-menu-panel").classList.add("hidden"); openJobs(); });
+  bind("#layout-landscape-button", "click", () => applyScreenLayout("landscape", true));
+  bind("#layout-portrait-button", "click", () => applyScreenLayout("portrait", true));
+  bind("#game-menu-resume-button", "click", () => { $("#game-menu-panel").classList.add("hidden"); $("#game-menu-button").setAttribute("aria-expanded", "false"); });
+  bind("#game-menu-inventory-button", "click", () => { $("#game-menu-panel").classList.add("hidden"); $("#game-menu-button").setAttribute("aria-expanded", "false"); openInventory(); });
+  bind("#game-menu-home-button", "click", () => {
     returnToMainMenu();
   });
-  $("#shop-panel").addEventListener("click", event => { if (event.target.id === "shop-panel") closeShop(); });
+  bind("#shop-panel", "click", event => { if (event.target.id === "shop-panel") closeShop(); });
   document.querySelectorAll(".shop-buy-button").forEach(button => button.addEventListener("click", () => buyShopItem(button)));
-  $("#new-game-button").addEventListener("click", () => {
+  bind("#new-game-button", "click", () => {
     requestLandscapeMode();
     const saved = loadSavedCharacter();
     fillForm({ name: "", gender: "male", age: 20, skin: "#6f402d", hair: "short", accessories: { glasses:false, chain:false, watch:false } });
     showScreen(creatorScreen);
   });
 
-  $("#continue-button").addEventListener("click", () => {
+  bind("#continue-button", "click", () => {
     requestLandscapeMode();
     const saved = loadSavedCharacter();
     if (saved) showSavedCharacter(saved);
   });
 
-  $("#back-home-button").addEventListener("click", () => { requestLandscapeMode(); returnToMainMenu(); });
-  $("#saved-home-button").addEventListener("click", () => { requestLandscapeMode(); returnToMainMenu(); });
-  $("#enter-city-button").addEventListener("click", () => {
+  bind("#back-home-button", "click", () => { requestLandscapeMode(); returnToMainMenu(); });
+  bind("#saved-home-button", "click", () => { requestLandscapeMode(); returnToMainMenu(); });
+  bind("#enter-city-button", "click", () => {
     requestLandscapeMode();
 
     const saved = loadSavedCharacter();
@@ -571,13 +580,13 @@ function bindEvents() {
       }
     });
   });
-  $("#edit-character-button").addEventListener("click", () => {
+  bind("#edit-character-button", "click", () => {
     fillForm(loadSavedCharacter() || state);
     showScreen(creatorScreen);
   });
-  $("#save-character-button").addEventListener("click", saveCharacter);
+  bind("#save-character-button", "click", saveCharacter);
 
-  $("#age-input").addEventListener("input", (event) => {
+  bind("#age-input", "input", (event) => {
     state.age = Number(event.target.value);
     $("#age-value").textContent = String(state.age);
   });
