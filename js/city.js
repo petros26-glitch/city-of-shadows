@@ -8,8 +8,9 @@ export function createCityGame(container, controls, characterData, onShopInterac
   scene.fog = new THREE.Fog("#171923", 22, 95);
 
   const camera = new THREE.PerspectiveCamera(62, 1, 0.1, 130);
-  const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "low-power" });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.15));
+  const mobileGraphics = window.matchMedia("(pointer: coarse)").matches || /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  const renderer = new THREE.WebGLRenderer({ antialias: false, alpha: false, depth: true, stencil: false, powerPreference: "low-power", preserveDrawingBuffer: false });
+  renderer.setPixelRatio(mobileGraphics ? 0.7 : Math.min(window.devicePixelRatio || 1, 1));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   container.replaceChildren(renderer.domElement);
   const shopPrompt = document.createElement("button");
@@ -702,11 +703,51 @@ export function createCityGame(container, controls, characterData, onShopInterac
     root.position.y = -bounds.min.y * root.scale.y;
     root.traverse(object => {
       if (!object.isMesh) return;
-      object.castShadow = true;
-      object.receiveShadow = true;
+      object.castShadow = false;
+      object.receiveShadow = false;
     });
     return root;
   }
+  async function optimizeCharacterTextures(root) {
+    const textures = new Set();
+    root.traverse(object => {
+      if (!object.isMesh) return;
+      const materials = Array.isArray(object.material) ? object.material : [object.material];
+      materials.forEach(material => {
+        if (!material) return;
+        Object.values(material).forEach(value => {
+          if (value && value.isTexture) textures.add(value);
+        });
+      });
+    });
+    const maxTextureSize = mobileGraphics ? 512 : 1024;
+    await Promise.all([...textures].map(async texture => {
+      texture.anisotropy = 1;
+      texture.generateMipmaps = false;
+      texture.minFilter = THREE.LinearFilter;
+      texture.magFilter = THREE.LinearFilter;
+      const source = texture.image;
+      const width = source?.width || source?.naturalWidth || 0;
+      const height = source?.height || source?.naturalHeight || 0;
+      if (!mobileGraphics || !width || !height || Math.max(width, height) <= maxTextureSize || typeof createImageBitmap !== "function") {
+        texture.needsUpdate = true;
+        return;
+      }
+      const scale = maxTextureSize / Math.max(width, height);
+      try {
+        const resized = await createImageBitmap(source, {
+          resizeWidth: Math.max(1, Math.round(width * scale)),
+          resizeHeight: Math.max(1, Math.round(height * scale)),
+          resizeQuality: "medium"
+        });
+        texture.image = resized;
+        texture.needsUpdate = true;
+      } catch (error) {
+        console.warn("A character texture could not be resized; keeping its original image.", error);
+      }
+    }));
+  }
+
   function makeCharacterAnimator(root, clips) {
     const mixer = new THREE.AnimationMixer(root);
     const actions = {};
@@ -730,7 +771,12 @@ export function createCityGame(container, controls, characterData, onShopInterac
       }
     };
   }
-  characterModelLoader.load(new URL("../Athletic_man.glb", import.meta.url).href, gltf => {
+  characterModelLoader.load(new URL("../Athletic_man.glb", import.meta.url).href, async gltf => {
+    try {
+      await optimizeCharacterTextures(gltf.scene);
+    } catch (error) {
+      console.warn("Character texture optimization was skipped:", error);
+    }
     if (destroyed) return;
 
     // Give the player and opponent independent cloned skeletons. Keep the
@@ -1084,8 +1130,13 @@ export function createCityGame(container, controls, characterData, onShopInterac
   }
   const observer=new ResizeObserver(resize); observer.observe(container); resize();
 
+  let lastFrameTime = 0;
+  const targetFrameInterval = mobileGraphics ? 1000 / 30 : 1000 / 45;
   function loop(time){
     animationId=requestAnimationFrame(loop);
+    if (document.hidden) return;
+    if (time - lastFrameTime < targetFrameInterval) return;
+    lastFrameTime = time;
     const dt=Math.min((time-previous)/1000||0,0.05);previous=time;
     if (playerModelController) playerModelController.mixer.update(dt);
     if (opponentModelController) opponentModelController.mixer.update(dt);
