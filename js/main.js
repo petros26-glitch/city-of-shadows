@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { createCityGame } from "./city.js?v=53";
+import { createCityGame } from "./city.js?v=54";
 
 const STORAGE_KEY = "cos-player-character-v1";
 const state = {
@@ -225,6 +225,7 @@ function showScreen(screen) {
   [homeScreen, creatorScreen, savedScreen, $("#city-screen")].forEach((item) => item.classList.add("hidden"));
   screen.classList.remove("hidden");
   document.body.classList.toggle("in-city", screen === $("#city-screen"));
+  if (previewReady && renderer) renderer.setAnimationLoop(screen === creatorScreen ? renderPreviewFrame : null);
   if (screen === creatorScreen) {
     requestAnimationFrame(() => resizePreview());
   }
@@ -455,7 +456,8 @@ function initPreview() {
   camera.lookAt(0, 1.2, 0);
 
   renderer = new THREE.WebGLRenderer({ antialias: false, alpha: true, powerPreference: "low-power" });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.35));
+  const previewIsMobile = window.matchMedia("(pointer: coarse)").matches || /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  renderer.setPixelRatio(previewIsMobile ? 0.7 : Math.min(window.devicePixelRatio || 1, 1));
   renderer.setSize(width, height);
   renderer.shadowMap.enabled = false;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -477,12 +479,14 @@ function initPreview() {
   buildCharacter();
   previewReady = true;
   $("#preview-status").textContent = "3D preview ready · drag to rotate";
-  renderer.setAnimationLoop(() => {
-    if (!creatorScreen || creatorScreen.classList.contains("hidden")) return;
-    currentRotation += (targetRotation - currentRotation) * 0.08;
-    if (character) character.rotation.y = currentRotation;
-    renderer.render(scene, camera);
-  });
+  renderer.setAnimationLoop(renderPreviewFrame);
+}
+
+function renderPreviewFrame() {
+  if (!renderer || !creatorScreen || creatorScreen.classList.contains("hidden") || document.hidden) return;
+  currentRotation += (targetRotation - currentRotation) * 0.08;
+  if (character) character.rotation.y = currentRotation;
+  renderer.render(scene, camera);
 }
 
 function resizePreview() {
