@@ -732,19 +732,29 @@ export function createCityGame(container, controls, characterData, onShopInterac
   }
   characterModelLoader.load("./Athletic_man.glb", gltf => {
     if (destroyed) return;
-    const opponentSource = cloneSkinnedModel(gltf.scene);
-    const playerModel = prepareCharacterModel(gltf.scene);
+
+    // Give the player and opponent independent cloned skeletons. Keep the
+    // player root visible and explicitly enable every node in the loaded GLB.
+    const playerModel = prepareCharacterModel(cloneSkinnedModel(gltf.scene));
+    const opponentModel = prepareCharacterModel(cloneSkinnedModel(gltf.scene));
+
     player.children.forEach(child => { child.visible = false; });
+    playerModel.visible = true;
+    playerModel.traverse(object => { object.visible = true; });
     player.add(playerModel);
+    player.visible = true;
     playerModelController = makeCharacterAnimator(playerModel, gltf.animations);
     playerModelController.play("idle");
-    const opponentModel = prepareCharacterModel(opponentSource);
+
     opponent.children.forEach(child => { if (child !== healthSprite) child.visible = false; });
+    opponentModel.visible = true;
+    opponentModel.traverse(object => { object.visible = true; });
     opponent.add(opponentModel);
     opponentModelController = makeCharacterAnimator(opponentModel, gltf.animations);
     opponentModelController.play("idle");
+
     const status = controls.querySelector(".city-status");
-    if (status) status.textContent = "REALISTIC 3D CHARACTERS READY";
+    if (status) status.textContent = "REALISTIC 3D PLAYER AND OPPONENT READY";
   }, undefined, error => {
     console.error("CITY OF SHADOWS character model could not be loaded:", error);
     const status = controls.querySelector(".city-status");
