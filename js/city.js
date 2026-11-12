@@ -1,4 +1,6 @@
 import * as THREE from "three";
+import { GLTFLoader } from "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/loaders/GLTFLoader.js";
+import { clone as cloneSkinnedModel } from "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/utils/SkeletonUtils.js";
 
 export function createCityGame(container, controls, characterData, onShopInteract, onInventoryInteract, onNeedsUpdate, onJobComplete) {
   const scene = new THREE.Scene();
@@ -682,6 +684,73 @@ export function createCityGame(container, controls, characterData, onShopInterac
   let vehicleSpeed = 0;
   let destroyed = false;
   const pendingUiTimers = new Set();
+
+  // Load the uploaded rigged character once, then clone its skeleton for the opponent.
+  // Low-poly characters remain available as a fallback if the model cannot load.
+  let playerModelController = null;
+  let opponentModelController = null;
+  const characterModelLoader = new GLTFLoader();
+  const characterActionNames = {
+    idle: ["Idle"], walk: ["Walk"], run: ["Run"], punch: ["Punch"],
+    kick: ["Front Kick", "Kick"], block: ["Block", "Fighting Stance"],
+    hit: ["Knockdown", "Fall"]
+  };
+  function prepareCharacterModel(root) {
+    const bounds = new THREE.Box3().setFromObject(root);
+    const height = Math.max(0.1, bounds.max.y - bounds.min.y);
+    root.scale.setScalar(2.12 / height);
+    root.position.y = -bounds.min.y * root.scale.y;
+    root.traverse(object => {
+      if (!object.isMesh) return;
+      object.castShadow = true;
+      object.receiveShadow = true;
+    });
+    return root;
+  }
+  function makeCharacterAnimator(root, clips) {
+    const mixer = new THREE.AnimationMixer(root);
+    const actions = {};
+    Object.entries(characterActionNames).forEach(([key, names]) => {
+      const clip = clips.find(item => names.some(name => item.name.toLowerCase() === name.toLowerCase()));
+      if (clip) actions[key] = mixer.clipAction(clip);
+    });
+    let current = null;
+    return {
+      mixer,
+      play(key, oneShot = false) {
+        const next = actions[key] || actions.idle;
+        if (!next || current === next) return;
+        if (current) current.fadeOut(0.12);
+        next.reset();
+        next.enabled = true;
+        next.setLoop(oneShot ? THREE.LoopOnce : THREE.LoopRepeat, oneShot ? 1 : Infinity);
+        next.clampWhenFinished = oneShot;
+        next.fadeIn(0.12).play();
+        current = next;
+      }
+    };
+  }
+  characterModelLoader.load("./Athletic_man.glb", gltf => {
+    if (destroyed) return;
+    const opponentSource = cloneSkinnedModel(gltf.scene);
+    const playerModel = prepareCharacterModel(gltf.scene);
+    player.children.forEach(child => { child.visible = false; });
+    player.add(playerModel);
+    playerModelController = makeCharacterAnimator(playerModel, gltf.animations);
+    playerModelController.play("idle");
+    const opponentModel = prepareCharacterModel(opponentSource);
+    opponent.children.forEach(child => { if (child !== healthSprite) child.visible = false; });
+    opponent.add(opponentModel);
+    opponentModelController = makeCharacterAnimator(opponentModel, gltf.animations);
+    opponentModelController.play("idle");
+    const status = controls.querySelector(".city-status");
+    if (status) status.textContent = "REALISTIC 3D CHARACTERS READY";
+  }, undefined, error => {
+    console.error("CITY OF SHADOWS character model could not be loaded:", error);
+    const status = controls.querySelector(".city-status");
+    if (status) status.textContent = "3D MODEL UNAVAILABLE · USING BACKUP CHARACTERS";
+  });
+
   function scheduleUiReset(callback, delay) {
     const timer = window.setTimeout(() => { pendingUiTimers.delete(timer); if (!destroyed) callback(); }, delay);
     pendingUiTimers.add(timer);
@@ -1008,6 +1077,8 @@ export function createCityGame(container, controls, characterData, onShopInterac
   function loop(time){
     animationId=requestAnimationFrame(loop);
     const dt=Math.min((time-previous)/1000||0,0.05);previous=time;
+    if (playerModelController) playerModelController.mixer.update(dt);
+    if (opponentModelController) opponentModelController.mixer.update(dt);
     const inventoryOpen = !document.querySelector("#inventory-panel").classList.contains("hidden");
     const shopOpen = !document.querySelector("#shop-panel").classList.contains("hidden");
     const gameMenuOpen = !document.querySelector("#game-menu-panel").classList.contains("hidden");
@@ -1142,6 +1213,7 @@ export function createCityGame(container, controls, characterData, onShopInterac
       return;
     }
     if (playerHealth <= 0) {
+      if (playerModelController) playerModelController.play("hit", true);
       respawnButton.hidden = false;
       const readout=controls.querySelector("#combat-readout");
       if(readout)readout.textContent="YOU ARE DOWN · TAP RESPAWN TO CONTINUE";
@@ -1244,6 +1316,10 @@ export function createCityGame(container, controls, characterData, onShopInterac
       playerParts.arms[0].rotation.x = -1.05;
       playerParts.arms[1].rotation.x = -1.05;
     }
+    if (playerModelController) {
+      const action = blockHeld ? "block" : playerKickTime > 0 ? "kick" : playerAttackTime > 0 ? "punch" : moving ? (fast ? "run" : "walk") : "idle";
+      playerModelController.play(action, action === "kick" || action === "punch");
+    }
 
     // Pedestrians walk along short street routes and turn around at each end.
     pedestrians.forEach(person => {
@@ -1309,6 +1385,7 @@ export function createCityGame(container, controls, characterData, onShopInterac
         if (!opponentBlocked) {
           opponent.position.x=ox;
           opponent.position.z=oz;
+          if (opponentModelController) opponentModelController.play("walk");
           const step = Math.sin(time*0.009)*0.38;
           opponentParts.legs[0].rotation.x=step;
           opponentParts.legs[1].rotation.x=-step;
@@ -1316,11 +1393,13 @@ export function createCityGame(container, controls, characterData, onShopInterac
           opponentParts.arms[1].rotation.x=step*0.6;
         }
       } else {
+        if (opponentModelController && opponentPunchTime <= 0) opponentModelController.play("block");
         opponentAttackCooldown=Math.max(0,opponentAttackCooldown-dt);
         opponentParts.arms[0].rotation.x = 0;
         opponentParts.arms[1].rotation.x = 0;
         opponentPunchTime = Math.max(0, opponentPunchTime - dt);
         if (opponentAttackCooldown===0) {
+          if (opponentModelController) opponentModelController.play("punch", true);
           opponentAttackCooldown=1.5;
           opponentPunchTime=0.34;
           opponentPunchSide=opponentPunchSide===0?1:0;
@@ -1352,6 +1431,7 @@ export function createCityGame(container, controls, characterData, onShopInterac
       if (readout) readout.textContent = "JOB COMPLETE · RETURN TO THE CITY TO TAKE ANOTHER JOB";
       if (typeof onJobComplete === "function") onJobComplete({ reward: 120, job: "market-delivery" });
     }
+    if (opponentHealth <= 0 && opponentModelController) opponentModelController.play("hit", true);
     if (opponentHealth <= 0 && opponentRespawnTime > 0) {
       opponentRespawnTime = Math.max(0, opponentRespawnTime - dt);
       if (opponentRespawnTime === 0) {
