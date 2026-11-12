@@ -730,7 +730,7 @@ export function createCityGame(container, controls, characterData, onShopInterac
       }
     };
   }
-  characterModelLoader.load("../Athletic_man.glb", gltf => {
+  characterModelLoader.load(new URL("../Athletic_man.glb", import.meta.url).href, gltf => {
     if (destroyed) return;
 
     // Give the player and opponent independent cloned skeletons. Keep the
