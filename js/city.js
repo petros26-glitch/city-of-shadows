@@ -690,6 +690,7 @@ export function createCityGame(container, controls, characterData, onShopInterac
   // Low-poly characters remain available as a fallback if the model cannot load.
   let playerModelController = null;
   let opponentModelController = null;
+  let characterModelResolved = false;
   const characterModelLoader = new GLTFLoader();
   const characterActionNames = {
     idle: ["Idle"], walk: ["Walk"], run: ["Run"], punch: ["Punch"],
@@ -797,6 +798,7 @@ export function createCityGame(container, controls, characterData, onShopInterac
       opponent.add(opponentModel);
       opponentModelController = nextOpponentController;
 
+      characterModelResolved = true;
       if (characterLoadStatus) characterLoadStatus.textContent = "REALISTIC 3D PLAYER AND OPPONENT READY";
 
       // Never hold up character display while Android decodes/resizes textures.
@@ -806,6 +808,7 @@ export function createCityGame(container, controls, characterData, onShopInterac
       });
     } catch (error) {
       console.error("CITY OF SHADOWS character model loaded but could not be prepared:", error);
+      characterModelResolved = true;
       if (characterLoadStatus) characterLoadStatus.textContent = "3D MODEL SETUP FAILED · BACKUP CHARACTERS ACTIVE";
     }
   }, progress => {
@@ -815,6 +818,7 @@ export function createCityGame(container, controls, characterData, onShopInterac
     }
   }, error => {
     console.error("CITY OF SHADOWS character model could not be loaded:", error);
+    characterModelResolved = true;
     if (characterLoadStatus) characterLoadStatus.textContent = "3D MODEL UNAVAILABLE · USING BACKUP CHARACTERS";
   });
 
@@ -1596,7 +1600,9 @@ export function createCityGame(container, controls, characterData, onShopInterac
     if(menuHealthFill)menuHealthFill.style.width=Math.max(0,Math.min(100,playerHealth))+"%";
     if(menuEnergyFill)menuEnergyFill.style.width=Math.max(0,Math.min(100,survival.energy))+"%";
     const status=controls.querySelector(".city-status");
-    status.textContent=vehicleHitMessageTime>0?vehicleHitMessage:(moving?(fast?"RUNNING":"WALKING"):"EXPLORE THE NEIGHBOURHOOD");
+    if (status && characterModelResolved) {
+      status.textContent=vehicleHitMessageTime>0?vehicleHitMessage:(moving?(fast?"RUNNING":"WALKING"):"EXPLORE THE NEIGHBOURHOOD");
+    }
   }
   animationId=requestAnimationFrame(loop);
 
