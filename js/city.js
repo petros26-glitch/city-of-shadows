@@ -771,40 +771,51 @@ export function createCityGame(container, controls, characterData, onShopInterac
       }
     };
   }
-  characterModelLoader.load(new URL("../Athletic_man.glb", import.meta.url).href, async gltf => {
+  const characterLoadStatus = controls.querySelector(".city-status");
+  if (characterLoadStatus) characterLoadStatus.textContent = "LOADING REALISTIC 3D CHARACTER…";
+  characterModelLoader.load(new URL("../Athletic_man.glb", import.meta.url).href, gltf => {
     try {
-      await optimizeCharacterTextures(gltf.scene);
+      if (destroyed) return;
+
+      // Prepare both independent skeletons before hiding either backup model.
+      // This keeps the playable characters visible if model preparation fails.
+      const playerModel = prepareCharacterModel(cloneSkinnedModel(gltf.scene));
+      const opponentModel = prepareCharacterModel(cloneSkinnedModel(gltf.scene));
+      const nextPlayerController = makeCharacterAnimator(playerModel, gltf.animations);
+      const nextOpponentController = makeCharacterAnimator(opponentModel, gltf.animations);
+      nextPlayerController.play("idle");
+      nextOpponentController.play("idle");
+
+      player.children.forEach(child => { child.visible = false; });
+      playerModel.traverse(object => { object.visible = true; });
+      player.add(playerModel);
+      player.visible = true;
+      playerModelController = nextPlayerController;
+
+      opponent.children.forEach(child => { if (child !== healthSprite) child.visible = false; });
+      opponentModel.traverse(object => { object.visible = true; });
+      opponent.add(opponentModel);
+      opponentModelController = nextOpponentController;
+
+      if (characterLoadStatus) characterLoadStatus.textContent = "REALISTIC 3D PLAYER AND OPPONENT READY";
+
+      // Never hold up character display while Android decodes/resizes textures.
+      // The model is already attached; texture optimization can finish later.
+      optimizeCharacterTextures(gltf.scene).catch(error => {
+        console.warn("Character texture optimization was skipped:", error);
+      });
     } catch (error) {
-      console.warn("Character texture optimization was skipped:", error);
+      console.error("CITY OF SHADOWS character model loaded but could not be prepared:", error);
+      if (characterLoadStatus) characterLoadStatus.textContent = "3D MODEL SETUP FAILED · BACKUP CHARACTERS ACTIVE";
     }
-    if (destroyed) return;
-
-    // Give the player and opponent independent cloned skeletons. Keep the
-    // player root visible and explicitly enable every node in the loaded GLB.
-    const playerModel = prepareCharacterModel(cloneSkinnedModel(gltf.scene));
-    const opponentModel = prepareCharacterModel(cloneSkinnedModel(gltf.scene));
-
-    player.children.forEach(child => { child.visible = false; });
-    playerModel.visible = true;
-    playerModel.traverse(object => { object.visible = true; });
-    player.add(playerModel);
-    player.visible = true;
-    playerModelController = makeCharacterAnimator(playerModel, gltf.animations);
-    playerModelController.play("idle");
-
-    opponent.children.forEach(child => { if (child !== healthSprite) child.visible = false; });
-    opponentModel.visible = true;
-    opponentModel.traverse(object => { object.visible = true; });
-    opponent.add(opponentModel);
-    opponentModelController = makeCharacterAnimator(opponentModel, gltf.animations);
-    opponentModelController.play("idle");
-
-    const status = controls.querySelector(".city-status");
-    if (status) status.textContent = "REALISTIC 3D PLAYER AND OPPONENT READY";
-  }, undefined, error => {
+  }, progress => {
+    if (characterLoadStatus && progress.total) {
+      const percent = Math.min(99, Math.round(progress.loaded / progress.total * 100));
+      characterLoadStatus.textContent = `LOADING REALISTIC 3D CHARACTER · ${percent}%`;
+    }
+  }, error => {
     console.error("CITY OF SHADOWS character model could not be loaded:", error);
-    const status = controls.querySelector(".city-status");
-    if (status) status.textContent = "3D MODEL UNAVAILABLE · USING BACKUP CHARACTERS";
+    if (characterLoadStatus) characterLoadStatus.textContent = "3D MODEL UNAVAILABLE · USING BACKUP CHARACTERS";
   });
 
   function scheduleUiReset(callback, delay) {
