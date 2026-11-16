@@ -11,8 +11,13 @@ This repository currently contains the first technical foundation:
 - A lightweight night-time starter-district blockout
 - Mouse, touch and trackpad camera orbit/zoom controls
 - Responsive viewport and conservative rendering defaults
+- Landscape-first presentation, with a rotate-device prompt on portrait mobile screens
 
 The current city is placeholder geometry. It is not the finished game world, and there are no playable characters or missions yet.
+
+## Orientation
+
+COS is designed to be played horizontally (landscape) on Android and Windows. The browser preview displays a rotate-device prompt on portrait mobile screens. When the Android app package is introduced, its native configuration will also be set to landscape orientation; browser pages cannot reliably force a phone's orientation.
 
 ## Requirements
 
