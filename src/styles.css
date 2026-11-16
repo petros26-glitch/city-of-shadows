@@ -150,9 +150,99 @@ body {
   display: none;
 }
 
+#rotate-prompt {
+  display: none;
+}
+
 @keyframes loading-pulse {
   0%, 100% { opacity: 0.35; transform: scaleX(0.65); }
   50% { opacity: 1; transform: scaleX(1); }
+}
+
+@media (orientation: portrait) and (max-width: 900px) {
+  #rotate-prompt {
+    position: absolute;
+    z-index: 10;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 28px;
+    background: radial-gradient(ellipse at center, #172238 0%, #080d17 72%);
+    text-align: center;
+  }
+
+  .rotate-icon {
+    width: 54px;
+    height: 72px;
+    margin-bottom: 12px;
+    border: 3px solid #d6a75e;
+    border-radius: 9px;
+    position: relative;
+    transform: rotate(-90deg);
+    animation: rotate-device 2.4s ease-in-out infinite;
+  }
+
+  .rotate-icon::after {
+    content: '';
+    position: absolute;
+    bottom: 5px;
+    left: 50%;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #d6a75e;
+    transform: translateX(-50%);
+  }
+
+  .rotate-icon span {
+    position: absolute;
+    top: 5px;
+    left: 50%;
+    width: 17px;
+    height: 2px;
+    border-radius: 2px;
+    background: #d6a75e;
+    transform: translateX(-50%);
+  }
+
+  .rotate-eyebrow {
+    margin: 0;
+    color: #d6a75e;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.22em;
+  }
+
+  #rotate-prompt h2 {
+    margin: 0;
+    font-size: clamp(22px, 7vw, 32px);
+    letter-spacing: 0.08em;
+  }
+
+  #rotate-prompt p:not(.rotate-eyebrow) {
+    max-width: 280px;
+    margin: 0;
+    color: #c3cad5;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  .rotate-hint {
+    margin-top: 8px;
+    color: #d6a75e;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+  }
+}
+
+@keyframes rotate-device {
+  0%, 15% { transform: rotate(-90deg); }
+  45%, 65% { transform: rotate(0deg); }
+  90%, 100% { transform: rotate(-90deg); }
 }
 
 @media (max-width: 600px) {
@@ -186,7 +276,8 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  #loading-screen span {
+  #loading-screen span,
+  .rotate-icon {
     animation: none;
   }
 }
