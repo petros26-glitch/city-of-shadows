@@ -189,7 +189,7 @@ export function createGame(root) {
   function handleKeyDown(event) {
     if (!gameStarted) return;
     const key = event.key.toLowerCase();
-    if (['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' '].includes(key)) {
+    if (['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' ', 'shift'].includes(key)) {
       event.preventDefault();
       keys.add(key);
       if (key === ' ') jump();
@@ -309,27 +309,36 @@ export function createGame(root) {
         forward.normalize();
         const right = new THREE.Vector3().crossVectors(forward, new THREE.Vector3(0, 1, 0)).normalize();
         const movement = forward.multiplyScalar(-inputZ).add(right.multiplyScalar(inputX)).normalize();
-        const speed = 5.2;
+        const isRunning = keys.has('shift') || Math.abs(stickState.x) > 0.82 || Math.abs(stickState.y) > 0.82;
+        const speed = isRunning ? 7.0 : 4.8;
         activeCharacter.group.position.x = THREE.MathUtils.clamp(activeCharacter.group.position.x + movement.x * speed * delta, -8.7, 8.7);
         activeCharacter.group.position.z = THREE.MathUtils.clamp(activeCharacter.group.position.z + movement.z * speed * delta, -43, 43);
         activeCharacter.group.rotation.y = Math.atan2(movement.x, movement.z);
-        activeCharacter.walkTime += delta * 10;
-        activeCharacter.leftLeg.rotation.x = Math.sin(activeCharacter.walkTime) * 0.48;
-        activeCharacter.rightLeg.rotation.x = -Math.sin(activeCharacter.walkTime) * 0.48;
-        activeCharacter.leftArm.rotation.x = -Math.sin(activeCharacter.walkTime) * 0.32;
-        activeCharacter.rightArm.rotation.x = Math.sin(activeCharacter.walkTime) * 0.32;
+        activeCharacter.walkTime += delta * (isRunning ? 14.5 : 9.5);
+        const stride = Math.sin(activeCharacter.walkTime);
+        const strideAmount = isRunning ? 0.72 : 0.48;
+        activeCharacter.leftLeg.rotation.x = stride * strideAmount;
+        activeCharacter.rightLeg.rotation.x = -stride * strideAmount;
+        activeCharacter.leftArm.rotation.x = -stride * (isRunning ? 0.52 : 0.36);
+        activeCharacter.rightArm.rotation.x = stride * (isRunning ? 0.52 : 0.36);
+        activeCharacter.body.position.y = Math.abs(Math.cos(activeCharacter.walkTime * 2)) * (isRunning ? 0.075 : 0.035);
+        activeCharacter.head.rotation.x = Math.sin(activeCharacter.walkTime) * 0.025;
       } else {
-        activeCharacter.leftLeg.rotation.x *= 0.8;
-        activeCharacter.rightLeg.rotation.x *= 0.8;
-        activeCharacter.leftArm.rotation.x *= 0.8;
-        activeCharacter.rightArm.rotation.x *= 0.8;
+        activeCharacter.leftLeg.rotation.x = THREE.MathUtils.damp(activeCharacter.leftLeg.rotation.x, 0, 9, delta);
+        activeCharacter.rightLeg.rotation.x = THREE.MathUtils.damp(activeCharacter.rightLeg.rotation.x, 0, 9, delta);
+        activeCharacter.leftArm.rotation.x = THREE.MathUtils.damp(activeCharacter.leftArm.rotation.x, 0, 7, delta);
+        activeCharacter.rightArm.rotation.x = THREE.MathUtils.damp(activeCharacter.rightArm.rotation.x, 0, 7, delta);
+        activeCharacter.body.position.y = Math.sin(frameTime * 0.0018) * 0.018;
+        activeCharacter.head.rotation.x = Math.sin(frameTime * 0.0011) * 0.012;
       }
 
       if (!onGround) {
         activeCharacter.group.position.y += jumpVelocity * delta;
+        activeCharacter.body.rotation.x = -0.08;
         jumpVelocity -= 15 * delta;
         if (activeCharacter.group.position.y <= 0) {
           activeCharacter.group.position.y = 0;
+          activeCharacter.body.rotation.x = 0;
           jumpVelocity = 0;
           onGround = true;
         }
