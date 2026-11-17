@@ -16,8 +16,20 @@
         <h1>CITY <span>OF</span> SHADOWS</h1>
         <p class="game-subtitle">DREAM. STRUGGLE. RISE.</p>
       </section>
-      <div class="scene-hint">DRAG TO LOOK AROUND <span>·</span> SCROLL TO ZOOM</div>
-      <div class="build-label">EARLY 3D FOUNDATION · BUILD 0.1.0</div>
+      <div class="scene-hint">LEFT STICK TO MOVE <span>·</span> DRAG RIGHT SIDE TO LOOK</div>
+      <div class="build-label">EARLY GAMEPLAY · BUILD 0.2.0</div>
+
+      <section id="mobile-controls" aria-label="Game controls">
+        <div id="move-joystick" class="joystick-base" aria-label="Movement joystick">
+          <span class="joystick-ring"></span>
+          <span id="move-stick" class="joystick-stick"></span>
+        </div>
+        <div class="action-controls">
+          <button id="action-interact" class="game-control secondary-control" type="button" aria-label="Interact">E</button>
+          <button id="action-jump" class="game-control jump-control" type="button" aria-label="Jump">JUMP</button>
+        </div>
+      </section>
+
       <section id="rotate-prompt" role="status" aria-live="polite">
         <div class="rotate-icon" aria-hidden="true"><span></span></div>
         <p class="rotate-eyebrow">CITY OF SHADOWS</p>
