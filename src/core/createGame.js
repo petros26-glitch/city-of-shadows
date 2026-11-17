@@ -120,7 +120,7 @@ export function createGame(root) {
   const stickState = { x: 0, y: 0, pointerId: null };
   const keys = new Set();
   const clock = new THREE.Clock();
-  const cameraOffset = camera.position.clone().sub(controls.target);
+  const cameraOffset = camera.position.clone().sub(initialTarget);
   let animationFrame = 0;
   let running = false;
   let jumpVelocity = 0;
