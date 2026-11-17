@@ -92,18 +92,26 @@ export function createGame(root) {
   player.position.set(0, 0, 3);
   scene.add(player);
 
-  const controls = new OrbitControls(camera, renderer.domElement);
-  controls.target.set(0, 1.35, 3);
-  controls.enableDamping = true;
-  controls.dampingFactor = 0.07;
-  controls.minDistance = 7;
-  controls.maxDistance = 28;
-  controls.maxPolarAngle = Math.PI * 0.48;
-  controls.minPolarAngle = 0.22;
-  controls.rotateSpeed = 0.55;
-  controls.enablePan = false;
-  controls.zoomSpeed = 0.7;
-  controls.update();
+  // Touch devices use a steady follow camera. OrbitControls interprets
+  // two-finger touch gestures as dolly/zoom, which can cause unwanted
+  // repeated zooming on some mobile browsers.
+  const controls = isTouchDevice ? null : new OrbitControls(camera, renderer.domElement);
+  const initialTarget = new THREE.Vector3(0, 1.35, 3);
+  if (controls) {
+    controls.target.copy(initialTarget);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.07;
+    controls.minDistance = 7;
+    controls.maxDistance = 28;
+    controls.maxPolarAngle = Math.PI * 0.48;
+    controls.minPolarAngle = 0.22;
+    controls.rotateSpeed = 0.55;
+    controls.enablePan = false;
+    controls.zoomSpeed = 0.7;
+    controls.update();
+  } else {
+    camera.lookAt(initialTarget);
+  }
 
   const joystick = document.querySelector('#move-stick');
   const joystickBase = document.querySelector('#move-joystick');
@@ -255,10 +263,16 @@ export function createGame(root) {
     }
 
     const target = new THREE.Vector3(player.position.x, player.position.y + 1.35, player.position.z);
-    const targetDelta = target.sub(controls.target);
-    camera.position.add(targetDelta);
-    controls.target.copy(target);
-    controls.update();
+    if (controls) {
+      const targetDelta = target.clone().sub(controls.target);
+      camera.position.add(targetDelta);
+      controls.target.copy(target);
+      controls.update();
+    } else {
+      // Keep a constant camera distance and angle while following the player.
+      camera.position.copy(target).add(cameraOffset);
+      camera.lookAt(target);
+    }
     renderer.render(scene, camera);
   }
 
@@ -295,7 +309,7 @@ export function createGame(root) {
       joystickBase?.removeEventListener('pointercancel', handleStickUp);
       jumpButton?.removeEventListener('pointerdown', jump);
       renderer.domElement.removeEventListener('webglcontextlost', handleContextLost);
-      controls.dispose();
+      controls?.dispose();
       scene.traverse((object) => {
         object.geometry?.dispose?.();
         if (Array.isArray(object.material)) object.material.forEach((material) => material.dispose());
