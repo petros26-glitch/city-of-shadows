@@ -5,6 +5,10 @@ import { createStarterDistrict } from '../world/createStarterDistrict.js';
 export function createGame(root) {
   if (!root) throw new Error('The game root element was not found.');
 
+  const isTouchDevice = window.matchMedia('(pointer: coarse)').matches;
+  const maxPixelRatio = isTouchDevice ? 0.85 : 1.25;
+  const frameInterval = isTouchDevice ? 1000 / 30 : 0;
+
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0x080d17);
   scene.fog = new THREE.Fog(0x080d17, 42, 115);
@@ -22,7 +26,7 @@ export function createGame(root) {
     renderer = new THREE.WebGLRenderer({
       antialias: false,
       alpha: false,
-      powerPreference: 'default',
+      powerPreference: 'low-power',
       stencil: false,
       depth: true
     });
@@ -30,7 +34,7 @@ export function createGame(root) {
     throw new Error('WebGL is unavailable or disabled.', { cause: error });
   }
 
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.35));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, maxPixelRatio));
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -114,6 +118,7 @@ export function createGame(root) {
   let jumpVelocity = 0;
   let onGround = true;
   let walkTime = 0;
+  let lastFrameTime = 0;
 
   function updateStick(event) {
     const rect = joystickBase.getBoundingClientRect();
@@ -189,13 +194,18 @@ export function createGame(root) {
     const height = Math.max(window.innerHeight, 1);
     camera.aspect = width / height;
     camera.updateProjectionMatrix();
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.35));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, maxPixelRatio));
     renderer.setSize(width, height);
   }
 
   function animate() {
     if (!running) return;
     animationFrame = window.requestAnimationFrame(animate);
+    const frameTime = window.performance.now();
+    if (frameInterval && frameTime - lastFrameTime < frameInterval) {
+      return;
+    }
+    lastFrameTime = frameTime;
     const delta = Math.min(clock.getDelta(), 0.05);
 
     let inputX = stickState.x;
