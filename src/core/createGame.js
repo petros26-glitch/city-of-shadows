@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { createStarterDistrict } from '../world/createStarterDistrict.js';
+import { createProtagonists } from '../characters/createProtagonists.js';
 
 export function createGame(root) {
   if (!root) throw new Error('The game root element was not found.');
@@ -19,7 +20,7 @@ export function createGame(root) {
     0.1,
     180
   );
-  camera.position.set(13, 10, 18);
+  camera.position.set(7, 4.5, 11);
 
   let renderer;
   try {
@@ -51,46 +52,29 @@ export function createGame(root) {
 
   createStarterDistrict(scene);
 
-  // Temporary player model: a lightweight placeholder until the character
-  // selection and final character models are added.
-  const player = new THREE.Group();
-  const skin = new THREE.MeshStandardMaterial({ color: 0x8f5738, roughness: 0.88 });
-  const shirt = new THREE.MeshStandardMaterial({ color: 0xc18a42, roughness: 0.9 });
-  const trousers = new THREE.MeshStandardMaterial({ color: 0x202a39, roughness: 0.95 });
-  const hair = new THREE.MeshStandardMaterial({ color: 0x171717, roughness: 1 });
+  const protagonists = createProtagonists(scene);
+  let selectedIndex = 0;
+  let activeCharacter = protagonists[selectedIndex];
+  let gameStarted = false;
+  activeCharacter.group.visible = true;
 
-  const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.43, 0.72, 3, 7), shirt);
-  torso.position.y = 1.18;
-  player.add(torso);
-
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.31, 10, 8), skin);
-  head.position.y = 1.98;
-  player.add(head);
-
-  const hairCap = new THREE.Mesh(new THREE.SphereGeometry(0.315, 10, 6, 0, Math.PI * 2, 0, Math.PI * 0.48), hair);
-  hairCap.position.y = 2.04;
-  player.add(hairCap);
-
-  const legGeometry = new THREE.CapsuleGeometry(0.16, 0.48, 2, 5);
-  const leftLeg = new THREE.Mesh(legGeometry, trousers);
-  leftLeg.position.set(-0.2, 0.43, 0);
-  player.add(leftLeg);
-  const rightLeg = new THREE.Mesh(legGeometry, trousers);
-  rightLeg.position.set(0.2, 0.43, 0);
-  player.add(rightLeg);
-
-  const armGeometry = new THREE.CapsuleGeometry(0.105, 0.48, 2, 5);
-  const leftArm = new THREE.Mesh(armGeometry, shirt);
-  leftArm.position.set(-0.51, 1.2, 0);
-  leftArm.rotation.z = -0.16;
-  player.add(leftArm);
-  const rightArm = new THREE.Mesh(armGeometry, shirt);
-  rightArm.position.set(0.51, 1.2, 0);
-  rightArm.rotation.z = 0.16;
-  player.add(rightArm);
-
-  player.position.set(0, 0, 3);
-  scene.add(player);
+  // A simple illuminated display plinth for the character preview.
+  const selectionStage = new THREE.Group();
+  const stageBase = new THREE.Mesh(
+    new THREE.CylinderGeometry(1.65, 1.8, 0.18, 32),
+    new THREE.MeshStandardMaterial({ color: 0x202b39, metalness: 0.55, roughness: 0.48 })
+  );
+  stageBase.position.y = 0.02;
+  selectionStage.add(stageBase);
+  const stageRing = new THREE.Mesh(
+    new THREE.TorusGeometry(1.48, 0.035, 6, 40),
+    new THREE.MeshStandardMaterial({ color: 0xd6a75e, emissive: 0x8b5720, emissiveIntensity: 0.65, metalness: 0.45 })
+  );
+  stageRing.rotation.x = Math.PI / 2;
+  stageRing.position.y = 0.13;
+  selectionStage.add(stageRing);
+  selectionStage.position.set(0, 0, 3);
+  scene.add(selectionStage);
 
   // Touch devices use a fixed-distance follow camera. A horizontal drag
   // on the open right side rotates the camera without enabling pinch zoom.
@@ -118,7 +102,7 @@ export function createGame(root) {
     if (cameraPointerId !== event.pointerId) return;
     cameraPointerId = null;
   }
-  const initialTarget = new THREE.Vector3(0, 1.35, 3);
+  const initialTarget = new THREE.Vector3(0, 1.25, 3);
   if (controls) {
     controls.target.copy(initialTarget);
     controls.enableDamping = true;
@@ -143,6 +127,15 @@ export function createGame(root) {
   const keys = new Set();
   const clock = new THREE.Clock();
   const cameraOffset = camera.position.clone().sub(initialTarget);
+  const selectionScreen = document.querySelector('#character-select');
+  const characterName = document.querySelector('#character-name');
+  const characterDescription = document.querySelector('#character-description');
+  const previousCharacterButton = document.querySelector('#character-previous');
+  const nextCharacterButton = document.querySelector('#character-next');
+  const confirmCharacterButton = document.querySelector('#character-confirm');
+  const mobileControls = document.querySelector('#mobile-controls');
+  const sceneHint = document.querySelector('.scene-hint');
+  const buildLabel = document.querySelector('.build-label');
   let animationFrame = 0;
   let running = false;
   let jumpVelocity = 0;
@@ -188,12 +181,13 @@ export function createGame(root) {
   }
 
   function jump() {
-    if (!onGround) return;
+    if (!gameStarted || !onGround) return;
     jumpVelocity = 6.2;
     onGround = false;
   }
 
   function handleKeyDown(event) {
+    if (!gameStarted) return;
     const key = event.key.toLowerCase();
     if (['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' '].includes(key)) {
       event.preventDefault();
@@ -224,6 +218,57 @@ export function createGame(root) {
   window.addEventListener('keyup', handleKeyUp);
   window.addEventListener('blur', resetStick);
 
+  function showSelectedCharacter() {
+    activeCharacter = protagonists[selectedIndex];
+    protagonists.forEach((character, index) => {
+      character.group.visible = index === selectedIndex;
+      character.group.position.set(0, 0, 3);
+      character.group.rotation.set(0, 0, 0);
+    });
+    if (characterName) characterName.textContent = activeCharacter.name;
+    if (characterDescription) characterDescription.textContent = activeCharacter.description;
+    const target = new THREE.Vector3(0, 1.25, 3);
+    camera.position.copy(target).add(cameraOffset);
+    camera.lookAt(target);
+    if (controls) {
+      controls.target.copy(target);
+      controls.update();
+    }
+  }
+
+  function moveCharacterSelection(direction) {
+    if (gameStarted) return;
+    selectedIndex = (selectedIndex + direction + protagonists.length) % protagonists.length;
+    showSelectedCharacter();
+  }
+
+  function confirmCharacterSelection() {
+    if (gameStarted) return;
+    gameStarted = true;
+    activeCharacter.group.position.set(0, 0, 3);
+    selectionStage.visible = false;
+    if (selectionScreen) selectionScreen.hidden = true;
+    if (mobileControls) mobileControls.hidden = false;
+    if (sceneHint) sceneHint.hidden = false;
+    if (buildLabel) buildLabel.hidden = false;
+    cameraOffset.set(13, 8.65, 15);
+    const target = new THREE.Vector3(0, 1.35, 3);
+    camera.position.copy(target).add(cameraOffset);
+    camera.lookAt(target);
+    if (controls) {
+      controls.target.copy(target);
+      controls.update();
+    }
+    keys.clear();
+  }
+
+  const handlePreviousCharacter = () => moveCharacterSelection(-1);
+  const handleNextCharacter = () => moveCharacterSelection(1);
+  previousCharacterButton?.addEventListener('click', handlePreviousCharacter);
+  nextCharacterButton?.addEventListener('click', handleNextCharacter);
+  confirmCharacterButton?.addEventListener('click', confirmCharacterSelection);
+  showSelectedCharacter();
+
   function resize() {
     const width = window.innerWidth;
     const height = Math.max(window.innerHeight, 1);
@@ -243,53 +288,59 @@ export function createGame(root) {
     lastFrameTime = frameTime;
     const delta = Math.min(clock.getDelta(), 0.05);
 
-    let inputX = stickState.x;
-    let inputZ = stickState.y;
-    if (keys.has('a') || keys.has('arrowleft')) inputX -= 1;
-    if (keys.has('d') || keys.has('arrowright')) inputX += 1;
-    if (keys.has('w') || keys.has('arrowup')) inputZ -= 1;
-    if (keys.has('s') || keys.has('arrowdown')) inputZ += 1;
+    if (gameStarted) {
+      let inputX = stickState.x;
+      let inputZ = stickState.y;
+      if (keys.has('a') || keys.has('arrowleft')) inputX -= 1;
+      if (keys.has('d') || keys.has('arrowright')) inputX += 1;
+      if (keys.has('w') || keys.has('arrowup')) inputZ -= 1;
+      if (keys.has('s') || keys.has('arrowdown')) inputZ += 1;
 
-    const inputLength = Math.hypot(inputX, inputZ);
-    if (inputLength > 1) {
-      inputX /= inputLength;
-      inputZ /= inputLength;
-    }
+      const inputLength = Math.hypot(inputX, inputZ);
+      if (inputLength > 1) {
+        inputX /= inputLength;
+        inputZ /= inputLength;
+      }
 
-    if (inputLength > 0.08) {
-      const forward = new THREE.Vector3();
-      camera.getWorldDirection(forward);
-      forward.y = 0;
-      forward.normalize();
-      const right = new THREE.Vector3().crossVectors(forward, new THREE.Vector3(0, 1, 0)).normalize();
-      const movement = forward.multiplyScalar(-inputZ).add(right.multiplyScalar(inputX)).normalize();
-      const speed = 5.2;
-      player.position.x = THREE.MathUtils.clamp(player.position.x + movement.x * speed * delta, -8.7, 8.7);
-      player.position.z = THREE.MathUtils.clamp(player.position.z + movement.z * speed * delta, -43, 43);
-      player.rotation.y = Math.atan2(movement.x, movement.z);
-      walkTime += delta * 10;
-      leftLeg.rotation.x = Math.sin(walkTime) * 0.48;
-      rightLeg.rotation.x = -Math.sin(walkTime) * 0.48;
-      leftArm.rotation.x = -Math.sin(walkTime) * 0.32;
-      rightArm.rotation.x = Math.sin(walkTime) * 0.32;
-    } else {
-      leftLeg.rotation.x *= 0.8;
-      rightLeg.rotation.x *= 0.8;
-      leftArm.rotation.x *= 0.8;
-      rightArm.rotation.x *= 0.8;
-    }
+      if (inputLength > 0.08) {
+        const forward = new THREE.Vector3();
+        camera.getWorldDirection(forward);
+        forward.y = 0;
+        forward.normalize();
+        const right = new THREE.Vector3().crossVectors(forward, new THREE.Vector3(0, 1, 0)).normalize();
+        const movement = forward.multiplyScalar(-inputZ).add(right.multiplyScalar(inputX)).normalize();
+        const speed = 5.2;
+        activeCharacter.group.position.x = THREE.MathUtils.clamp(activeCharacter.group.position.x + movement.x * speed * delta, -8.7, 8.7);
+        activeCharacter.group.position.z = THREE.MathUtils.clamp(activeCharacter.group.position.z + movement.z * speed * delta, -43, 43);
+        activeCharacter.group.rotation.y = Math.atan2(movement.x, movement.z);
+        activeCharacter.walkTime += delta * 10;
+        activeCharacter.leftLeg.rotation.x = Math.sin(activeCharacter.walkTime) * 0.48;
+        activeCharacter.rightLeg.rotation.x = -Math.sin(activeCharacter.walkTime) * 0.48;
+        activeCharacter.leftArm.rotation.x = -Math.sin(activeCharacter.walkTime) * 0.32;
+        activeCharacter.rightArm.rotation.x = Math.sin(activeCharacter.walkTime) * 0.32;
+      } else {
+        activeCharacter.leftLeg.rotation.x *= 0.8;
+        activeCharacter.rightLeg.rotation.x *= 0.8;
+        activeCharacter.leftArm.rotation.x *= 0.8;
+        activeCharacter.rightArm.rotation.x *= 0.8;
+      }
 
-    if (!onGround) {
-      player.position.y += jumpVelocity * delta;
-      jumpVelocity -= 15 * delta;
-      if (player.position.y <= 0) {
-        player.position.y = 0;
-        jumpVelocity = 0;
-        onGround = true;
+      if (!onGround) {
+        activeCharacter.group.position.y += jumpVelocity * delta;
+        jumpVelocity -= 15 * delta;
+        if (activeCharacter.group.position.y <= 0) {
+          activeCharacter.group.position.y = 0;
+          jumpVelocity = 0;
+          onGround = true;
+        }
       }
     }
 
-    const target = new THREE.Vector3(player.position.x, player.position.y + 1.35, player.position.z);
+    const target = new THREE.Vector3(
+      activeCharacter.group.position.x,
+      activeCharacter.group.position.y + 1.35,
+      activeCharacter.group.position.z
+    );
     if (controls) {
       const targetDelta = target.clone().sub(controls.target);
       camera.position.add(targetDelta);
@@ -335,6 +386,9 @@ export function createGame(root) {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
       window.removeEventListener('blur', resetStick);
+      previousCharacterButton?.removeEventListener('click', handlePreviousCharacter);
+      nextCharacterButton?.removeEventListener('click', handleNextCharacter);
+      confirmCharacterButton?.removeEventListener('click', confirmCharacterSelection);
       joystickBase?.removeEventListener('pointerdown', handleStickDown);
       joystickBase?.removeEventListener('pointermove', handleStickMove);
       joystickBase?.removeEventListener('pointerup', handleStickUp);
