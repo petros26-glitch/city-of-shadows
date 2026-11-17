@@ -16,10 +16,31 @@
         <h1>CITY <span>OF</span> SHADOWS</h1>
         <p class="game-subtitle">DREAM. STRUGGLE. RISE.</p>
       </section>
-      <div class="scene-hint">LEFT STICK TO MOVE <span>·</span> DRAG RIGHT SIDE TO LOOK</div>
-      <div class="build-label">EARLY GAMEPLAY · BUILD 0.2.0</div>
+      <div class="scene-hint" hidden>LEFT STICK TO MOVE <span>·</span> DRAG RIGHT SIDE TO LOOK</div>
+      <div class="build-label" hidden>EARLY GAMEPLAY · BUILD 0.2.0</div>
 
-      <section id="mobile-controls" aria-label="Game controls">
+      <section id="character-select" aria-label="Choose your protagonist">
+        <div class="selection-topline">CITY OF SHADOWS <span>·</span> CHARACTER SELECT</div>
+        <div class="selection-panel">
+          <p class="selection-eyebrow">YOUR STORY STARTS HERE</p>
+          <h2>CHOOSE YOUR<br /><span>PROTAGONIST</span></h2>
+          <p class="selection-intro">Two lives. One city. The same story.</p>
+          <div class="character-details" aria-live="polite">
+            <p id="character-name">MALE PROTAGONIST</p>
+            <span id="character-description">18 YEARS OLD · THE DEFAULT HERO</span>
+          </div>
+          <div class="character-switcher">
+            <button id="character-previous" type="button" aria-label="Previous character">‹</button>
+            <span>SWITCH CHARACTER</span>
+            <button id="character-next" type="button" aria-label="Next character">›</button>
+          </div>
+          <button id="character-confirm" class="confirm-character" type="button">CONFIRM &amp; PLAY <span>→</span></button>
+          <p class="selection-footnote">BOTH CHARACTERS SHARE THE SAME MISSIONS AND PROGRESSION</p>
+        </div>
+        <div class="selection-bottomline">18+ PROTAGONISTS <span>·</span> OPEN-WORLD ACTION ADVENTURE</div>
+      </section>
+
+      <section id="mobile-controls" hidden aria-label="Game controls">
         <div id="move-joystick" class="joystick-base" aria-label="Movement joystick">
           <span class="joystick-ring"></span>
           <span id="move-stick" class="joystick-stick"></span>
