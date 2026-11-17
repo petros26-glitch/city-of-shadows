@@ -92,10 +92,32 @@ export function createGame(root) {
   player.position.set(0, 0, 3);
   scene.add(player);
 
-  // Touch devices use a steady follow camera. OrbitControls interprets
-  // two-finger touch gestures as dolly/zoom, which can cause unwanted
-  // repeated zooming on some mobile browsers.
+  // Touch devices use a fixed-distance follow camera. A horizontal drag
+  // on the open right side rotates the camera without enabling pinch zoom.
   const controls = isTouchDevice ? null : new OrbitControls(camera, renderer.domElement);
+  let cameraPointerId = null;
+  let lastCameraX = 0;
+
+  function handleCameraDown(event) {
+    if (!isTouchDevice || event.clientX < window.innerWidth * 0.42) return;
+    cameraPointerId = event.pointerId;
+    lastCameraX = event.clientX;
+    renderer.domElement.setPointerCapture(event.pointerId);
+    event.preventDefault();
+  }
+
+  function handleCameraMove(event) {
+    if (cameraPointerId !== event.pointerId) return;
+    event.preventDefault();
+    const deltaX = event.clientX - lastCameraX;
+    lastCameraX = event.clientX;
+    cameraOffset.applyAxisAngle(new THREE.Vector3(0, 1, 0), -deltaX * 0.008);
+  }
+
+  function handleCameraUp(event) {
+    if (cameraPointerId !== event.pointerId) return;
+    cameraPointerId = null;
+  }
   const initialTarget = new THREE.Vector3(0, 1.35, 3);
   if (controls) {
     controls.target.copy(initialTarget);
@@ -189,10 +211,15 @@ export function createGame(root) {
   joystickBase?.addEventListener('pointerup', handleStickUp);
   joystickBase?.addEventListener('pointercancel', handleStickUp);
   jumpButton?.addEventListener('pointerdown', jump);
-  actionButton?.addEventListener('pointerdown', () => {
-    actionButton.classList.add('is-pressed');
-    window.setTimeout(() => actionButton.classList.remove('is-pressed'), 140);
-  });
+  let actionPressTimer = 0;
+  function handleActionDown() {
+    actionButton?.classList.add('is-pressed');
+    window.clearTimeout(actionPressTimer);
+    actionPressTimer = window.setTimeout(() => {
+      actionButton?.classList.remove('is-pressed');
+    }, 140);
+  }
+  actionButton?.addEventListener('pointerdown', handleActionDown);
   window.addEventListener('keydown', handleKeyDown);
   window.addEventListener('keyup', handleKeyUp);
   window.addEventListener('blur', resetStick);
@@ -286,6 +313,11 @@ export function createGame(root) {
     }
   }
 
+  renderer.domElement.addEventListener('pointerdown', handleCameraDown);
+  renderer.domElement.addEventListener('pointermove', handleCameraMove);
+  renderer.domElement.addEventListener('pointerup', handleCameraUp);
+  renderer.domElement.addEventListener('pointercancel', handleCameraUp);
+
   renderer.domElement.addEventListener('webglcontextlost', handleContextLost, false);
   window.addEventListener('resize', resize);
 
@@ -308,7 +340,13 @@ export function createGame(root) {
       joystickBase?.removeEventListener('pointerup', handleStickUp);
       joystickBase?.removeEventListener('pointercancel', handleStickUp);
       jumpButton?.removeEventListener('pointerdown', jump);
+      actionButton?.removeEventListener('pointerdown', handleActionDown);
+      window.clearTimeout(actionPressTimer);
       renderer.domElement.removeEventListener('webglcontextlost', handleContextLost);
+      renderer.domElement.removeEventListener('pointerdown', handleCameraDown);
+      renderer.domElement.removeEventListener('pointermove', handleCameraMove);
+      renderer.domElement.removeEventListener('pointerup', handleCameraUp);
+      renderer.domElement.removeEventListener('pointercancel', handleCameraUp);
       controls?.dispose();
       scene.traverse((object) => {
         object.geometry?.dispose?.();
