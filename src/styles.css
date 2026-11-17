@@ -281,3 +281,156 @@ body {
     animation: none;
   }
 }
+
+
+/* Touch controls for the first playable mobile build. */
+#mobile-controls {
+  position: absolute;
+  z-index: 4;
+  inset: 0;
+  display: none;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.joystick-base {
+  position: absolute;
+  left: max(24px, env(safe-area-inset-left));
+  bottom: max(26px, env(safe-area-inset-bottom));
+  width: clamp(112px, 19vw, 150px);
+  height: clamp(112px, 19vw, 150px);
+  border: 1px solid rgb(255 255 255 / 24%);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgb(255 255 255 / 10%), rgb(8 13 23 / 42%));
+  box-shadow: 0 8px 28px rgb(0 0 0 / 30%), inset 0 0 20px rgb(255 255 255 / 5%);
+  pointer-events: auto;
+  touch-action: none;
+}
+
+.joystick-ring {
+  position: absolute;
+  inset: 13%;
+  border: 1px dashed rgb(255 255 255 / 22%);
+  border-radius: 50%;
+}
+
+.joystick-stick {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 42%;
+  height: 42%;
+  border: 2px solid rgb(255 255 255 / 55%);
+  border-radius: 50%;
+  background: linear-gradient(145deg, #d6a75e, #8d5d2d);
+  box-shadow: 0 4px 14px rgb(0 0 0 / 45%), inset 0 1px 3px rgb(255 255 255 / 35%);
+  transform: translate(0, 0);
+  margin-left: -21%;
+  margin-top: -21%;
+  pointer-events: none;
+}
+
+.action-controls {
+  position: absolute;
+  right: max(26px, env(safe-area-inset-right));
+  bottom: max(28px, env(safe-area-inset-bottom));
+  display: flex;
+  align-items: flex-end;
+  gap: 15px;
+  pointer-events: none;
+}
+
+.game-control {
+  display: grid;
+  place-items: center;
+  border: 1px solid rgb(255 255 255 / 38%);
+  border-radius: 50%;
+  color: #fff8ec;
+  font: 800 11px Arial, sans-serif;
+  letter-spacing: 0.08em;
+  text-shadow: 0 1px 3px #000;
+  box-shadow: 0 6px 18px rgb(0 0 0 / 38%), inset 0 1px 4px rgb(255 255 255 / 18%);
+  pointer-events: auto;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.jump-control {
+  width: clamp(70px, 11vw, 88px);
+  height: clamp(70px, 11vw, 88px);
+  background: linear-gradient(145deg, #bd8741, #76502a);
+}
+
+.secondary-control {
+  width: clamp(48px, 8vw, 62px);
+  height: clamp(48px, 8vw, 62px);
+  margin-bottom: 7px;
+  background: linear-gradient(145deg, #53667a, #27384b);
+}
+
+.game-control:active,
+.game-control.is-pressed {
+  filter: brightness(1.3);
+  transform: scale(0.94);
+}
+
+@media (orientation: landscape) and (max-width: 1100px), (pointer: coarse) {
+  #mobile-controls {
+    display: block;
+  }
+
+  .scene-hint {
+    top: auto;
+    bottom: max(12px, env(safe-area-inset-bottom));
+    left: 50%;
+    width: max-content;
+    max-width: 36%;
+    transform: translateX(-50%);
+    text-align: center;
+    font-size: 7px;
+    opacity: 0.72;
+  }
+
+  .build-label {
+    top: max(14px, env(safe-area-inset-top));
+    bottom: auto;
+    font-size: 7px;
+  }
+
+  .game-brand {
+    top: max(14px, env(safe-area-inset-top));
+  }
+}
+
+@media (max-height: 420px) and (orientation: landscape) {
+  .joystick-base {
+    width: 100px;
+    height: 100px;
+    bottom: max(12px, env(safe-area-inset-bottom));
+  }
+
+  .action-controls {
+    bottom: max(12px, env(safe-area-inset-bottom));
+    gap: 10px;
+  }
+
+  .jump-control {
+    width: 62px;
+    height: 62px;
+  }
+
+  .secondary-control {
+    width: 44px;
+    height: 44px;
+  }
+
+  .game-brand h1 {
+    font-size: 24px;
+  }
+
+  .game-subtitle,
+  .eyebrow {
+    font-size: 7px;
+  }
+}
