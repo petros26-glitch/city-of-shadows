@@ -717,3 +717,104 @@ body {
     display: none;
   }
 }
+
+
+/* First NPC interaction and dialogue UI. */
+.interaction-prompt {
+  position: absolute;
+  z-index: 5;
+  left: 50%;
+  bottom: max(22px, env(safe-area-inset-bottom));
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transform: translateX(-50%);
+  padding: 9px 14px;
+  border: 1px solid rgb(214 167 94 / 55%);
+  border-radius: 4px;
+  background: rgb(8 13 23 / 92%);
+  color: #f4f0e8;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  box-shadow: 0 8px 25px rgb(0 0 0 / 35%);
+  pointer-events: none;
+}
+.interaction-prompt[hidden],
+.dialogue-panel[hidden] { display: none !important; }
+.interaction-key {
+  display: grid;
+  place-items: center;
+  width: 27px;
+  height: 27px;
+  border-radius: 3px;
+  background: #d6a75e;
+  color: #17130e;
+  font-size: 13px;
+}
+.dialogue-panel {
+  position: absolute;
+  z-index: 9;
+  left: 50%;
+  bottom: max(22px, env(safe-area-inset-bottom));
+  width: min(560px, calc(100% - 36px));
+  padding: 18px 20px 14px;
+  transform: translateX(-50%);
+  border: 1px solid rgb(214 167 94 / 55%);
+  border-top: 3px solid #d6a75e;
+  border-radius: 4px;
+  background: linear-gradient(145deg, rgb(15 23 36 / 98%), rgb(5 9 16 / 98%));
+  box-shadow: 0 16px 45px rgb(0 0 0 / 55%);
+  color: #f4f0e8;
+}
+.dialogue-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.dialogue-tag {
+  color: #d6a75e;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+}
+.dialogue-heading strong {
+  font-size: 12px;
+  letter-spacing: 0.12em;
+}
+.dialogue-panel p {
+  margin: 12px 0 15px;
+  color: #d2d8e1;
+  font-size: 13px;
+  line-height: 1.55;
+}
+.dialogue-panel button {
+  min-width: 118px;
+  min-height: 38px;
+  padding: 0 15px;
+  border: 0;
+  border-radius: 3px;
+  background: #d6a75e;
+  color: #17130e;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+}
+.dialogue-help {
+  float: right;
+  padding-top: 13px;
+  color: #8994a3;
+  font-size: 7px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+@media (orientation: landscape) and (max-height: 480px) {
+  .dialogue-panel {
+    bottom: max(12px, env(safe-area-inset-bottom));
+    width: min(520px, 62vw);
+    padding: 12px 15px 10px;
+  }
+  .dialogue-panel p { margin: 8px 0 10px; font-size: 11px; }
+  .dialogue-panel button { min-height: 32px; }
+  .interaction-prompt { bottom: max(12px, env(safe-area-inset-bottom)); }
+}
