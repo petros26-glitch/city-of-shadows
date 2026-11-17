@@ -12,18 +12,35 @@ This repository currently contains the first technical foundation:
 - Mouse, touch and trackpad camera orbit/zoom controls
 - Responsive viewport and conservative rendering defaults
 - Landscape-first presentation, with a rotate-device prompt on portrait mobile screens
+- Capacitor 8 configuration for packaging the existing web game as an Android app
 
 The current city is placeholder geometry. It is not the finished game world, and there are no playable characters or missions yet.
 
 ## Orientation
 
-COS is designed to be played horizontally (landscape) on Android and Windows. The browser preview displays a rotate-device prompt on portrait mobile screens. When the Android app package is introduced, its native configuration will also be set to landscape orientation; browser pages cannot reliably force a phone's orientation.
+COS is designed to be played horizontally (landscape) on Android and Windows. The browser preview displays a rotate-device prompt on portrait mobile screens. The Android build sets the native main activity to fixed landscape orientation, so the installed game can open horizontally even when Android Auto-rotate is turned off. The browser preview cannot override Android's system rotation lock.
+
+## Android test build
+
+GitHub Actions builds a debug APK when relevant game or Android packaging files change, and also supports a manual run from the Actions tab. Download the `COS-Android-debug-APK` artifact from a successful workflow run to test the installable Android build.
+
+The Android project is generated during the workflow rather than checked into the repository at this early stage. This keeps the source repository lean while we validate the native wrapper and landscape behaviour.
+
+For local Android development, install Node.js 22+, Android Studio and the Android SDK, then run:
+
+```bash
+npm install
+npx cap add android
+npm run android:prepare
+npm run android:open
+```
 
 ## Requirements
 
-- Node.js 20.19+ or 22.12+
+- Node.js 22+
 - npm
-- A modern browser with WebGL support
+- Android Studio and Android SDK for local Android builds
+- A modern browser with WebGL support for the browser preview
 
 ## Run locally
 
@@ -34,7 +51,7 @@ npm run dev
 
 Open the local URL printed by Vite (normally http://localhost:5173).
 
-## Create a production build
+## Create a production web build
 
 ```bash
 npm run build
