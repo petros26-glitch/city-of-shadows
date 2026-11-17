@@ -76,6 +76,44 @@ export function createGame(root) {
   selectionStage.position.set(0, 0, 3);
   scene.add(selectionStage);
 
+  // First roadside NPC: a lightweight local resident beside the kiosk.
+  const npc = new THREE.Group();
+  npc.position.set(7.15, 0, 1.2);
+  const npcSkin = new THREE.MeshStandardMaterial({ color: 0x8a5638, roughness: 0.9 });
+  const npcShirt = new THREE.MeshStandardMaterial({ color: 0x2d6470, roughness: 0.88 });
+  const npcTrousers = new THREE.MeshStandardMaterial({ color: 0x252d3a, roughness: 0.95 });
+  const npcHair = new THREE.MeshStandardMaterial({ color: 0x171717, roughness: 1 });
+  const npcBody = new THREE.Mesh(new THREE.CapsuleGeometry(0.28, 0.62, 3, 7), npcShirt);
+  npcBody.position.y = 1.05;
+  npc.add(npcBody);
+  const npcHead = new THREE.Mesh(new THREE.SphereGeometry(0.23, 9, 7), npcSkin);
+  npcHead.position.y = 1.67;
+  npc.add(npcHead);
+  const npcHairCap = new THREE.Mesh(new THREE.SphereGeometry(0.235, 9, 5, 0, Math.PI * 2, 0, Math.PI * 0.48), npcHair);
+  npcHairCap.position.y = 1.72;
+  npc.add(npcHairCap);
+  const npcLegGeometry = new THREE.CylinderGeometry(0.105, 0.12, 0.62, 6);
+  for (const x of [-0.13, 0.13]) {
+    const leg = new THREE.Mesh(npcLegGeometry, npcTrousers);
+    leg.position.set(x, 0.48, 0);
+    npc.add(leg);
+  }
+  const npcArmGeometry = new THREE.CylinderGeometry(0.075, 0.085, 0.58, 6);
+  for (const x of [-0.34, 0.34]) {
+    const arm = new THREE.Mesh(npcArmGeometry, npcSkin);
+    arm.position.set(x, 1.08, 0);
+    arm.rotation.z = x < 0 ? -0.12 : 0.12;
+    npc.add(arm);
+  }
+  const npcMarker = new THREE.Mesh(
+    new THREE.TorusGeometry(0.42, 0.035, 6, 24),
+    new THREE.MeshStandardMaterial({ color: 0xd6a75e, emissive: 0x8b5720, emissiveIntensity: 0.8 })
+  );
+  npcMarker.rotation.x = Math.PI / 2;
+  npcMarker.position.y = 0.08;
+  npc.add(npcMarker);
+  scene.add(npc);
+
   // Touch devices use a fixed-distance follow camera. A horizontal drag
   // on the open right side rotates the camera without enabling pinch zoom.
   const controls = isTouchDevice ? null : new OrbitControls(camera, renderer.domElement);
@@ -123,6 +161,19 @@ export function createGame(root) {
   const joystickBase = document.querySelector('#move-joystick');
   const jumpButton = document.querySelector('#action-jump');
   const actionButton = document.querySelector('#action-interact');
+  const interactionPrompt = document.querySelector('#interaction-prompt');
+  const dialoguePanel = document.querySelector('#dialogue-panel');
+  const dialogueName = document.querySelector('#dialogue-name');
+  const dialogueText = document.querySelector('#dialogue-text');
+  const dialogueNextButton = document.querySelector('#dialogue-next');
+  const dialogueLines = [
+    'Good evening, my friend. This city can be tough, especially when you are just starting out.',
+    'I run this little kiosk. Keep your eyes open and get to know the people around here.',
+    'There is always a story behind every corner. Stay sharp out there.'
+  ];
+  let dialogueIndex = 0;
+  let dialogueOpen = false;
+  let nearNpc = false;
   const stickState = { x: 0, y: 0, pointerId: null };
   const keys = new Set();
   const clock = new THREE.Clock();
@@ -189,6 +240,11 @@ export function createGame(root) {
   function handleKeyDown(event) {
     if (!gameStarted) return;
     const key = event.key.toLowerCase();
+    if (key === 'e') {
+      event.preventDefault();
+      interact();
+      return;
+    }
     if (['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' ', 'shift'].includes(key)) {
       event.preventDefault();
       keys.add(key);
@@ -206,6 +262,39 @@ export function createGame(root) {
   joystickBase?.addEventListener('pointercancel', handleStickUp);
   jumpButton?.addEventListener('pointerdown', jump);
   let actionPressTimer = 0;
+  function closeDialogue() {
+    dialogueOpen = false;
+    if (dialoguePanel) dialoguePanel.hidden = true;
+    if (interactionPrompt) interactionPrompt.hidden = !nearNpc;
+  }
+
+  function interact() {
+    if (!gameStarted) return;
+    if (dialogueOpen) {
+      dialogueIndex += 1;
+      if (dialogueIndex >= dialogueLines.length) {
+        closeDialogue();
+        return;
+      }
+      if (dialogueText) dialogueText.textContent = dialogueLines[dialogueIndex];
+      if (dialogueNextButton) dialogueNextButton.textContent =
+        dialogueIndex === dialogueLines.length - 1 ? 'FINISH' : 'CONTINUE';
+      return;
+    }
+    if (!nearNpc) return;
+    dialogueOpen = true;
+    dialogueIndex = 0;
+    if (dialogueName) dialogueName.textContent = 'KOLA · KIOSK OWNER';
+    if (dialogueText) dialogueText.textContent = dialogueLines[dialogueIndex];
+    if (dialogueNextButton) dialogueNextButton.textContent = 'CONTINUE';
+    if (dialoguePanel) dialoguePanel.hidden = false;
+    if (interactionPrompt) interactionPrompt.hidden = true;
+  }
+
+  function handleDialogueNext() {
+    interact();
+  }
+
   function handleActionDown() {
     actionButton?.classList.add('is-pressed');
     window.clearTimeout(actionPressTimer);
@@ -214,6 +303,7 @@ export function createGame(root) {
     }, 140);
   }
   actionButton?.addEventListener('pointerdown', handleActionDown);
+  dialogueNextButton?.addEventListener('click', handleDialogueNext);
   window.addEventListener('keydown', handleKeyDown);
   window.addEventListener('keyup', handleKeyUp);
   window.addEventListener('blur', resetStick);
@@ -289,12 +379,21 @@ export function createGame(root) {
     const delta = Math.min(clock.getDelta(), 0.05);
 
     if (gameStarted) {
-      let inputX = stickState.x;
-      let inputZ = stickState.y;
-      if (keys.has('a') || keys.has('arrowleft')) inputX -= 1;
-      if (keys.has('d') || keys.has('arrowright')) inputX += 1;
-      if (keys.has('w') || keys.has('arrowup')) inputZ -= 1;
-      if (keys.has('s') || keys.has('arrowdown')) inputZ += 1;
+      const npcDistance = Math.hypot(
+        activeCharacter.group.position.x - npc.position.x,
+        activeCharacter.group.position.z - npc.position.z
+      );
+      nearNpc = npcDistance <= 2.8;
+      if (interactionPrompt) interactionPrompt.hidden = !nearNpc || dialogueOpen;
+      npcMarker.rotation.z += delta * 0.8;
+      npcMarker.position.y = 0.08 + Math.sin(frameTime * 0.003) * 0.035;
+
+      let inputX = dialogueOpen ? 0 : stickState.x;
+      let inputZ = dialogueOpen ? 0 : stickState.y;
+      if (!dialogueOpen && (keys.has('a') || keys.has('arrowleft'))) inputX -= 1;
+      if (!dialogueOpen && (keys.has('d') || keys.has('arrowright'))) inputX += 1;
+      if (!dialogueOpen && (keys.has('w') || keys.has('arrowup'))) inputZ -= 1;
+      if (!dialogueOpen && (keys.has('s') || keys.has('arrowdown'))) inputZ += 1;
 
       const inputLength = Math.hypot(inputX, inputZ);
       if (inputLength > 1) {
@@ -404,6 +503,7 @@ export function createGame(root) {
       joystickBase?.removeEventListener('pointercancel', handleStickUp);
       jumpButton?.removeEventListener('pointerdown', jump);
       actionButton?.removeEventListener('pointerdown', handleActionDown);
+      dialogueNextButton?.removeEventListener('click', handleDialogueNext);
       window.clearTimeout(actionPressTimer);
       renderer.domElement.removeEventListener('webglcontextlost', handleContextLost);
       renderer.domElement.removeEventListener('pointerdown', handleCameraDown);
