@@ -296,6 +296,7 @@ export function createGame(root) {
   }
 
   function handleActionDown() {
+    interact();
     actionButton?.classList.add('is-pressed');
     window.clearTimeout(actionPressTimer);
     actionPressTimer = window.setTimeout(() => {
