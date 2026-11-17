@@ -10,7 +10,7 @@ if (!activityMatch) {
 
 if (!/android:screenOrientation=/.test(activityMatch[0])) {
   const updatedActivity = activityMatch[0].replace(/\s*\/?>$/, (ending) => {
-    return \` android:screenOrientation="landscape"\${ending}\`;
+    return ' android:screenOrientation="landscape"' + ending;
   });
   manifest = manifest.replace(activityMatch[0], updatedActivity);
 } else {
