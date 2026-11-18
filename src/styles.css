@@ -965,3 +965,118 @@ body {
   .encounter-actions { grid-template-columns: 1fr; }
   .encounter-actions button { min-height: 38px; }
 }
+
+
+/* Mansion lobby: choose a physical route to the upstairs office. */
+.transport-choice {
+  position: absolute;
+  z-index: 10;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgb(3 6 11 / 72%);
+  backdrop-filter: blur(5px);
+}
+.transport-choice[hidden] { display: none !important; }
+.transport-card {
+  width: min(540px, 100%);
+  padding: clamp(20px, 4vw, 30px);
+  border: 1px solid rgb(214 167 94 / 62%);
+  border-top: 3px solid #d6a75e;
+  border-radius: 5px;
+  background: linear-gradient(145deg, rgb(19 28 42 / 98%), rgb(5 9 16 / 99%));
+  box-shadow: 0 22px 70px rgb(0 0 0 / 68%);
+}
+.transport-kicker {
+  color: #d6a75e;
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: 0.2em;
+}
+.transport-card h2 {
+  margin: 11px 0 9px;
+  font-size: clamp(18px, 3vw, 25px);
+  line-height: 1.12;
+  letter-spacing: 0.035em;
+}
+.transport-card > p {
+  margin: 0 0 20px;
+  color: #c2cbd7;
+  font-size: 12px;
+  line-height: 1.55;
+}
+.transport-options {
+  display: grid;
+  gap: 10px;
+}
+.transport-option {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  width: 100%;
+  min-height: 76px;
+  padding: 12px 15px;
+  border: 1px solid rgb(214 167 94 / 42%);
+  border-radius: 4px;
+  background: linear-gradient(100deg, rgb(214 167 94 / 14%), rgb(255 255 255 / 3%));
+  color: #f4f0e8;
+  text-align: left;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.transport-option:active {
+  background: rgb(214 167 94 / 25%);
+  transform: scale(0.99);
+}
+.transport-icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 42px;
+  width: 42px;
+  height: 42px;
+  border: 1px solid rgb(214 167 94 / 55%);
+  border-radius: 4px;
+  color: #d6a75e;
+  font-size: 27px;
+  font-weight: 700;
+}
+.transport-copy {
+  display: grid;
+  flex: 1;
+  gap: 5px;
+}
+.transport-copy strong {
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+}
+.transport-copy small {
+  color: #aeb9c8;
+  font-size: 10px;
+  line-height: 1.4;
+}
+.transport-arrow {
+  color: #d6a75e;
+  font-size: 25px;
+}
+.transport-footnote {
+  display: block;
+  margin-top: 17px;
+  color: #8793a4;
+  font-size: 7px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-align: center;
+}
+@media (max-height: 480px) and (orientation: landscape) {
+  .transport-card { width: min(480px, 80vw); padding: 14px 18px; }
+  .transport-card h2 { margin: 7px 0; font-size: 17px; }
+  .transport-card > p { margin-bottom: 10px; font-size: 10px; }
+  .transport-options { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .transport-option { min-height: 66px; padding: 9px; gap: 8px; }
+  .transport-icon { flex-basis: 32px; width: 32px; height: 32px; font-size: 21px; }
+  .transport-copy strong { font-size: 8px; }
+  .transport-copy small { font-size: 8px; }
+  .transport-footnote { margin-top: 10px; }
+}

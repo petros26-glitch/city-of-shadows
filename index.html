@@ -54,6 +54,27 @@
         <span id="interaction-label">TALK TO KOLA</span>
       </div>
 
+      <section id="transport-choice" class="transport-choice" hidden aria-label="Choose how to go upstairs">
+        <div class="transport-card">
+          <span class="transport-kicker">PRIVATE RESIDENCE · MAIN LOBBY</span>
+          <h2>HOW WOULD YOU LIKE TO GO UPSTAIRS?</h2>
+          <p>The man you are delivering to is waiting in his private office upstairs.</p>
+          <div class="transport-options">
+            <button type="button" data-transport="stairs" class="transport-option">
+              <span class="transport-icon" aria-hidden="true">↗</span>
+              <span class="transport-copy"><strong>CLIMB THE STAIRS</strong><small>Walk up the staircase to the upper floor.</small></span>
+              <span class="transport-arrow" aria-hidden="true">›</span>
+            </button>
+            <button type="button" data-transport="lift" class="transport-option">
+              <span class="transport-icon" aria-hidden="true">⇧</span>
+              <span class="transport-copy"><strong>TAKE THE LIFT</strong><small>Ride the elevator directly to the upper floor.</small></span>
+              <span class="transport-arrow" aria-hidden="true">›</span>
+            </button>
+          </div>
+          <span class="transport-footnote">BOTH ROUTES LEAD TO THE SAME PRIVATE OFFICE</span>
+        </div>
+      </section>
+
       <section id="encounter-choice" class="encounter-choice" hidden aria-label="Choose how to handle the men">
         <div class="encounter-card">
           <span class="encounter-kicker">ORIYABA · STREET ENCOUNTER</span>

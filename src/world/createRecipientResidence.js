@@ -98,8 +98,11 @@ export function createRecipientResidence(scene) {
     box(estate, [2.8, 0.14, 0.42], [17, 0.07 + i * 0.14, -34.25 - i * 0.4], stone);
   }
 
-  // Upstairs floor has a deliberate stairwell opening.
-  box(estate, [5.55, 0.2, 7.4], [15.575, 4.25, -39.2], cream);
+  // Upstairs floor has separate openings for the staircase and elevator shaft.
+  box(estate, [0.55, 0.2, 7.4], [13.075, 4.25, -39.2], cream);
+  box(estate, [3.1, 0.2, 7.4], [16.8, 4.25, -39.2], cream);
+  box(estate, [1.9, 0.2, 3.5], [14.3, 4.25, -37.1], cream);
+  box(estate, [1.9, 0.2, 2.0], [14.3, 4.25, -41.85], cream);
   box(estate, [0.95, 0.2, 7.4], [20.725, 4.25, -39.2], cream);
   box(estate, [1.9, 0.2, 0.9], [19.3, 4.25, -35.95], cream);
   box(estate, [1.9, 0.2, 2.0], [19.3, 4.25, -41.9], cream);
@@ -125,6 +128,44 @@ export function createRecipientResidence(scene) {
       minX: x - 0.16, maxX: x + 0.16, minZ: -40.75, maxZ: -35.45,
       minY: 0, maxY: 4.5
     });
+  }
+
+  // Elevator shaft, glass enclosure and moving cabin.
+  const liftFrame = new THREE.MeshStandardMaterial({ color: 0x9a7445, metalness: 0.62, roughness: 0.36 });
+  const liftMetal = new THREE.MeshStandardMaterial({ color: 0x343b45, metalness: 0.55, roughness: 0.42 });
+  const liftGlass = new THREE.MeshStandardMaterial({ color: 0x30495c, metalness: 0.28, roughness: 0.22, transparent: true, opacity: 0.48 });
+  for (const x of [13.3, 15.3]) {
+    box(estate, [0.12, 7.25, 0.12], [x, 3.63, -38.85], liftFrame);
+    box(estate, [0.08, 7.1, 1.85], [x, 3.62, -39.85], liftGlass);
+  }
+  box(estate, [2.0, 7.1, 0.08], [14.3, 3.62, -40.8], liftGlass);
+  box(estate, [0.12, 7.25, 0.12], [13.3, 3.63, -40.8], liftFrame);
+  box(estate, [0.12, 7.25, 0.12], [15.3, 3.63, -40.8], liftFrame);
+  for (const x of [13.3, 15.3]) {
+    box(estate, [0.12, 7.25, 0.12], [x, 3.63, -38.85], liftFrame);
+    colliders.push({ minX: x - 0.07, maxX: x + 0.07, minZ: -40.9, maxZ: -38.8, minY: 0, maxY: 7.3 });
+  }
+  colliders.push({ minX: 13.3, maxX: 15.3, minZ: -40.9, maxZ: -40.72, minY: 0, maxY: 7.3 });
+
+  const liftCar = new THREE.Group();
+  liftCar.position.set(14.3, 0, -39.85);
+  estate.add(liftCar);
+  box(liftCar, [1.72, 0.14, 1.72], [0, 0.12, 0], liftMetal);
+  box(liftCar, [0.1, 2.42, 1.68], [-0.81, 1.39, 0], liftMetal);
+  box(liftCar, [0.1, 2.42, 1.68], [0.81, 1.39, 0], liftMetal);
+  box(liftCar, [1.68, 2.42, 0.1], [0, 1.39, -0.81], liftMetal);
+  box(liftCar, [1.72, 0.12, 1.72], [0, 2.62, 0], liftMetal);
+  const liftLeftDoor = box(liftCar, [0.76, 2.28, 0.09], [-0.39, 1.35, 0.82], liftFrame);
+  const liftRightDoor = box(liftCar, [0.76, 2.28, 0.09], [0.39, 1.35, 0.82], liftFrame);
+  const liftDoorInset = new THREE.MeshStandardMaterial({ color: 0x1b2734, metalness: 0.5, roughness: 0.38 });
+  box(liftLeftDoor, [0.52, 1.75, 0.035], [0, 0, 0.055], liftDoorInset);
+  box(liftRightDoor, [0.52, 1.75, 0.035], [0, 0, 0.055], liftDoorInset);
+  let liftState = 'idle';
+  let liftTimer = 0;
+
+  function setLiftDoors(open) {
+    liftLeftDoor.position.x = open ? -0.78 : -0.39;
+    liftRightDoor.position.x = open ? 0.78 : 0.39;
   }
 
   // Fully enclosed upstairs office: four walls, roof, windows and interior.
@@ -179,6 +220,45 @@ export function createRecipientResidence(scene) {
       return Math.hypot(x - 19.3, z - stairBottomZ) <= 1.85;
     },
     getFloorY,
+    startLiftRide(player) {
+      if (liftState !== 'idle') return false;
+      player.position.set(14.3, 0, -39.85);
+      liftCar.position.y = 0;
+      setLiftDoors(true);
+      liftState = 'opening-ground';
+      liftTimer = 0;
+      return true;
+    },
+    isLiftRunning() {
+      return liftState !== 'idle';
+    },
+    updateLift(delta, player) {
+      if (liftState === 'idle') return false;
+      liftTimer += delta;
+      if (liftState === 'opening-ground' && liftTimer >= 0.45) {
+        setLiftDoors(false);
+        liftState = 'closing-ground';
+        liftTimer = 0;
+      } else if (liftState === 'closing-ground' && liftTimer >= 0.45) {
+        liftState = 'moving-up';
+        liftTimer = 0;
+      } else if (liftState === 'moving-up') {
+        const progress = THREE.MathUtils.clamp(liftTimer / 1.8, 0, 1);
+        liftCar.position.y = progress * 4.35;
+        player.position.y = progress * 4.35;
+        if (progress >= 1) {
+          setLiftDoors(true);
+          liftState = 'opening-upper';
+          liftTimer = 0;
+        }
+      } else if (liftState === 'opening-upper' && liftTimer >= 0.5) {
+        player.position.set(14.3, 4.35, -38.35);
+        liftState = 'idle';
+        liftTimer = 0;
+        return false;
+      }
+      return true;
+    },
     openGate() {
       gate.rotation.y = -Math.PI * 0.42;
       gateCollider.active = false;
