@@ -635,7 +635,7 @@ export function createGame(root) {
     }
 
     if (nearLift && playerFloorY < 2.5
-      && ['climb-stairs', 'meet-secretary', 'secretary-stand', 'follow-secretary', 'open-office-door', 'opening-office-door', 'meet-recipient', 'completed'].includes(stage)) {
+      && ['climb-stairs', 'take-lift', 'meet-secretary', 'secretary-stand', 'follow-secretary', 'open-office-door', 'opening-office-door', 'meet-recipient', 'completed'].includes(stage)) {
       if (residence.startLiftRide(activeCharacter.group)) {
         playerFloorY = 0;
         onGround = true;
@@ -847,7 +847,7 @@ export function createGame(root) {
           promptText = 'CLIMB THE STAIRS';
           promptVisible = true;
         } else if (nearLift && playerFloorY < 2.5
-          && ['climb-stairs', 'meet-secretary', 'secretary-stand', 'follow-secretary', 'open-office-door', 'opening-office-door', 'meet-recipient', 'completed'].includes(missionState.stage)) {
+          && ['climb-stairs', 'take-lift', 'meet-secretary', 'secretary-stand', 'follow-secretary', 'open-office-door', 'opening-office-door', 'meet-recipient', 'completed'].includes(missionState.stage)) {
           promptText = 'TAKE ELEVATOR UP';
           promptVisible = true;
         } else if (nearLift && playerFloorY > 2.5 && missionState.stage !== 'inactive') {
