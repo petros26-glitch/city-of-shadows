@@ -3,6 +3,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { createStarterDistrict } from '../world/createStarterDistrict.js';
 import { createProtagonists } from '../characters/createProtagonists.js';
 import { createMissionManager } from '../missions/missionManager.js';
+import { createRecipientResidence } from '../world/createRecipientResidence.js';
 
 export function createGame(root) {
   if (!root) throw new Error('The game root element was not found.');
@@ -150,8 +151,13 @@ export function createGame(root) {
     createMissionPerson(0.72, -14.5, 0x353e50)
   ];
   suspiciousMen.forEach((person) => { person.group.visible = false; });
-  const recipient = createMissionPerson(-5.6, -32, 0x4b5365);
+  const residence = createRecipientResidence(scene);
+  const gatekeeper = createMissionPerson(8.35, -34.6, 0x344d57);
+  gatekeeper.group.visible = false;
+  const recipient = createMissionPerson(19, -38, 0x4b5365);
+  recipient.group.position.y = 4.25;
   recipient.group.visible = false;
+  const stairsPosition = new THREE.Vector3(12.6, 0, -38);
 
   const packagePickup = new THREE.Group();
   packagePickup.position.set(6.4, 0, -6.5);
@@ -259,6 +265,10 @@ export function createGame(root) {
   let encounterChoiceOpen = false;
   let nearPackage = false;
   let nearRecipient = false;
+  let nearGatekeeper = false;
+  let nearMansionDoor = false;
+  let nearStairs = false;
+  let playerFloorY = 0;
   let dialoguePurpose = null;
   let missionNoticeTimer = 0;
 
@@ -302,9 +312,9 @@ export function createGame(root) {
 
   function moveToDelivery() {
     suspiciousMen.forEach((person) => { person.group.visible = false; });
-    missionManager.setStage('deliver-package', 'Take the sealed package to the older man.');
-    recipient.group.visible = true;
-    showMissionNotice('The men are behind you. Find the older man.');
+    missionManager.setStage('reach-mansion', 'Take the sealed package to the large mansion at the end of the road.');
+    gatekeeper.group.visible = true;
+    showMissionNotice('DELIVERY ADDRESS · THE GUARDED MANSION');
   }
 
   function handleApproachChoice(event) {
@@ -419,6 +429,10 @@ export function createGame(root) {
       showMissionNotice('NEW OBJECTIVE · COLLECT THE SEALED PACKAGE');
     } else if (completedPurpose === 'talk-men' || completedPurpose === 'fight-men') {
       moveToDelivery();
+    } else if (completedPurpose === 'gateman') {
+      residence.openGate();
+      missionManager.setStage('enter-estate', 'Enter the mansion compound and find the main entrance.');
+      showMissionNotice('GATE OPEN · ENTER THE ESTATE');
     } else if (completedPurpose === 'recipient') {
       missionManager.complete();
       showMissionNotice('MISSION COMPLETE · ₦500 RECEIVED');
@@ -457,8 +471,35 @@ export function createGame(root) {
       return;
     }
 
-    if (stage === 'deliver-package' && nearRecipient) {
-      openDialogue('THE OLDER MAN', 'UNKNOWN CONTACT', [
+    if (stage === 'reach-mansion' && nearGatekeeper) {
+      openDialogue('GATEMAN', 'MANSION SECURITY', [
+        'The gateman steps forward. “Good afternoon. Who are you looking for?”',
+        '“I have a delivery for someone inside. Kola sent me.”',
+        'The gateman studies you for a moment, then reaches for the gate controls. “Wait here. I will let them know.”',
+        'A buzzer sounds. “You can go in. Follow the driveway and use the main entrance.”'
+      ], 'gateman');
+      return;
+    }
+
+    if (stage === 'enter-estate' && nearMansionDoor) {
+      missionManager.setStage('go-upstairs', 'Enter the mansion and go upstairs to the private office.');
+      showMissionNotice('MAIN ENTRANCE · GO UPSTAIRS');
+      return;
+    }
+
+    if (stage === 'go-upstairs' && nearStairs) {
+      activeCharacter.group.position.set(14.2, 4.25, -38);
+      playerFloorY = 4.25;
+      onGround = true;
+      jumpVelocity = 0;
+      recipient.group.visible = true;
+      missionManager.setStage('meet-recipient', 'Find the older man in his upstairs private office.');
+      showMissionNotice('UPSTAIRS · FIND THE OLDER MAN');
+      return;
+    }
+
+    if (stage === 'meet-recipient' && nearRecipient) {
+      openDialogue('THE OLDER MAN', 'PRIVATE OFFICE · UNKNOWN CONTACT', [
         'Who sent you?',
         'Kola. He said I should bring this here.',
         'Kola? Hmm… I thought that matter was already settled.',
@@ -565,7 +606,10 @@ export function createGame(root) {
       nearNpc = npcDistance <= 2.8;
       const playerPosition = activeCharacter.group.position;
       nearPackage = packagePickup.visible && Math.hypot(playerPosition.x - packagePickup.position.x, playerPosition.z - packagePickup.position.z) <= 2.5;
-      nearRecipient = recipient.group.visible && Math.hypot(playerPosition.x - recipient.group.position.x, playerPosition.z - recipient.group.position.z) <= 2.8;
+      nearRecipient = recipient.group.visible && Math.hypot(playerPosition.x - recipient.group.position.x, playerPosition.z - recipient.group.position.z) <= 3.0;
+      nearGatekeeper = gatekeeper.group.visible && Math.hypot(playerPosition.x - gatekeeper.group.position.x, playerPosition.z - gatekeeper.group.position.z) <= 2.8;
+      nearMansionDoor = Math.hypot(playerPosition.x - 12.1, playerPosition.z + 38) <= 2.4;
+      nearStairs = Math.hypot(playerPosition.x - stairsPosition.x, playerPosition.z - stairsPosition.z) <= 2.5;
       const missionState = missionManager.getState();
 
       if (missionState.stage === 'reach-encounter') {
@@ -593,7 +637,16 @@ export function createGame(root) {
         } else if (missionState.stage === 'collect-package' && nearPackage) {
           promptText = 'COLLECT PACKAGE';
           promptVisible = true;
-        } else if (missionState.stage === 'deliver-package' && nearRecipient) {
+        } else if (missionState.stage === 'reach-mansion' && nearGatekeeper) {
+          promptText = 'TALK TO GATEMAN';
+          promptVisible = true;
+        } else if (missionState.stage === 'enter-estate' && nearMansionDoor) {
+          promptText = 'ENTER MANSION';
+          promptVisible = true;
+        } else if (missionState.stage === 'go-upstairs' && nearStairs) {
+          promptText = 'GO UPSTAIRS';
+          promptVisible = true;
+        } else if (missionState.stage === 'meet-recipient' && nearRecipient) {
           promptText = 'DELIVER PACKAGE';
           promptVisible = true;
         }
@@ -634,8 +687,8 @@ export function createGame(root) {
         const movement = forward.multiplyScalar(-inputZ).add(right.multiplyScalar(inputX)).normalize();
         const isRunning = keys.has('shift') || Math.abs(stickState.x) > 0.82 || Math.abs(stickState.y) > 0.82;
         const speed = isRunning ? 7.0 : 4.8;
-        activeCharacter.group.position.x = THREE.MathUtils.clamp(activeCharacter.group.position.x + movement.x * speed * delta, -8.7, 8.7);
-        activeCharacter.group.position.z = THREE.MathUtils.clamp(activeCharacter.group.position.z + movement.z * speed * delta, -43, 43);
+        activeCharacter.group.position.x = THREE.MathUtils.clamp(activeCharacter.group.position.x + movement.x * speed * delta, -8.7, 24);
+        activeCharacter.group.position.z = THREE.MathUtils.clamp(activeCharacter.group.position.z + movement.z * speed * delta, -53, 43);
         activeCharacter.group.rotation.y = Math.atan2(movement.x, movement.z);
         activeCharacter.walkTime += delta * (isRunning ? 14.5 : 9.5);
         const stride = Math.sin(activeCharacter.walkTime);
@@ -659,8 +712,8 @@ export function createGame(root) {
         activeCharacter.group.position.y += jumpVelocity * delta;
         activeCharacter.body.rotation.x = -0.08;
         jumpVelocity -= 15 * delta;
-        if (activeCharacter.group.position.y <= 0) {
-          activeCharacter.group.position.y = 0;
+        if (activeCharacter.group.position.y <= playerFloorY) {
+          activeCharacter.group.position.y = playerFloorY;
           activeCharacter.body.rotation.x = 0;
           jumpVelocity = 0;
           onGround = true;
