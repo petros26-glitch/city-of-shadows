@@ -156,7 +156,7 @@ export function createGame(root) {
   const gatekeeper = createMissionPerson(8.35, -34.6, 0x344d57);
   gatekeeper.group.visible = false;
   const recipient = createMissionPerson(16.5, -38.2, 0x4b5365);
-  recipient.group.position.y = 4.25;
+  recipient.group.position.y = 4.35;
   recipient.group.visible = false;
   const collisionWorld = createCollisionWorld([...districtColliders, ...residence.colliders]);
   const collisionActors = [npc, ...suspiciousMen.map((person) => person.group), gatekeeper.group, recipient.group];
@@ -724,8 +724,8 @@ export function createGame(root) {
         activeCharacter.head.rotation.x = Math.sin(frameTime * 0.0011) * 0.012;
       }
 
-      if (missionManager.getState().stage === 'climb-stairs' && playerFloorY >= 4.2 && onGround) {
-        playerFloorY = 4.25;
+      if (missionManager.getState().stage === 'climb-stairs' && playerFloorY >= 4.3 && onGround) {
+        playerFloorY = 4.35;
         activeCharacter.group.position.y = playerFloorY;
         recipient.group.visible = true;
         missionManager.setStage('meet-recipient', 'Find the older man in his enclosed upstairs private office.');

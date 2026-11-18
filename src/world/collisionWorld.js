@@ -2,7 +2,7 @@ export function createCollisionWorld(colliders = []) {
   function blocked(x, z, floorY, radius, actors, self) {
     for (const wall of colliders) {
       if (wall.active === false) continue;
-      if (floorY > wall.maxY || floorY + 1.75 < wall.minY) continue;
+      if (floorY >= wall.maxY - 0.05 || floorY + 1.75 <= wall.minY) continue;
 
       const closestX = Math.max(wall.minX, Math.min(x, wall.maxX));
       const closestZ = Math.max(wall.minZ, Math.min(z, wall.maxZ));

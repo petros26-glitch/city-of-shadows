@@ -112,7 +112,7 @@ export function createRecipientResidence(scene) {
     const tread = box(
       estate,
       [1.55, 0.08, 0.5],
-      [19.3, (i + 0.5) * 0.425 - 0.04, stairBottomZ - (i + 0.5) * 0.5],
+      [19.3, (i + 0.5) * 0.435 - 0.04, stairBottomZ - (i + 0.5) * 0.5],
       stone
     );
     tread.material = i % 2 === 0 ? stone : darkStone;
@@ -161,7 +161,7 @@ export function createRecipientResidence(scene) {
   function getFloorY(x, z, currentY = 0) {
     if (isOnStairs(x, z)) {
       const progress = THREE.MathUtils.clamp((stairBottomZ - z) / (stairBottomZ - stairTopZ), 0, 1);
-      return progress * 4.25;
+      return progress * 4.35;
     }
     const insideUpperRoom =
       x >= 12.95 && x <= 21.05 &&
