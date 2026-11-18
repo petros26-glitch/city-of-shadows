@@ -74,7 +74,7 @@ function addBuilding(scene, x, z, width, depth, height, color, seed, colliders) 
   return group;
 }
 
-function addStreetlight(scene, x, z) {
+function addStreetlight(scene, x, z, colliders) {
   const poleMaterial = new THREE.MeshStandardMaterial({
     color: 0x252c35,
     metalness: 0.65,
@@ -89,6 +89,19 @@ function addStreetlight(scene, x, z) {
   const group = new THREE.Group();
   group.position.set(x, 0, z);
   scene.add(group);
+  // The pole and concrete footing are solid obstacles for the player.
+  colliders.push({
+    minX: x - 0.28, maxX: x + 0.28,
+    minZ: z - 0.28, maxZ: z + 0.28,
+    minY: 0, maxY: 5.6
+  });
+
+  const base = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.28, 0.32, 0.16, 8),
+    poleMaterial
+  );
+  base.position.y = 0.08;
+  group.add(base);
 
   const pole = new THREE.Mesh(
     new THREE.CylinderGeometry(0.075, 0.12, 5.5, 6),
@@ -177,8 +190,8 @@ export function createStarterDistrict(scene) {
   });
 
   [-29, -9, 11, 31].forEach((z) => {
-    addStreetlight(scene, -7.1, z);
-    addStreetlight(scene, 7.1, z - 5);
+    addStreetlight(scene, -7.1, z, colliders);
+    addStreetlight(scene, 7.1, z - 5, colliders);
   });
 
   const distantMaterial = new THREE.MeshStandardMaterial({
