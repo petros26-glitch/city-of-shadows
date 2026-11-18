@@ -521,6 +521,15 @@ export function createGame(root) {
         onGround = true;
         jumpVelocity = 0;
         cameraOffset.set(0, 4.2, 7.2);
+        if (controls) {
+          controls.target.set(
+            activeCharacter.group.position.x,
+            activeCharacter.group.position.y + 1.35,
+            activeCharacter.group.position.z
+          );
+          camera.position.copy(controls.target).add(new THREE.Vector3(0, 4.2, 7.2));
+          controls.update();
+        }
         missionManager.setStage('climb-stairs', 'Explore the mansion lobby. Walk to the visible staircase and climb to the upstairs office, or use the elevator.');
         showMissionNotice('MANSION INTERIOR · YOU ARE INSIDE');
       }

@@ -132,8 +132,8 @@ export function createRecipientResidence(scene) {
   // Upper corridor and enclosed private office with a real doorway.
   addSolid(interior, [0.22, 2.8, 7.8], [100.5, 5.85, -3.1], cream, colliders, 4.4, 7.3);
   addSolid(interior, [0.22, 2.8, 7.8], [111.5, 5.85, -3.1], cream, colliders, 4.4, 7.3);
-  addSolid(interior, [5.4, 2.8, 0.22], [103.2, 5.85, -7], cream, colliders, 4.4, 7.3);
-  addSolid(interior, [5.4, 2.8, 0.22], [108.8, 5.85, -7], cream, colliders, 4.4, 7.3);
+  addSolid(interior, [4.4, 2.8, 0.22], [102.9, 5.85, -7], cream, colliders, 4.4, 7.3);
+  addSolid(interior, [4.4, 2.8, 0.22], [109.1, 5.85, -7], cream, colliders, 4.4, 7.3);
   addSolid(interior, [0.22, 2.8, 4.8], [109.5, 5.85, -3.1], cream, colliders, 4.4, 7.3);
   addBox(interior, [11.6, 0.25, 8.2], [106, 7.3, -3.1], dark);
   for (const x of [102.2, 109.8]) {
