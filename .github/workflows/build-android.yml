@@ -1,15 +1,6 @@
 name: Build COS Android APK
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - "package.json"
-      - "capacitor.config.json"
-      - "index.html"
-      - "src/**"
-      - "scripts/**"
-      - ".github/workflows/build-android.yml"
   workflow_dispatch:
 
 permissions:
