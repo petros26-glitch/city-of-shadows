@@ -153,7 +153,6 @@ export function createRecipientResidence(scene) {
   }
   addPlatform(interior, [3.2, 1.04, 0.85], [105.5, 0.52, 8.3], wood, colliders, platforms, 0);
   addBox(interior, [3.35, 0.12, 0.95], [105.5, 1.0, 8.3], gold);
-  addBox(interior, [3.35, 0.12, 0.95], [105.5, 1.0, 8.3], gold);
   addPlatform(interior, [2.4, 0.48, 0.85], [102.7, 0.24, -4.8], wood, colliders, platforms, 0);
   addPlatform(interior, [2.4, 0.48, 0.85], [109.3, 0.24, -4.8], wood, colliders, platforms, 0);
   const rug = new THREE.Mesh(new THREE.BoxGeometry(5.2, 0.035, 3.0), new THREE.MeshStandardMaterial({ color: 0x513b35, roughness: 1 }));
