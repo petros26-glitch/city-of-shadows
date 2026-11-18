@@ -221,8 +221,12 @@ export function createGame(root) {
   recipient.group.position.copy(residence.recipientPosition);
   recipient.group.visible = false;
   recipient.marker.visible = false;
+  const secretary = createMissionPerson(16.5, -38.2, 0x9a8264, 'secretary');
+  secretary.group.position.copy(residence.secretaryPosition);
+  secretary.group.visible = false;
+  secretary.marker.visible = false;
   const collisionWorld = createCollisionWorld([...districtColliders, ...residence.colliders]);
-  const collisionActors = [npc, ...suspiciousMen.map((person) => person.group), gatekeeper.group, recipient.group];
+  const collisionActors = [npc, ...suspiciousMen.map((person) => person.group), gatekeeper.group, secretary.group, recipient.group];
 
   const packagePickup = new THREE.Group();
   packagePickup.position.set(6.4, 0, -6.5);
@@ -334,8 +338,11 @@ export function createGame(root) {
   let transportChoiceOpen = false;
   let nearPackage = false;
   let nearRecipient = false;
+  let nearSecretary = false;
   let nearGatekeeper = false;
   let nearMansionDoor = false;
+  let nearOfficeDoor = false;
+  let nearExit = false;
   let nearStairs = false;
   let nearLift = false;
   let playerFloorY = 0;
@@ -529,6 +536,9 @@ export function createGame(root) {
       gatekeeperGestureTime = 1.15;
       missionManager.setStage('enter-estate', 'Walk through the open gate, follow the driveway and enter through the mansion doorway.');
       showMissionNotice('GATE OPEN · ENTER THE ESTATE');
+    } else if (completedPurpose === 'secretary') {
+      residence.openOfficeDoor();
+      showMissionNotice('SECRETARY · PLEASE ENTER');
     } else if (completedPurpose === 'recipient') {
       missionManager.complete();
       showMissionNotice('MISSION COMPLETE · ₦500 RECEIVED');
@@ -602,13 +612,46 @@ export function createGame(root) {
       return;
     }
 
-    if (stage === 'climb-stairs' && nearLift) {
+    if ((stage === 'climb-stairs' || stage === 'reach-office-door') && nearLift && playerFloorY < 2.5) {
       if (residence.startLiftRide(activeCharacter.group)) {
         playerFloorY = 0;
         onGround = true;
         jumpVelocity = 0;
-        missionManager.setStage('take-lift', 'Ride the elevator to the upper floor, then walk to the private office.');
-        showMissionNotice('ELEVATOR · DOORS CLOSING');
+        showMissionNotice('ELEVATOR · GOING UP');
+      }
+      return;
+    }
+
+    if (stage === 'completed' && nearLift && playerFloorY > 2.5) {
+      if (residence.startLiftRide(activeCharacter.group)) {
+        onGround = true;
+        jumpVelocity = 0;
+        showMissionNotice('ELEVATOR · RETURNING TO LOBBY');
+      }
+      return;
+    }
+
+    if (stage === 'reach-office-door' && nearSecretary) {
+      openDialogue('PRIVATE SECRETARY', 'UPPER FLOOR · RECEPTION', [
+        'Good afternoon. May I help you?',
+        '“I have a delivery for the man in this office. Kola sent me.”',
+        'She checks the appointment book, then picks up the desk phone. “One moment, please.”',
+        'A short pause. “He will see you now. Please go through the door.”'
+      ], 'secretary');
+      return;
+    }
+
+    if (stage === 'enter-office' && nearOfficeDoor) {
+      missionManager.setStage('meet-recipient', 'Enter the private office and speak to the man behind the desk.');
+      showMissionNotice('PRIVATE OFFICE · DOOR OPEN');
+      return;
+    }
+
+    if (stage === 'completed' && nearExit) {
+      if (residence.exitInterior(activeCharacter.group)) {
+        resetStick();
+        keys.clear();
+        showMissionNotice('MAIN ENTRANCE · EXITING THE MANSION');
       }
       return;
     }
@@ -724,15 +767,18 @@ export function createGame(root) {
       const playerPosition = activeCharacter.group.position;
       nearPackage = packagePickup.visible && Math.hypot(playerPosition.x - packagePickup.position.x, playerPosition.z - packagePickup.position.z) <= 2.5;
       nearRecipient = recipient.group.visible && Math.hypot(playerPosition.x - recipient.group.position.x, playerPosition.z - recipient.group.position.z) <= 3.0;
+      nearSecretary = secretary.group.visible && Math.hypot(playerPosition.x - secretary.group.position.x, playerPosition.z - secretary.group.position.z) <= 2.5;
       nearGatekeeper = gatekeeper.group.visible && Math.hypot(playerPosition.x - gatekeeper.group.position.x, playerPosition.z - gatekeeper.group.position.z) <= 2.8;
       nearMansionDoor = !residence.isInterior() && playerPosition.x >= 16.35 && playerPosition.x <= 17.65 && playerPosition.z >= -34.45 && playerPosition.z <= -32.85;
+      nearOfficeDoor = residence.isNearOfficeDoor(playerPosition.x, playerPosition.z);
+      nearExit = residence.isNearExit(playerPosition.x, playerPosition.z);
       nearStairs = residence.isNearStairs(playerPosition.x, playerPosition.z);
       nearLift = residence.isNearLift(playerPosition.x, playerPosition.z);
       const missionState = missionManager.getState();
       if (locationLabel) {
         if (residence.isInterior()) {
           locationLabel.textContent = playerFloorY >= 3.8
-            ? 'PRIVATE RESIDENCE · UPPER FLOOR'
+            ? (playerPosition.z < -7.1 ? 'PRIVATE RESIDENCE · PRIVATE OFFICE' : 'PRIVATE RESIDENCE · UPPER FLOOR')
             : 'PRIVATE RESIDENCE · MAIN LOBBY';
         } else if (missionState.stage === 'reach-mansion' || missionState.stage === 'enter-estate') {
           locationLabel.textContent = 'ORIYABA · GUARDED ESTATE';
@@ -775,11 +821,23 @@ export function createGame(root) {
         } else if (missionState.stage === 'climb-stairs' && nearStairs) {
           promptText = 'CLIMB THE STAIRS';
           promptVisible = true;
-        } else if (missionState.stage === 'climb-stairs' && nearLift) {
-          promptText = 'ENTER ELEVATOR';
+        } else if ((missionState.stage === 'climb-stairs' || missionState.stage === 'reach-office-door') && nearLift && playerFloorY < 2.5) {
+          promptText = 'TAKE ELEVATOR UP';
+          promptVisible = true;
+        } else if (missionState.stage === 'reach-office-door' && nearSecretary) {
+          promptText = 'SPEAK TO SECRETARY';
+          promptVisible = true;
+        } else if (missionState.stage === 'enter-office' && nearOfficeDoor) {
+          promptText = 'ENTER PRIVATE OFFICE';
           promptVisible = true;
         } else if (missionState.stage === 'meet-recipient' && nearRecipient) {
           promptText = 'DELIVER PACKAGE';
+          promptVisible = true;
+        } else if (missionState.stage === 'completed' && nearLift && playerFloorY > 2.5) {
+          promptText = 'TAKE ELEVATOR DOWN';
+          promptVisible = true;
+        } else if (missionState.stage === 'completed' && nearExit) {
+          promptText = 'EXIT MANSION';
           promptVisible = true;
         }
         interactionPrompt.hidden = !promptVisible || dialogueOpen || encounterChoiceOpen;
@@ -801,6 +859,16 @@ export function createGame(root) {
       if (enteringInterior && !residence.isEnteringInterior()) {
         showMissionNotice('MANSION INTERIOR · YOU ARE INSIDE');
       }
+      residence.updateOfficeDoor(delta);
+      const exitingInterior = residence.isExitingInterior();
+      residence.updateExit(delta);
+      if (exitingInterior && !residence.isExitingInterior()) {
+        playerFloorY = 0;
+        onGround = true;
+        jumpVelocity = 0;
+        cameraOffset.set(0, 4.2, 7.2);
+        showMissionNotice('ORIYABA · BACK OUTSIDE THE MANSION');
+      }
       if (gatekeeperGestureTime > 0) {
         gatekeeperGestureTime = Math.max(0, gatekeeperGestureTime - delta);
         const gesture = Math.sin((1.15 - gatekeeperGestureTime) * 5.2);
@@ -818,16 +886,20 @@ export function createGame(root) {
       if (residence.isLiftRunning()) {
         const liftStillRunning = residence.updateLift(delta, activeCharacter.group);
         if (!liftStillRunning) {
-          playerFloorY = 4.35;
+          playerFloorY = activeCharacter.group.position.y > 2.5 ? 4.35 : 0;
           onGround = true;
           jumpVelocity = 0;
-          recipient.group.visible = true;
-          missionManager.setStage('meet-recipient', 'Find the older man in his enclosed upstairs private office.');
-          showMissionNotice('UPSTAIRS · FIND THE OLDER MAN');
+          if (playerFloorY > 2.5 && missionManager.getState().status === 'active') {
+            secretary.group.visible = true;
+            missionManager.setStage('reach-office-door', 'Go to the private office entrance and speak to the secretary.');
+            showMissionNotice('UPPER FLOOR · FIND THE SECRETARY');
+          } else if (playerFloorY === 0) {
+            showMissionNotice('MAIN LOBBY · YOU ARE BACK DOWNSTAIRS');
+          }
         }
       }
 
-      const movementLocked = dialogueOpen || encounterChoiceOpen || transportChoiceOpen || residence.isLiftRunning() || residence.isEnteringInterior() || residence.isGateOpening();
+      const movementLocked = dialogueOpen || encounterChoiceOpen || transportChoiceOpen || residence.isLiftRunning() || residence.isEnteringInterior() || residence.isExitingInterior() || residence.isOfficeDoorOpening() || residence.isGateOpening();
       let inputX = movementLocked ? 0 : stickState.x;
       let inputZ = movementLocked ? 0 : stickState.y;
       if (!movementLocked && (keys.has('a') || keys.has('arrowleft'))) inputX -= 1;
@@ -863,7 +935,7 @@ export function createGame(root) {
           ? THREE.MathUtils.clamp(resolved.x, 100.65, 111.35)
           : THREE.MathUtils.clamp(resolved.x, -8.7, 24);
         activeCharacter.group.position.z = insideMansion
-          ? THREE.MathUtils.clamp(resolved.z, -7.45, 11.45)
+          ? THREE.MathUtils.clamp(resolved.z, -12.15, 11.45)
           : THREE.MathUtils.clamp(resolved.z, -53, 43);
         if (onGround) {
           playerFloorY = residence.getFloorY(
@@ -895,9 +967,12 @@ export function createGame(root) {
       if (missionManager.getState().stage === 'climb-stairs' && playerFloorY >= 4.3 && onGround) {
         playerFloorY = 4.35;
         activeCharacter.group.position.y = playerFloorY;
+        secretary.group.visible = true;
+        missionManager.setStage('reach-office-door', 'Go to the private office entrance and speak to the secretary.');
+        showMissionNotice('UPPER FLOOR · FIND THE SECRETARY');
+      }
+      if (missionManager.getState().stage === 'enter-office' && !residence.isOfficeDoorOpening()) {
         recipient.group.visible = true;
-        missionManager.setStage('meet-recipient', 'Find the older man in his enclosed upstairs private office.');
-        showMissionNotice('UPSTAIRS · FIND THE OLDER MAN');
       }
 
       if (!onGround) {
