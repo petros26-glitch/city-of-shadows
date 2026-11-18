@@ -71,6 +71,27 @@ export function createRecipientResidence(scene) {
   doorGlow.position.set(17, 3.1, -34.2);
   exterior.add(doorGlow);
 
+  // Heavy double front doors. The player must approach the entrance and let them swing open.
+  const mainDoors = new THREE.Group();
+  exterior.add(mainDoors);
+  const leftMainDoor = new THREE.Group();
+  leftMainDoor.position.set(16.0, 0, -34.84);
+  const rightMainDoor = new THREE.Group();
+  rightMainDoor.position.set(18.0, 0, -34.84);
+  const doorMaterial = new THREE.MeshStandardMaterial({ color: 0x493021, roughness: 0.82 });
+  addBox(leftMainDoor, [1.0, 3.45, 0.16], [0.5, 1.73, 0], doorMaterial);
+  addBox(rightMainDoor, [1.0, 3.45, 0.16], [-0.5, 1.73, 0], doorMaterial);
+  for (const pivot of [leftMainDoor, rightMainDoor]) {
+    addBox(pivot, [0.08, 3.1, 0.04], [pivot === leftMainDoor ? 0.85 : -0.85, 1.73, 0.1], gold);
+    addBox(pivot, [0.13, 0.13, 0.09], [pivot === leftMainDoor ? 0.82 : -0.82, 1.72, 0.15], gold);
+    mainDoors.add(pivot);
+  }
+  const mainDoorCollider = { minX: 15.98, maxX: 18.02, minZ: -34.98, maxZ: -34.7, minY: 0, maxY: 3.5, active: true };
+  colliders.push(mainDoorCollider);
+  let mainDoorProgress = 0;
+  let entryPending = false;
+  let entryPlayer = null;
+
   // The interior is a separate lightweight walkable environment. It is switched on
   // only after the player reaches and enters the exterior front door.
   const interior = new THREE.Group();
@@ -200,12 +221,29 @@ export function createRecipientResidence(scene) {
     gatekeeperPosition: new THREE.Vector3(8.35, 0, -34.6),
     recipientPosition: new THREE.Vector3(106, 4.35, -4.6),
     enterInterior(player) {
-      if (interior.visible) return false;
-      exterior.visible = false;
-      interior.visible = true;
-      player.position.set(106, 0, 10.1);
-      player.rotation.y = Math.PI;
+      if (interior.visible || entryPending) return false;
+      entryPending = true;
+      entryPlayer = player;
+      mainDoorProgress = 0;
       return true;
+    },
+    isEnteringInterior() { return entryPending; },
+    updateEntry(delta) {
+      if (!entryPending) return false;
+      mainDoorProgress = Math.min(1, mainDoorProgress + delta / 0.85);
+      const eased = mainDoorProgress * mainDoorProgress * (3 - 2 * mainDoorProgress);
+      leftMainDoor.rotation.y = -eased * 1.22;
+      rightMainDoor.rotation.y = eased * 1.22;
+      if (mainDoorProgress >= 0.82) mainDoorCollider.active = false;
+      if (mainDoorProgress >= 1) {
+        exterior.visible = false;
+        interior.visible = true;
+        entryPlayer.position.set(106, 0, 10.1);
+        entryPlayer.rotation.y = Math.PI;
+        entryPlayer = null;
+        entryPending = false;
+      }
+      return entryPending;
     },
     isInterior() { return interior.visible; },
     isOnStairs,

@@ -254,6 +254,7 @@ export function createGame(root) {
   const confirmCharacterButton = document.querySelector('#character-confirm');
   const mobileControls = document.querySelector('#mobile-controls');
   const sceneHint = document.querySelector('.scene-hint');
+  const locationLabel = document.querySelector('#location-label');
   const buildLabel = document.querySelector('.build-label');
   const interactionLabel = document.querySelector('#interaction-label');
   const dialogueTag = document.querySelector('.dialogue-tag');
@@ -610,6 +611,7 @@ export function createGame(root) {
     if (mobileControls) mobileControls.hidden = false;
     if (sceneHint) sceneHint.hidden = false;
     if (buildLabel) buildLabel.hidden = false;
+    if (locationLabel) locationLabel.hidden = false;
     cameraOffset.set(13, 8.65, 15);
     const target = new THREE.Vector3(0, 1.35, 3);
     camera.position.copy(target).add(cameraOffset);
@@ -661,6 +663,17 @@ export function createGame(root) {
       nearStairs = residence.isNearStairs(playerPosition.x, playerPosition.z);
       nearLift = residence.isNearLift(playerPosition.x, playerPosition.z);
       const missionState = missionManager.getState();
+      if (locationLabel) {
+        if (residence.isInterior()) {
+          locationLabel.textContent = playerFloorY >= 3.8
+            ? 'PRIVATE RESIDENCE · UPPER FLOOR'
+            : 'PRIVATE RESIDENCE · MAIN LOBBY';
+        } else if (missionState.stage === 'reach-mansion' || missionState.stage === 'enter-estate') {
+          locationLabel.textContent = 'ORIYABA · GUARDED ESTATE';
+        } else {
+          locationLabel.textContent = 'ORIYABA · STREET DISTRICT';
+        }
+      }
 
       if (missionState.stage === 'reach-encounter') {
         const encounterDistance = Math.hypot(playerPosition.x - encounterPosition.x, playerPosition.z - encounterPosition.z);
