@@ -151,7 +151,7 @@ export function createRecipientResidence(scene) {
       addBox(interior, [0.55, 0.16, 0.55], [x, 4.12, z], gold);
     }
   }
-  addPlatform(interior, [3.2, 0.95, 0.85], [105.5, 0.48, 8.3], wood, colliders, platforms, 0);
+  addPlatform(interior, [3.2, 1.04, 0.85], [105.5, 0.52, 8.3], wood, colliders, platforms, 0);
   addBox(interior, [3.35, 0.12, 0.95], [105.5, 1.0, 8.3], gold);
   addBox(interior, [3.35, 0.12, 0.95], [105.5, 1.0, 8.3], gold);
   addPlatform(interior, [2.4, 0.48, 0.85], [102.7, 0.24, -4.8], wood, colliders, platforms, 0);
@@ -223,7 +223,7 @@ export function createRecipientResidence(scene) {
   // Upstairs reception: one shared destination for the staircase and elevator.
   // The desk faces the open landing; the secretary sits behind it with a chair,
   // computer, keyboard, desk phone and a small visitor bell.
-  addPlatform(interior, [3.25, 0.88, 0.92], [105.5, 4.79, -0.55], wood, colliders, platforms, 4.35);
+  addPlatform(interior, [3.25, 1.12, 0.92], [105.5, 4.79, -0.55], wood, colliders, platforms, 4.35);
   addBox(interior, [3.38, 0.12, 1.02], [105.5, 5.29, -0.55], gold);
   addBox(interior, [0.92, 0.08, 0.55], [105.5, 5.39, -0.66], dark);
   addBox(interior, [0.62, 0.42, 0.06], [105.5, 5.65, -0.83], glass);
@@ -283,7 +283,7 @@ export function createRecipientResidence(scene) {
   const officeSign = addBox(interior, [1.15, 0.32, 0.06], [106, 6.95, -6.82], gold);
 
   // A large executive desk and chair make the recipient's office unmistakable.
-  addPlatform(interior, [3.1, 0.95, 0.92], [106, 4.88, -9.45], wood, colliders, platforms, 4.35);
+  addPlatform(interior, [3.1, 1.12, 0.92], [106, 4.88, -9.45], wood, colliders, platforms, 4.35);
   addBox(interior, [3.25, 0.12, 1.02], [106, 5.38, -9.45], gold);
   addBox(interior, [1.0, 0.08, 0.62], [106, 5.48, -9.45], dark);
   addBox(interior, [0.68, 0.42, 0.04], [106, 5.72, -9.22], glass);
