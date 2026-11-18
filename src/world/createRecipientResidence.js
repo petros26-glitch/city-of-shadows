@@ -127,6 +127,7 @@ export function createRecipientResidence(scene) {
   addBox(interior, [3.0, 0.22, 3.2], [109.5, 4.35, -6.4], floor);
   addBox(interior, [3.0, 0.22, 3.4], [109.5, 4.35, 2.2], floor);
   addBox(interior, [3.0, 0.22, 2.0], [109.5, 4.35, -3.9], floor);
+  addBox(interior, [3.0, 0.22, 1.8], [109.5, 4.35, -0.3], floor);
 
   // Upper corridor and enclosed private office with a real doorway.
   addSolid(interior, [0.22, 2.8, 7.8], [100.5, 5.85, -3.1], cream, colliders, 4.4, 7.3);
@@ -150,6 +151,11 @@ export function createRecipientResidence(scene) {
   const shaft = new THREE.Group();
   shaft.position.set(102.8, 0, 0.1);
   interior.add(shaft);
+  colliders.push(
+    { minX: 101.72, maxX: 101.9, minZ: -1.05, maxZ: 1.1, minY: 0, maxY: 7.1 },
+    { minX: 103.7, maxX: 103.88, minZ: -1.05, maxZ: 1.1, minY: 0, maxY: 7.1 },
+    { minX: 101.8, maxX: 103.8, minZ: -1.1, maxZ: -0.92, minY: 0, maxY: 7.1 }
+  );
   addBox(shaft, [2.0, 7.0, 2.0], [0, 3.5, 0], glass);
   addBox(shaft, [0.1, 7.0, 2.0], [-1.0, 3.5, 0], gold);
   addBox(shaft, [0.1, 7.0, 2.0], [1.0, 3.5, 0], gold);
