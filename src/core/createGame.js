@@ -840,7 +840,7 @@ export function createGame(root) {
           promptText = 'EXIT MANSION';
           promptVisible = true;
         }
-        interactionPrompt.hidden = !promptVisible || dialogueOpen || encounterChoiceOpen;
+        interactionPrompt.hidden = !promptVisible || dialogueOpen || encounterChoiceOpen || residence.isOfficeDoorOpening() || residence.isExitingInterior();
         if (interactionLabel) interactionLabel.textContent = promptText;
       }
 
@@ -859,7 +859,13 @@ export function createGame(root) {
       if (enteringInterior && !residence.isEnteringInterior()) {
         showMissionNotice('MANSION INTERIOR · YOU ARE INSIDE');
       }
+      const officeDoorWasOpening = residence.isOfficeDoorOpening();
       residence.updateOfficeDoor(delta);
+      if (officeDoorWasOpening && !residence.isOfficeDoorOpening()) {
+        missionManager.setStage('enter-office', 'The secretary has opened the office. Walk through the doorway.');
+        recipient.group.visible = true;
+        showMissionNotice('PRIVATE OFFICE · DOOR OPEN');
+      }
       const exitingInterior = residence.isExitingInterior();
       residence.updateExit(delta);
       if (exitingInterior && !residence.isExitingInterior()) {
