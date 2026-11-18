@@ -214,7 +214,7 @@ export function createGame(root) {
   ];
   suspiciousMen.forEach((person) => { person.group.visible = false; });
   const residence = createRecipientResidence(scene);
-  const gatekeeper = createMissionPerson(8.35, -34.6, 0x344d57, 'guard');
+  const gatekeeper = createMissionPerson(8.4, -37.2, 0x344d57, 'guard');
   gatekeeper.group.visible = false;
   gatekeeper.marker.visible = false;
   const recipient = createMissionPerson(16.5, -38.2, 0x4b5365, 'older');

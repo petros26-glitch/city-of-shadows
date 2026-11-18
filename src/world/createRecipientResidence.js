@@ -280,7 +280,7 @@ export function createRecipientResidence(scene) {
 
   return {
     colliders,
-    gatekeeperPosition: new THREE.Vector3(8.35, 0, -34.6),
+    gatekeeperPosition: new THREE.Vector3(8.4, 0, -37.2),
     recipientPosition: new THREE.Vector3(106, 4.35, -4.6),
     enterInterior(player) {
       if (interior.visible || entryPending) return false;
