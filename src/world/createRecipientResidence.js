@@ -19,8 +19,20 @@ function addSolid(parent, size, position, material, colliders, minY = 0, maxY = 
   });
 }
 
+function addPlatform(parent, size, position, material, colliders, platforms, minY) {
+  addSolid(parent, size, position, material, colliders, minY, position[1] + size[1] / 2);
+  platforms.push({
+    minX: position[0] - size[0] / 2,
+    maxX: position[0] + size[0] / 2,
+    minZ: position[2] - size[2] / 2,
+    maxZ: position[2] + size[2] / 2,
+    topY: position[1] + size[1] / 2
+  });
+}
+
 export function createRecipientResidence(scene) {
   const colliders = [];
+  const platforms = [];
   const stone = new THREE.MeshStandardMaterial({ color: 0x77766f, roughness: 0.95 });
   const dark = new THREE.MeshStandardMaterial({ color: 0x252d38, roughness: 0.88 });
   const cream = new THREE.MeshStandardMaterial({ color: 0xc9bda7, roughness: 0.92 });
@@ -139,10 +151,11 @@ export function createRecipientResidence(scene) {
       addBox(interior, [0.55, 0.16, 0.55], [x, 4.12, z], gold);
     }
   }
-  addSolid(interior, [3.2, 0.95, 0.85], [105.5, 0.48, 8.3], wood, colliders, 0, 1.0);
+  addPlatform(interior, [3.2, 0.95, 0.85], [105.5, 0.48, 8.3], wood, colliders, platforms, 0);
   addBox(interior, [3.35, 0.12, 0.95], [105.5, 1.0, 8.3], gold);
-  addSolid(interior, [2.4, 0.48, 0.85], [102.7, 0.24, -4.8], wood, colliders, 0, 0.55);
-  addSolid(interior, [2.4, 0.48, 0.85], [109.3, 0.24, -4.8], wood, colliders, 0, 0.55);
+  addBox(interior, [3.35, 0.12, 0.95], [105.5, 1.0, 8.3], gold);
+  addPlatform(interior, [2.4, 0.48, 0.85], [102.7, 0.24, -4.8], wood, colliders, platforms, 0);
+  addPlatform(interior, [2.4, 0.48, 0.85], [109.3, 0.24, -4.8], wood, colliders, platforms, 0);
   const rug = new THREE.Mesh(new THREE.BoxGeometry(5.2, 0.035, 3.0), new THREE.MeshStandardMaterial({ color: 0x513b35, roughness: 1 }));
   rug.position.set(106, 0.025, 4.1);
   interior.add(rug);
@@ -207,13 +220,30 @@ export function createRecipientResidence(scene) {
     addBox(interior, [1.2, 1.2, 0.07], [x, 6.0, 0.42], glass);
     addBox(interior, [1.25, 0.08, 0.1], [x, 6.0, 0.48], gold);
   }
-  addSolid(interior, [2.2, 0.85, 1.0], [104.2, 4.9, -4.3], wood, colliders, 4.35, 5.8);
-  addBox(interior, [2.4, 0.12, 1.1], [104.2, 5.36, -4.3], gold);
-  addBox(interior, [0.8, 0.08, 0.55], [104.2, 5.48, -4.3], dark);
-  addBox(interior, [0.48, 0.04, 0.32], [104.2, 5.55, -4.3], glass);
-  addSolid(interior, [1.5, 1.8, 0.12], [106.2, 5.25, -6.1], dark, colliders, 4.35, 6.2);
-  addSolid(interior, [0.9, 0.8, 0.9], [106.4, 4.78, -2.0], wood, colliders, 4.35, 5.6);
-  addBox(interior, [0.95, 0.12, 0.95], [106.4, 5.18, -2.0], gold);
+  // Upstairs reception: one shared destination for the staircase and elevator.
+  // The desk faces the open landing; the secretary sits behind it with a chair,
+  // computer, keyboard, desk phone and a small visitor bell.
+  addPlatform(interior, [3.25, 0.88, 0.92], [105.5, 4.79, -0.55], wood, colliders, platforms, 4.35);
+  addBox(interior, [3.38, 0.12, 1.02], [105.5, 5.29, -0.55], gold);
+  addBox(interior, [0.92, 0.08, 0.55], [105.5, 5.39, -0.66], dark);
+  addBox(interior, [0.62, 0.42, 0.06], [105.5, 5.65, -0.83], glass);
+  addBox(interior, [0.52, 0.035, 0.22], [105.5, 5.36, -0.18], dark);
+  addBox(interior, [0.22, 0.12, 0.18], [106.65, 5.38, -0.72], gold);
+  addBox(interior, [0.12, 0.06, 0.12], [106.65, 5.47, -0.72], dark);
+
+  // Reception chair and visitor seating.
+  addPlatform(interior, [0.82, 0.18, 0.78], [105.5, 4.88, -1.82], dark, colliders, platforms, 4.35);
+  addSolid(interior, [0.78, 0.82, 0.16], [105.5, 5.28, -2.18], dark, colliders, 4.35, 5.7);
+  addBox(interior, [0.92, 0.12, 0.92], [108.65, 4.65, -0.35], wood);
+  addBox(interior, [0.96, 0.1, 0.96], [108.65, 5.02, -0.35], gold);
+  addBox(interior, [0.34, 0.46, 0.34], [108.65, 5.29, -0.35], dark);
+  const receptionLamp = new THREE.PointLight(0xffd29a, 0.55, 6);
+  receptionLamp.position.set(105.5, 6.55, -0.7);
+  interior.add(receptionLamp);
+
+  // Keep the office corridor open so the secretary can walk ahead of the player.
+  addPlatform(interior, [1.0, 0.62, 0.78], [109.5, 4.68, -4.45], wood, colliders, platforms, 4.35);
+  addBox(interior, [1.08, 0.1, 0.86], [109.5, 5.04, -4.45], gold);
   addSolid(interior, [0.28, 2.0, 1.8], [110.9, 5.45, -4.7], wood, colliders, 4.35, 6.6);
   for (let i = 0; i < 4; i += 1) addBox(interior, [0.08, 0.34, 1.45], [110.72, 4.7 + i * 0.43, -4.7], i % 2 ? gold : dark);
   addBox(interior, [0.9, 0.85, 0.06], [102.1, 5.55, -6.78], gold);
@@ -253,7 +283,7 @@ export function createRecipientResidence(scene) {
   const officeSign = addBox(interior, [1.15, 0.32, 0.06], [106, 6.95, -6.82], gold);
 
   // A large executive desk and chair make the recipient's office unmistakable.
-  addSolid(interior, [3.1, 0.95, 0.92], [106, 4.88, -9.45], wood, colliders, 4.35, 5.85);
+  addPlatform(interior, [3.1, 0.95, 0.92], [106, 4.88, -9.45], wood, colliders, platforms, 4.35);
   addBox(interior, [3.25, 0.12, 1.02], [106, 5.38, -9.45], gold);
   addBox(interior, [1.0, 0.08, 0.62], [106, 5.48, -9.45], dark);
   addBox(interior, [0.68, 0.42, 0.04], [106, 5.72, -9.22], glass);
@@ -331,7 +361,7 @@ export function createRecipientResidence(scene) {
     return x >= 107.8 && x <= 110.2 && z <= stairBottomZ + 0.25 && z >= stairTopZ - 0.25;
   }
 
-  function getFloorY(x, z, currentY = 0) {
+  function getBaseFloorY(x, z, currentY = 0) {
     if (!interior.visible) return 0;
     if (isOnStairs(x, z)) {
       const progress = THREE.MathUtils.clamp((stairBottomZ - z) / (stairBottomZ - stairTopZ), 0, 1);
@@ -342,11 +372,38 @@ export function createRecipientResidence(scene) {
     return 0;
   }
 
+  function getFloorY(x, z, currentY = 0) {
+    const baseY = getBaseFloorY(x, z, currentY);
+    for (const platform of platforms) {
+      const inside = x >= platform.minX + 0.08 && x <= platform.maxX - 0.08
+        && z >= platform.minZ + 0.08 && z <= platform.maxZ - 0.08;
+      if (inside && currentY >= platform.topY - 0.12 && currentY <= platform.topY + 0.45) {
+        return Math.max(baseY, platform.topY);
+      }
+    }
+    return baseY;
+  }
+
+  function getLandingY(x, z, previousY, nextY, falling) {
+    if (!falling) return null;
+    let landing = null;
+    for (const platform of platforms) {
+      const inside = x >= platform.minX + 0.08 && x <= platform.maxX - 0.08
+        && z >= platform.minZ + 0.08 && z <= platform.maxZ - 0.08;
+      if (inside && previousY >= platform.topY - 0.04 && nextY <= platform.topY) {
+        if (landing === null || platform.topY > landing) landing = platform.topY;
+      }
+    }
+    return landing;
+  }
+
   return {
     colliders,
+    getLandingY,
     gatekeeperPosition: new THREE.Vector3(8.4, 0, -37.2),
     recipientPosition: new THREE.Vector3(106, 4.35, -11.05),
-    secretaryPosition: new THREE.Vector3(107.35, 4.35, -4.45),
+    secretaryPosition: new THREE.Vector3(105.5, 4.35, -1.28),
+    secretaryEscortPosition: new THREE.Vector3(106, 4.35, -5.55),
     enterInterior(player) {
       if (interior.visible || entryPending) return false;
       entryPending = true;
