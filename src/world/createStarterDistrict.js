@@ -152,16 +152,20 @@ export function createStarterDistrict(scene) {
       buildingPalette[index % buildingPalette.length],
       index
     );
-    addBuilding(
-      scene,
-      13.2 + (index % 2) * 1.5,
-      z - 3,
-      8 + ((index + 1) % 3),
-      8,
-      height + ((index % 2) * 2),
-      buildingPalette[(index + 2) % buildingPalette.length],
-      index + 3
-    );
+    // The first right-side plot is reserved for the guarded mansion
+    // used by the opening delivery mission.
+    if (index !== 0) {
+      addBuilding(
+        scene,
+        13.2 + (index % 2) * 1.5,
+        z - 3,
+        8 + ((index + 1) % 3),
+        8,
+        height + ((index % 2) * 2),
+        buildingPalette[(index + 2) % buildingPalette.length],
+        index + 3
+      );
+    }
   });
 
   [-29, -9, 11, 31].forEach((z) => {
