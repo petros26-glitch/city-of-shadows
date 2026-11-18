@@ -572,6 +572,8 @@ export function createGame(root) {
         const encounterDistance = Math.hypot(playerPosition.x - encounterPosition.x, playerPosition.z - encounterPosition.z);
         if (encounterDistance <= 2.9) {
           suspiciousMen.forEach((person) => { person.group.visible = true; });
+          resetStick();
+          keys.clear();
           encounterChoiceOpen = true;
           if (encounterChoice) encounterChoice.hidden = false;
           missionManager.setStage('choose-approach', 'Choose how to handle the two men.');
