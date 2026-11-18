@@ -741,17 +741,6 @@ export function createGame(root) {
           locationLabel.textContent = 'ORIYABA · STREET DISTRICT';
         }
       }
-      if (locationLabel) {
-        if (residence.isInterior()) {
-          locationLabel.textContent = playerFloorY >= 3.8
-            ? 'PRIVATE RESIDENCE · UPPER FLOOR'
-            : 'PRIVATE RESIDENCE · MAIN LOBBY';
-        } else if (missionState.stage === 'reach-mansion' || missionState.stage === 'enter-estate') {
-          locationLabel.textContent = 'ORIYABA · GUARDED ESTATE';
-        } else {
-          locationLabel.textContent = 'ORIYABA · STREET DISTRICT';
-        }
-      }
 
       if (missionState.stage === 'reach-encounter') {
         const encounterDistance = Math.hypot(playerPosition.x - encounterPosition.x, playerPosition.z - encounterPosition.z);

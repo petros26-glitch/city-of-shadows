@@ -44,15 +44,33 @@ export function createRecipientResidence(scene) {
 
   const gate = new THREE.Group();
   gate.position.set(10, 0, -38);
-  addBox(gate, [0.12, 2.35, 3.25], [0, 1.2, 1.63], dark);
-  addBox(gate, [0.12, 2.35, 3.25], [0, 1.2, -1.63], dark);
-  for (let i = 0; i < 6; i += 1) addBox(gate, [0.16, 2.55, 0.08], [0, 1.25, -2.8 + i * 1.12], gold);
+  const leftLeaf = new THREE.Group();
+  leftLeaf.position.set(0, 0, 3.25);
+  const rightLeaf = new THREE.Group();
+  rightLeaf.position.set(0, 0, -3.25);
+  for (const leaf of [leftLeaf, rightLeaf]) {
+    addBox(leaf, [0.14, 2.35, 3.18], [0, 1.2, -1.59], dark);
+    addBox(leaf, [0.18, 2.5, 0.12], [0, 1.25, -0.08], gold);
+    addBox(leaf, [0.18, 2.5, 0.12], [0, 1.25, -3.1], gold);
+    for (let i = 1; i <= 5; i += 1) addBox(leaf, [0.11, 2.2, 0.075], [0, 1.2, -i * 0.51], gold);
+    gate.add(leaf);
+  }
   exterior.add(gate);
-  const gateCollider = { minX: 9.88, maxX: 10.16, minZ: -41.25, maxZ: -34.75, minY: 0, maxY: 2.5, active: true };
+  const gateCollider = { minX: 9.84, maxX: 10.18, minZ: -41.3, maxZ: -34.7, minY: 0, maxY: 2.55, active: true };
   colliders.push(gateCollider);
-
+  let gateOpening = false;
+  let gateOpenProgress = 0;
+  for (const z of [-42.1, -33.9]) {
+    addBox(exterior, [0.72, 3.0, 0.72], [10, 1.5, z], stone);
+    addBox(exterior, [0.9, 0.18, 0.9], [10, 3.05, z], gold);
+    const lantern = new THREE.PointLight(0xffc77c, 0.65, 6);
+    lantern.position.set(10, 2.8, z);
+    exterior.add(lantern);
+  }
   addSolid(exterior, [2.6, 2.6, 2.3], [8, 1.3, -34.2], cream, colliders, 0, 2.6);
   addBox(exterior, [2.9, 0.2, 2.6], [8, 2.7, -34.2], dark);
+  addBox(exterior, [2.1, 0.9, 0.08], [8, 1.8, -33.02], glass);
+  addBox(exterior, [2.2, 0.1, 0.14], [8, 2.28, -32.98], gold);
 
   // Mansion facade: the doorway is deliberately open so the entry point is obvious.
   addBox(exterior, [9.2, 0.22, 8.4], [17, 0.02, -39.2], dark);
@@ -116,10 +134,32 @@ export function createRecipientResidence(scene) {
       addBox(interior, [0.55, 0.16, 0.55], [x, 4.12, z], gold);
     }
   }
-  addBox(interior, [3.2, 0.95, 0.85], [105.5, 0.48, 8.3], wood);
+  addSolid(interior, [3.2, 0.95, 0.85], [105.5, 0.48, 8.3], wood, colliders, 0, 1.0);
   addBox(interior, [3.35, 0.12, 0.95], [105.5, 1.0, 8.3], gold);
-  addBox(interior, [2.4, 0.48, 0.85], [102.7, 0.24, -4.8], wood);
-  addBox(interior, [2.4, 0.48, 0.85], [109.3, 0.24, -4.8], wood);
+  addSolid(interior, [2.4, 0.48, 0.85], [102.7, 0.24, -4.8], wood, colliders, 0, 0.55);
+  addSolid(interior, [2.4, 0.48, 0.85], [109.3, 0.24, -4.8], wood, colliders, 0, 0.55);
+  const rug = new THREE.Mesh(new THREE.BoxGeometry(5.2, 0.035, 3.0), new THREE.MeshStandardMaterial({ color: 0x513b35, roughness: 1 }));
+  rug.position.set(106, 0.025, 4.1);
+  interior.add(rug);
+  for (const x of [100.9, 111.1]) {
+    const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.27, 0.48, 8), wood);
+    pot.position.set(x, 0.24, 7.2);
+    interior.add(pot);
+    const leaves = new THREE.Group();
+    leaves.position.set(x, 0.48, 7.2);
+    for (let i = 0; i < 5; i += 1) {
+      const leaf = new THREE.Mesh(new THREE.ConeGeometry(0.16, 1.15, 5), new THREE.MeshStandardMaterial({ color: i % 2 ? 0x315b3d : 0x47734b, roughness: 1 }));
+      leaf.position.y = 0.48;
+      leaf.rotation.z = (i - 2) * 0.28;
+      leaves.add(leaf);
+    }
+    interior.add(leaves);
+    colliders.push({ minX: x - 0.42, maxX: x + 0.42, minZ: 6.75, maxZ: 7.65, minY: 0, maxY: 1.6 });
+  }
+  addBox(interior, [1.4, 1.0, 0.12], [106, 2.5, -7.78], wood);
+  addBox(interior, [1.12, 0.72, 0.035], [106, 2.52, -7.69], gold);
+  addBox(interior, [0.8, 0.06, 0.52], [105.5, 1.55, 8.05], dark);
+  addBox(interior, [0.48, 0.08, 0.34], [105.5, 1.62, 8.02], glass);
   for (const x of [103, 106, 109]) {
     const lamp = new THREE.PointLight(0xffd29a, 0.7, 9);
     lamp.position.set(x, 3.75, 3);
@@ -162,9 +202,17 @@ export function createRecipientResidence(scene) {
     addBox(interior, [1.2, 1.2, 0.07], [x, 6.0, 0.42], glass);
     addBox(interior, [1.25, 0.08, 0.1], [x, 6.0, 0.48], gold);
   }
-  addBox(interior, [2.2, 0.85, 1.0], [104.2, 4.9, -4.3], wood);
+  addSolid(interior, [2.2, 0.85, 1.0], [104.2, 4.9, -4.3], wood, colliders, 4.35, 5.8);
   addBox(interior, [2.4, 0.12, 1.1], [104.2, 5.36, -4.3], gold);
-  addBox(interior, [1.5, 1.8, 0.12], [106.2, 5.25, -6.1], dark);
+  addBox(interior, [0.8, 0.08, 0.55], [104.2, 5.48, -4.3], dark);
+  addBox(interior, [0.48, 0.04, 0.32], [104.2, 5.55, -4.3], glass);
+  addSolid(interior, [1.5, 1.8, 0.12], [106.2, 5.25, -6.1], dark, colliders, 4.35, 6.2);
+  addSolid(interior, [0.9, 0.8, 0.9], [106.4, 4.78, -2.0], wood, colliders, 4.35, 5.6);
+  addBox(interior, [0.95, 0.12, 0.95], [106.4, 5.18, -2.0], gold);
+  addSolid(interior, [0.28, 2.0, 1.8], [110.9, 5.45, -4.7], wood, colliders, 4.35, 6.6);
+  for (let i = 0; i < 4; i += 1) addBox(interior, [0.08, 0.34, 1.45], [110.72, 4.7 + i * 0.43, -4.7], i % 2 ? gold : dark);
+  addBox(interior, [0.9, 0.85, 0.06], [102.1, 5.55, -6.78], gold);
+  addBox(interior, [0.72, 0.66, 0.04], [102.1, 5.55, -6.72], wood);
   const officeLamp = new THREE.PointLight(0xffc77c, 0.9, 8);
   officeLamp.position.set(106, 6.5, -3.8);
   interior.add(officeLamp);
@@ -306,8 +354,20 @@ export function createRecipientResidence(scene) {
       return true;
     },
     openGate() {
-      gate.rotation.y = -Math.PI * 0.42;
-      gateCollider.active = false;
-    }
+      if (gateOpening || gateOpenProgress >= 1) return;
+      gateOpening = true;
+      gateOpenProgress = 0;
+    },
+    updateGate(delta) {
+      if (!gateOpening) return false;
+      gateOpenProgress = Math.min(1, gateOpenProgress + delta / 1.25);
+      const eased = gateOpenProgress * gateOpenProgress * (3 - 2 * gateOpenProgress);
+      leftLeaf.rotation.y = eased * 1.42;
+      rightLeaf.rotation.y = -eased * 1.42;
+      if (gateOpenProgress >= 0.82) gateCollider.active = false;
+      if (gateOpenProgress >= 1) gateOpening = false;
+      return gateOpening;
+    },
+    isGateOpening() { return gateOpening; }
   };
 }
