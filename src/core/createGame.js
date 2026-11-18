@@ -127,7 +127,7 @@ export function createGame(root) {
     const trim = new THREE.MeshStandardMaterial({ color: role === 'older' ? 0xc7a36c : 0xd6a75e, metalness: 0.12, roughness: 0.72 });
     const dark = new THREE.MeshStandardMaterial({ color: 0x171717, roughness: 1 });
     const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.29, 0.58, 3, 8), shirt);
-    torso.position.y = 1.04;
+    torso.position.y = role === 'secretary' ? 0.88 : 1.04;
     person.add(torso);
     if (role === 'older') {
       const jacket = new THREE.Mesh(new THREE.BoxGeometry(0.58, 0.76, 0.18), trousers);
@@ -138,39 +138,54 @@ export function createGame(root) {
       person.add(tie);
     }
     const head = new THREE.Mesh(new THREE.SphereGeometry(0.235, 12, 10), skin);
-    head.position.y = 1.69;
+    head.position.y = role === 'secretary' ? 1.53 : 1.69;
     person.add(head);
     const hair = new THREE.Mesh(
       new THREE.SphereGeometry(0.24, 11, 7, 0, Math.PI * 2, 0, Math.PI * 0.5),
       role === 'older' ? new THREE.MeshStandardMaterial({ color: 0xaaa69a, roughness: 1 }) : dark
     );
-    hair.position.y = 1.77;
+    hair.position.y = role === 'secretary' ? 1.61 : 1.77;
     person.add(hair);
+    if (role === 'secretary') {
+      const bun = new THREE.Mesh(new THREE.SphereGeometry(0.14, 9, 7), dark);
+      bun.position.set(0, 1.62, -0.2);
+      person.add(bun);
+    }
     const eyeWhite = new THREE.MeshStandardMaterial({ color: 0xf2e8d9, roughness: 0.8 });
+    const eyes = [];
+    const pupils = [];
     for (const side of [-1, 1]) {
       const eye = new THREE.Mesh(new THREE.SphereGeometry(0.035, 7, 6), eyeWhite);
-      eye.position.set(side * 0.085, 1.71, 0.214);
+      eye.position.set(side * 0.085, role === 'secretary' ? 1.55 : 1.71, 0.214);
       person.add(eye);
+      eyes.push(eye);
       const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.017, 6, 5), dark);
-      pupil.position.set(side * 0.085, 1.71, 0.245);
+      pupil.position.set(side * 0.085, role === 'secretary' ? 1.55 : 1.71, 0.245);
       person.add(pupil);
+      pupils.push(pupil);
     }
     const nose = new THREE.Mesh(new THREE.SphereGeometry(0.045, 7, 6), skin);
-    nose.position.set(0, 1.64, 0.25);
+    nose.position.set(0, role === 'secretary' ? 1.48 : 1.64, 0.25);
     person.add(nose);
-    const legs = new THREE.CapsuleGeometry(0.105, 0.48, 2, 6);
+    const legGeometry = new THREE.CapsuleGeometry(0.105, 0.48, 2, 6);
+    const legs = [];
+    const shoes = [];
     for (const side of [-1, 1]) {
-      const leg = new THREE.Mesh(legs, trousers);
-      leg.position.set(side * 0.14, 0.43, 0);
+      const leg = new THREE.Mesh(legGeometry, trousers);
+      leg.position.set(side * 0.14, role === 'secretary' ? 0.38 : 0.43, role === 'secretary' ? 0.24 : 0);
+      if (role === 'secretary') leg.rotation.x = Math.PI / 2;
       person.add(leg);
+      legs.push(leg);
       const shoe = new THREE.Mesh(new THREE.BoxGeometry(0.23, 0.12, 0.34), dark);
-      shoe.position.set(side * 0.14, 0.12, 0.07);
+      shoe.position.set(side * 0.14, 0.12, role === 'secretary' ? 0.58 : 0.07);
       person.add(shoe);
+      shoes.push(shoe);
     }
     const arms = [];
     for (const side of [-1, 1]) {
       const arm = new THREE.Group();
-      arm.position.set(side * 0.34, 1.37, 0);
+      arm.position.set(side * 0.34, role === 'secretary' ? 1.14 : 1.37, 0);
+      if (role === 'secretary') arm.rotation.x = -Math.PI / 2;
       const sleeve = new THREE.Mesh(new THREE.CapsuleGeometry(0.095, 0.42, 2, 6), role === 'older' ? trousers : shirt);
       sleeve.position.y = -0.25;
       arm.add(sleeve);
@@ -205,7 +220,7 @@ export function createGame(root) {
     marker.position.y = 0.07;
     person.add(marker);
     scene.add(person);
-    return { group: person, marker, arms, role };
+    return { group: person, marker, arms, legs, shoes, torso, head, hair, eyes, pupils, nose, role };
   }
 
   const suspiciousMen = [
@@ -349,6 +364,10 @@ export function createGame(root) {
   let dialoguePurpose = null;
   let missionNoticeTimer = 0;
   let gatekeeperGestureTime = 0;
+  let secretaryStandProgress = 1;
+  let secretaryStandingUp = false;
+  let secretaryWalking = false;
+  let secretaryWalkTime = 0;
 
   function updateMissionHud(state) {
     if (missionHud) missionHud.hidden = state.status === 'inactive';
@@ -537,8 +556,11 @@ export function createGame(root) {
       missionManager.setStage('enter-estate', 'Walk through the open gate, follow the driveway and enter through the mansion doorway.');
       showMissionNotice('GATE OPEN · ENTER THE ESTATE');
     } else if (completedPurpose === 'secretary') {
-      residence.openOfficeDoor();
-      showMissionNotice('SECRETARY · PLEASE ENTER');
+      secretaryStandProgress = 0;
+      secretaryStandingUp = true;
+      secretaryWalking = false;
+      missionManager.setStage('secretary-stand', 'The secretary stands up and prepares to show you the private office.');
+      showMissionNotice('THE SECRETARY · PLEASE FOLLOW ME');
     } else if (completedPurpose === 'recipient') {
       missionManager.complete();
       showMissionNotice('MISSION COMPLETE · ₦500 RECEIVED');
@@ -612,7 +634,8 @@ export function createGame(root) {
       return;
     }
 
-    if ((stage === 'climb-stairs' || stage === 'reach-office-door') && nearLift && playerFloorY < 2.5) {
+    if (nearLift && playerFloorY < 2.5
+      && ['climb-stairs', 'meet-secretary', 'secretary-stand', 'follow-secretary', 'open-office-door', 'opening-office-door', 'meet-recipient', 'completed'].includes(stage)) {
       if (residence.startLiftRide(activeCharacter.group)) {
         playerFloorY = 0;
         onGround = true;
@@ -622,7 +645,7 @@ export function createGame(root) {
       return;
     }
 
-    if (stage === 'completed' && nearLift && playerFloorY > 2.5) {
+    if (nearLift && playerFloorY > 2.5 && stage !== 'inactive') {
       if (residence.startLiftRide(activeCharacter.group)) {
         onGround = true;
         jumpVelocity = 0;
@@ -631,19 +654,20 @@ export function createGame(root) {
       return;
     }
 
-    if (stage === 'reach-office-door' && nearSecretary) {
+    if (stage === 'meet-secretary' && nearSecretary) {
       openDialogue('PRIVATE SECRETARY', 'UPPER FLOOR · RECEPTION', [
-        'Good afternoon. May I help you?',
+        'Good afternoon. Welcome. How may I help you?',
         '“I have a delivery for the man in this office. Kola sent me.”',
-        'She checks the appointment book, then picks up the desk phone. “One moment, please.”',
-        'A short pause. “He will see you now. Please go through the door.”'
+        '“Of course. He is expecting something. Please, come with me.”',
+        'She rises from her chair and gestures towards the private office corridor. “I will show you the way.”'
       ], 'secretary');
       return;
     }
 
-    if (stage === 'enter-office' && nearOfficeDoor) {
-      missionManager.setStage('meet-recipient', 'Enter the private office and speak to the man behind the desk.');
-      showMissionNotice('PRIVATE OFFICE · DOOR OPEN');
+    if (stage === 'open-office-door' && nearOfficeDoor) {
+      residence.openOfficeDoor();
+      missionManager.setStage('opening-office-door', 'Wait while the private office doors open.');
+      showMissionNotice('PRIVATE OFFICE · OPENING DOORS');
       return;
     }
 
@@ -767,7 +791,8 @@ export function createGame(root) {
       const playerPosition = activeCharacter.group.position;
       nearPackage = packagePickup.visible && Math.hypot(playerPosition.x - packagePickup.position.x, playerPosition.z - packagePickup.position.z) <= 2.5;
       nearRecipient = recipient.group.visible && Math.hypot(playerPosition.x - recipient.group.position.x, playerPosition.z - recipient.group.position.z) <= 2.25;
-      nearSecretary = secretary.group.visible && Math.hypot(playerPosition.x - secretary.group.position.x, playerPosition.z - secretary.group.position.z) <= 2.5;
+      nearSecretary = secretary.group.visible && missionManager.getState().stage === 'meet-secretary'
+        && Math.hypot(playerPosition.x - secretary.group.position.x, playerPosition.z - secretary.group.position.z) <= 2.5;
       nearGatekeeper = gatekeeper.group.visible && Math.hypot(playerPosition.x - gatekeeper.group.position.x, playerPosition.z - gatekeeper.group.position.z) <= 2.8;
       nearMansionDoor = !residence.isInterior() && playerPosition.x >= 16.35 && playerPosition.x <= 17.65 && playerPosition.z >= -34.45 && playerPosition.z <= -32.85;
       nearOfficeDoor = residence.isNearOfficeDoor(playerPosition.x, playerPosition.z);
@@ -824,11 +849,11 @@ export function createGame(root) {
         } else if ((missionState.stage === 'climb-stairs' || missionState.stage === 'reach-office-door') && nearLift && playerFloorY < 2.5) {
           promptText = 'TAKE ELEVATOR UP';
           promptVisible = true;
-        } else if (missionState.stage === 'reach-office-door' && nearSecretary) {
+        } else if (missionState.stage === 'meet-secretary' && nearSecretary) {
           promptText = 'SPEAK TO SECRETARY';
           promptVisible = true;
-        } else if (missionState.stage === 'enter-office' && nearOfficeDoor) {
-          promptText = 'ENTER PRIVATE OFFICE';
+        } else if (missionState.stage === 'open-office-door' && nearOfficeDoor) {
+          promptText = 'OPEN PRIVATE OFFICE';
           promptVisible = true;
         } else if (missionState.stage === 'meet-recipient' && nearRecipient) {
           promptText = 'DELIVER PACKAGE';
@@ -861,8 +886,9 @@ export function createGame(root) {
       }
       const officeDoorWasOpening = residence.isOfficeDoorOpening();
       residence.updateOfficeDoor(delta);
-      if (officeDoorWasOpening && !residence.isOfficeDoorOpening()) {
-        missionManager.setStage('enter-office', 'The secretary has opened the office. Walk through the doorway.');
+      if (officeDoorWasOpening && !residence.isOfficeDoorOpening()
+        && missionManager.getState().stage === 'opening-office-door') {
+        missionManager.setStage('meet-recipient', 'Enter the private office and deliver the sealed package to the man behind the desk.');
         recipient.group.visible = true;
         showMissionNotice('PRIVATE OFFICE · DOOR OPEN');
       }
@@ -895,17 +921,18 @@ export function createGame(root) {
           playerFloorY = activeCharacter.group.position.y > 2.5 ? 4.35 : 0;
           onGround = true;
           jumpVelocity = 0;
-          if (playerFloorY > 2.5 && missionManager.getState().status === 'active') {
+          if (playerFloorY > 2.5 && missionManager.getState().status === 'active'
+            && missionManager.getState().stage === 'climb-stairs') {
             secretary.group.visible = true;
-            missionManager.setStage('reach-office-door', 'Go to the private office entrance and speak to the secretary.');
-            showMissionNotice('UPPER FLOOR · FIND THE SECRETARY');
+            missionManager.setStage('meet-secretary', 'Go to the upstairs reception desk and speak to the secretary.');
+            showMissionNotice('UPPER FLOOR · RECEPTION');
           } else if (playerFloorY === 0) {
             showMissionNotice('MAIN LOBBY · YOU ARE BACK DOWNSTAIRS');
           }
         }
       }
 
-      const movementLocked = dialogueOpen || encounterChoiceOpen || transportChoiceOpen || residence.isLiftRunning() || residence.isEnteringInterior() || residence.isExitingInterior() || residence.isOfficeDoorOpening() || residence.isGateOpening();
+      const movementLocked = dialogueOpen || encounterChoiceOpen || transportChoiceOpen || secretaryStandingUp || residence.isLiftRunning() || residence.isEnteringInterior() || residence.isExitingInterior() || residence.isOfficeDoorOpening() || residence.isGateOpening();
       let inputX = movementLocked ? 0 : stickState.x;
       let inputZ = movementLocked ? 0 : stickState.y;
       if (!movementLocked && (keys.has('a') || keys.has('arrowleft'))) inputX -= 1;
@@ -944,12 +971,19 @@ export function createGame(root) {
           ? THREE.MathUtils.clamp(resolved.z, -12.15, 11.45)
           : THREE.MathUtils.clamp(resolved.z, -53, 43);
         if (onGround) {
-          playerFloorY = residence.getFloorY(
+          const supportedFloor = residence.getFloorY(
             activeCharacter.group.position.x,
             activeCharacter.group.position.z,
             playerFloorY
           );
-          activeCharacter.group.position.y = playerFloorY;
+          if (supportedFloor < playerFloorY - 0.08) {
+            playerFloorY = supportedFloor;
+            onGround = false;
+            jumpVelocity = 0;
+          } else {
+            playerFloorY = supportedFloor;
+            activeCharacter.group.position.y = playerFloorY;
+          }
         }
         activeCharacter.group.rotation.y = Math.atan2(movement.x, movement.z);
         activeCharacter.walkTime += delta * (isRunning ? 14.5 : 9.5);
@@ -974,22 +1008,89 @@ export function createGame(root) {
         playerFloorY = 4.35;
         activeCharacter.group.position.y = playerFloorY;
         secretary.group.visible = true;
-        missionManager.setStage('reach-office-door', 'Go to the private office entrance and speak to the secretary.');
-        showMissionNotice('UPPER FLOOR · FIND THE SECRETARY');
-      }
-      if (missionManager.getState().stage === 'enter-office' && !residence.isOfficeDoorOpening()) {
-        recipient.group.visible = true;
+        missionManager.setStage('meet-secretary', 'Go to the upstairs reception desk and speak to the secretary.');
+        showMissionNotice('UPPER FLOOR · RECEPTION');
       }
 
       if (!onGround) {
-        activeCharacter.group.position.y += jumpVelocity * delta;
+        const previousY = activeCharacter.group.position.y;
+        const nextY = previousY + jumpVelocity * delta;
+        const landingPlatform = residence.getLandingY(
+          activeCharacter.group.position.x,
+          activeCharacter.group.position.z,
+          previousY,
+          nextY,
+          jumpVelocity <= 0
+        );
+        activeCharacter.group.position.y = nextY;
         activeCharacter.body.rotation.x = -0.08;
         jumpVelocity -= 15 * delta;
-        if (activeCharacter.group.position.y <= playerFloorY) {
+        if (landingPlatform !== null) {
+          playerFloorY = landingPlatform;
+          activeCharacter.group.position.y = landingPlatform;
+          activeCharacter.body.rotation.x = 0;
+          jumpVelocity = 0;
+          onGround = true;
+        } else if (activeCharacter.group.position.y <= playerFloorY) {
           activeCharacter.group.position.y = playerFloorY;
           activeCharacter.body.rotation.x = 0;
           jumpVelocity = 0;
           onGround = true;
+        }
+      }
+
+      if (secretaryStandingUp) {
+        secretaryStandProgress = Math.min(1, secretaryStandProgress + delta / 0.72);
+        const t = secretaryStandProgress * secretaryStandProgress * (3 - 2 * secretaryStandProgress);
+        secretary.torso.position.y = THREE.MathUtils.lerp(0.88, 1.04, t);
+        secretary.head.position.y = THREE.MathUtils.lerp(1.53, 1.69, t);
+        secretary.hair.position.y = THREE.MathUtils.lerp(1.61, 1.77, t);
+        secretary.eyes.forEach((eye) => { eye.position.y = THREE.MathUtils.lerp(1.55, 1.71, t); });
+        secretary.pupils.forEach((pupil) => { pupil.position.y = THREE.MathUtils.lerp(1.55, 1.71, t); });
+        secretary.nose.position.y = THREE.MathUtils.lerp(1.48, 1.64, t);
+        secretary.legs.forEach((leg) => {
+          leg.position.y = THREE.MathUtils.lerp(0.38, 0.43, t);
+          leg.position.z = THREE.MathUtils.lerp(0.24, 0, t);
+          leg.rotation.x = THREE.MathUtils.lerp(Math.PI / 2, 0, t);
+        });
+        secretary.shoes.forEach((shoe) => { shoe.position.z = THREE.MathUtils.lerp(0.58, 0.07, t); });
+        secretary.arms.forEach((arm) => {
+          arm.position.y = THREE.MathUtils.lerp(1.14, 1.37, t);
+          arm.rotation.x = THREE.MathUtils.lerp(-Math.PI / 2, 0, t);
+        });
+        if (secretaryStandProgress >= 1) {
+          secretaryStandingUp = false;
+          secretaryWalking = true;
+          secretary.group.rotation.y = Math.PI;
+          missionManager.setStage('follow-secretary', 'Follow the secretary along the upper corridor to the private office door.');
+          showMissionNotice('FOLLOW THE SECRETARY');
+        }
+      }
+
+      if (secretaryWalking) {
+        const destination = residence.secretaryEscortPosition;
+        const dx = destination.x - secretary.group.position.x;
+        const dz = destination.z - secretary.group.position.z;
+        const distance = Math.hypot(dx, dz);
+        if (distance <= 0.12) {
+          secretary.group.position.copy(destination);
+          secretaryWalking = false;
+          secretary.group.rotation.y = 0;
+          secretary.legs.forEach((leg) => { leg.rotation.x = 0; });
+          secretary.arms.forEach((arm) => { arm.rotation.x = 0; });
+          missionManager.setStage('open-office-door', 'Walk up to the private office and open the door yourself.');
+          showMissionNotice('THE SECRETARY · PRIVATE OFFICE');
+        } else {
+          const step = Math.min(distance, 1.75 * delta);
+          secretary.group.position.x += (dx / distance) * step;
+          secretary.group.position.z += (dz / distance) * step;
+          secretary.group.rotation.y = Math.atan2(dx, dz);
+          secretaryWalkTime += delta * 7.5;
+          const stride = Math.sin(secretaryWalkTime) * 0.42;
+          secretary.legs[0].rotation.x = stride;
+          secretary.legs[1].rotation.x = -stride;
+          secretary.arms[0].rotation.x = -stride * 0.7;
+          secretary.arms[1].rotation.x = stride * 0.7;
         }
       }
     }
