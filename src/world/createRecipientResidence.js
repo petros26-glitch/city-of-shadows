@@ -253,8 +253,8 @@ export function createRecipientResidence(scene) {
   chairBase.position.set(105.5, 4.39, -1.5);
   interior.add(chairBase);
   for (const side of [-1, 1]) {
-    addBox(interior, [0.1, 0.09, 0.66], [105.5 + side * 0.45, 5.08, -1.48], gold);
-    addBox(interior, [0.08, 0.32, 0.08], [105.5 + side * 0.45, 4.92, -1.48], dark);
+    addSolid(interior, [0.1, 0.09, 0.66], [105.5 + side * 0.45, 5.08, -1.48], gold, colliders, 5.035, 5.125);
+    addSolid(interior, [0.08, 0.32, 0.08], [105.5 + side * 0.45, 4.92, -1.48], dark, colliders, 4.76, 5.08);
   }
   addSolid(interior, [0.92, 0.52, 0.92], [108.65, 4.85, -0.35], wood, colliders, 4.35, 5.11);
   addBox(interior, [0.96, 0.1, 0.96], [108.65, 5.02, -0.35], gold);
