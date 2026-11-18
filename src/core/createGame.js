@@ -318,7 +318,6 @@ export function createGame(root) {
   const mobileControls = document.querySelector('#mobile-controls');
   const sceneHint = document.querySelector('.scene-hint');
   const locationLabel = document.querySelector('#location-label');
-  const locationLabel = document.querySelector('#location-label');
   const buildLabel = document.querySelector('.build-label');
   const interactionLabel = document.querySelector('#interaction-label');
   const dialogueTag = document.querySelector('.dialogue-tag');
