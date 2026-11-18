@@ -214,7 +214,11 @@ export function createRecipientResidence(scene) {
   addSolid(interior, [4.4, 2.8, 0.22], [102.9, 5.85, -7], cream, colliders, 4.4, 7.3);
   addSolid(interior, [4.4, 2.8, 0.22], [109.1, 5.85, -7], cream, colliders, 4.4, 7.3);
   addSolid(interior, [0.22, 2.8, 4.8], [109.5, 5.85, -3.1], cream, colliders, 4.4, 7.3);
-  addBox(interior, [11.6, 0.25, 8.2], [106, 7.3, -3.1], dark);
+  // The roof is grouped so it can be hidden as a deliberate third-person camera cutaway.
+  // This lets the player see the upstairs reception instead of the camera looking at the roof.
+  const overheadShell = new THREE.Group();
+  interior.add(overheadShell);
+  addBox(overheadShell, [11.6, 0.25, 8.2], [106, 7.3, -3.1], dark);
   for (const x of [102.2, 109.8]) {
     addBox(interior, [1.2, 1.2, 0.07], [x, 6.0, 0.42], glass);
     addBox(interior, [1.25, 0.08, 0.1], [x, 6.0, 0.48], gold);
@@ -264,7 +268,7 @@ export function createRecipientResidence(scene) {
   // A proper private office suite sits beyond the upper-floor reception corridor.
   // The secretary waits outside; the recipient remains hidden until the office is opened.
   addBox(interior, [11.0, 0.22, 5.35], [106, 4.35, -9.75], floor);
-  addBox(interior, [11.4, 0.24, 5.6], [106, 7.3, -9.75], dark);
+  addBox(overheadShell, [11.4, 0.24, 5.6], [106, 7.3, -9.75], dark);
   addSolid(interior, [0.22, 2.8, 5.35], [100.5, 5.85, -9.75], cream, colliders, 4.35, 7.3);
   addSolid(interior, [0.22, 2.8, 5.35], [111.5, 5.85, -9.75], cream, colliders, 4.35, 7.3);
   addSolid(interior, [11.0, 2.8, 0.22], [106, 5.85, -12.42], cream, colliders, 4.35, 7.3);
@@ -431,6 +435,7 @@ export function createRecipientResidence(scene) {
       if (mainDoorProgress >= 1) {
         exterior.visible = false;
         interior.visible = true;
+        overheadShell.visible = false;
         entryPlayer.position.set(106, 0, 10.1);
         entryPlayer.rotation.y = Math.PI;
         entryPlayer = null;
@@ -459,6 +464,7 @@ export function createRecipientResidence(scene) {
       if (exitDoorProgress >= 0.8) interiorExitCollider.active = false;
       if (exitDoorProgress >= 1) {
         interior.visible = false;
+        overheadShell.visible = true;
         exterior.visible = true;
         exitPlayer.position.set(17, 0, -32.7);
         exitPlayer.rotation.y = Math.PI;
