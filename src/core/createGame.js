@@ -1002,7 +1002,9 @@ export function createGame(root) {
         );
         const insideMansion = residence.isInterior();
         activeCharacter.group.position.x = insideMansion
-          ? THREE.MathUtils.clamp(resolved.x, 100.65, 111.35)
+          ? (playerFloorY >= 3.8
+            ? THREE.MathUtils.clamp(resolved.x, 100.65, 111.35)
+            : THREE.MathUtils.clamp(resolved.x, 98.65, 113.35))
           : THREE.MathUtils.clamp(resolved.x, -8.7, 24);
         activeCharacter.group.position.z = insideMansion
           ? THREE.MathUtils.clamp(resolved.z, -12.15, 11.45)
