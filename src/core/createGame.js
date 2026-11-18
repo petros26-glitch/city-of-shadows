@@ -155,7 +155,7 @@ export function createGame(root) {
   const gatekeeper = createMissionPerson(8.35, -34.6, 0x344d57);
   gatekeeper.group.visible = false;
   const recipient = createMissionPerson(19, -38, 0x4b5365);
-  recipient.group.position.y = 4.25;
+  recipient.group.position.y = 4.375;
   recipient.group.visible = false;
   const stairsPosition = new THREE.Vector3(12.6, 0, -38);
 
@@ -488,8 +488,8 @@ export function createGame(root) {
     }
 
     if (stage === 'go-upstairs' && nearStairs) {
-      activeCharacter.group.position.set(14.2, 4.25, -38);
-      playerFloorY = 4.25;
+      activeCharacter.group.position.set(14.2, 4.375, -38);
+      playerFloorY = 4.375;
       onGround = true;
       jumpVelocity = 0;
       recipient.group.visible = true;
