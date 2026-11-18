@@ -109,12 +109,17 @@ export function createRecipientResidence(scene) {
   let mainDoorProgress = 0;
   let entryPending = false;
   let entryPlayer = null;
+  let exitPending = false;
+  let exitPlayer = null;
+  let exitDoorProgress = 0;
 
   // The interior is a separate lightweight walkable environment. It is switched on
   // only after the player reaches and enters the exterior front door.
   const interior = new THREE.Group();
   interior.visible = false;
   scene.add(interior);
+  let officeDoorProgress = 0;
+  let officeDoorOpening = false;
   const lobbyX = 106;
   const lobbyZ = 2;
   addBox(interior, [12, 0.24, 20], [lobbyX, -0.12, lobbyZ], floor);
@@ -217,6 +222,65 @@ export function createRecipientResidence(scene) {
   officeLamp.position.set(106, 6.5, -3.8);
   interior.add(officeLamp);
 
+  // A proper private office suite sits beyond the upper-floor reception corridor.
+  // The secretary waits outside; the recipient remains hidden until the office is opened.
+  addBox(interior, [11.0, 0.22, 5.35], [106, 4.35, -9.75], floor);
+  addBox(interior, [11.4, 0.24, 5.6], [106, 7.3, -9.75], dark);
+  addSolid(interior, [0.22, 2.8, 5.35], [100.5, 5.85, -9.75], cream, colliders, 4.35, 7.3);
+  addSolid(interior, [0.22, 2.8, 5.35], [111.5, 5.85, -9.75], cream, colliders, 4.35, 7.3);
+  addSolid(interior, [11.0, 2.8, 0.22], [106, 5.85, -12.42], cream, colliders, 4.35, 7.3);
+  addBox(interior, [1.5, 1.8, 0.08], [102.2, 5.8, -12.27], glass);
+  addBox(interior, [1.6, 0.08, 0.1], [102.2, 6.0, -12.2], gold);
+
+  // Double office doors occupy the existing opening in the corridor wall.
+  const officeDoors = new THREE.Group();
+  interior.add(officeDoors);
+  const leftOfficeDoor = new THREE.Group();
+  leftOfficeDoor.position.set(105.2, 4.35, -7.08);
+  const rightOfficeDoor = new THREE.Group();
+  rightOfficeDoor.position.set(106.8, 4.35, -7.08);
+  addBox(leftOfficeDoor, [0.8, 2.55, 0.14], [0.4, 1.275, 0], wood);
+  addBox(rightOfficeDoor, [0.8, 2.55, 0.14], [-0.4, 1.275, 0], wood);
+  for (const panel of [leftOfficeDoor, rightOfficeDoor]) {
+    addBox(panel, [0.56, 1.75, 0.035], [panel === leftOfficeDoor ? 0.4 : -0.4, 1.35, 0.09], gold);
+    officeDoors.add(panel);
+  }
+  const officeDoorCollider = {
+    minX: 105.12, maxX: 106.88, minZ: -7.2, maxZ: -6.94,
+    minY: 4.35, maxY: 7.05, active: true
+  };
+  colliders.push(officeDoorCollider);
+  const officeSign = addBox(interior, [1.15, 0.32, 0.06], [106, 6.95, -6.82], gold);
+
+  // A large executive desk and chair make the recipient's office unmistakable.
+  addSolid(interior, [3.1, 0.95, 0.92], [106, 4.88, -9.45], wood, colliders, 4.35, 5.85);
+  addBox(interior, [3.25, 0.12, 1.02], [106, 5.38, -9.45], gold);
+  addBox(interior, [1.0, 0.08, 0.62], [106, 5.48, -9.45], dark);
+  addBox(interior, [0.68, 0.42, 0.04], [106, 5.72, -9.22], glass);
+  addSolid(interior, [1.0, 0.72, 0.82], [106, 4.72, -11.35], dark, colliders, 4.35, 5.2);
+  const officeRug = new THREE.Mesh(new THREE.BoxGeometry(5.2, 0.035, 2.8), new THREE.MeshStandardMaterial({ color: 0x463b36, roughness: 1 }));
+  officeRug.position.set(106, 4.49, -9.9);
+  interior.add(officeRug);
+  const privateLamp = new THREE.PointLight(0xffc98b, 1.0, 9);
+  privateLamp.position.set(106, 6.55, -9.5);
+  interior.add(privateLamp);
+
+  // The inside face of the same main entrance is used when leaving the mansion.
+  const interiorExitDoors = new THREE.Group();
+  interior.add(interiorExitDoors);
+  const leftExitDoor = new THREE.Group();
+  leftExitDoor.position.set(104, 0, 12);
+  const rightExitDoor = new THREE.Group();
+  rightExitDoor.position.set(108, 0, 12);
+  addBox(leftExitDoor, [2, 3.35, 0.16], [1, 1.675, 0], doorMaterial);
+  addBox(rightExitDoor, [2, 3.35, 0.16], [-1, 1.675, 0], doorMaterial);
+  interiorExitDoors.add(leftExitDoor, rightExitDoor);
+  const interiorExitCollider = {
+    minX: 103.9, maxX: 108.1, minZ: 11.86, maxZ: 12.14,
+    minY: 0, maxY: 3.45, active: true
+  };
+  colliders.push(interiorExitCollider);
+
   // Glass elevator shaft and a visible cabin with three enclosed sides.
   const shaft = new THREE.Group();
   shaft.position.set(102.8, 0, 0.1);
@@ -273,7 +337,7 @@ export function createRecipientResidence(scene) {
       const progress = THREE.MathUtils.clamp((stairBottomZ - z) / (stairBottomZ - stairTopZ), 0, 1);
       return progress * 4.35;
     }
-    const onUpper = x >= 100.8 && x <= 111.2 && z >= -6.7 && z <= 4.8;
+    const onUpper = x >= 100.8 && x <= 111.2 && z >= -12.1 && z <= 4.8;
     if (currentY > 3.8 && onUpper) return 4.35;
     return 0;
   }
@@ -281,7 +345,8 @@ export function createRecipientResidence(scene) {
   return {
     colliders,
     gatekeeperPosition: new THREE.Vector3(8.4, 0, -37.2),
-    recipientPosition: new THREE.Vector3(106, 4.35, -4.6),
+    recipientPosition: new THREE.Vector3(106, 4.35, -11.05),
+    secretaryPosition: new THREE.Vector3(107.35, 4.35, -4.45),
     enterInterior(player) {
       if (interior.visible || entryPending) return false;
       entryPending = true;
@@ -308,6 +373,35 @@ export function createRecipientResidence(scene) {
       return entryPending;
     },
     isInterior() { return interior.visible; },
+    isExitingInterior() { return exitPending; },
+    isNearExit(x, z) {
+      return interior.visible && x >= 104.2 && x <= 107.8 && z >= 9.1 && z <= 11.6;
+    },
+    exitInterior(player) {
+      if (!interior.visible || exitPending) return false;
+      exitPending = true;
+      exitPlayer = player;
+      exitDoorProgress = 0;
+      return true;
+    },
+    updateExit(delta) {
+      if (!exitPending) return false;
+      exitDoorProgress = Math.min(1, exitDoorProgress + delta / 0.9);
+      const eased = exitDoorProgress * exitDoorProgress * (3 - 2 * exitDoorProgress);
+      leftExitDoor.rotation.y = -eased * 1.18;
+      rightExitDoor.rotation.y = eased * 1.18;
+      if (exitDoorProgress >= 0.8) interiorExitCollider.active = false;
+      if (exitDoorProgress >= 1) {
+        interior.visible = false;
+        exterior.visible = true;
+        exitPlayer.position.set(17, 0, -32.7);
+        exitPlayer.rotation.y = Math.PI;
+        exitPlayer = null;
+        exitPending = false;
+        return false;
+      }
+      return true;
+    },
     isOnStairs,
     isNearStairs(x, z) {
       return interior.visible && Math.hypot(x - stairX, z - stairBottomZ) <= 2.0;
@@ -315,13 +409,40 @@ export function createRecipientResidence(scene) {
     isNearLift(x, z) {
       return interior.visible && Math.hypot(x - 102.8, z - 1.9) <= 1.8;
     },
+    isNearOfficeDoor(x, z) {
+      return interior.visible && x >= 104.2 && x <= 107.8 && z >= -8.25 && z <= -6.15;
+    },
     getFloorY,
+    openOfficeDoor() {
+      if (officeDoorOpening || officeDoorProgress >= 1) return;
+      officeDoorOpening = true;
+      officeDoorProgress = 0;
+    },
+    isOfficeDoorOpening() { return officeDoorOpening; },
+    updateOfficeDoor(delta) {
+      if (!officeDoorOpening) return false;
+      officeDoorProgress = Math.min(1, officeDoorProgress + delta / 0.8);
+      const eased = officeDoorProgress * officeDoorProgress * (3 - 2 * officeDoorProgress);
+      leftOfficeDoor.rotation.y = -eased * 1.18;
+      rightOfficeDoor.rotation.y = eased * 1.18;
+      if (officeDoorProgress >= 0.8) officeDoorCollider.active = false;
+      if (officeDoorProgress >= 1) officeDoorOpening = false;
+      return officeDoorOpening;
+    },
     startLiftRide(player) {
       if (!interior.visible || liftState !== 'idle') return false;
-      player.position.set(102.8, 0, 0.1);
-      cabin.position.y = 0;
-      setLiftDoors(true);
-      liftState = 'opening-ground';
+      const fromUpper = player.position.y > 2.5;
+      if (fromUpper) {
+        player.position.set(102.8, 4.35, 0.1);
+        cabin.position.y = 4.35;
+        setLiftDoors(true);
+        liftState = 'opening-upper';
+      } else {
+        player.position.set(102.8, 0, 0.1);
+        cabin.position.y = 0;
+        setLiftDoors(true);
+        liftState = 'opening-ground';
+      }
       liftTimer = 0;
       return true;
     },
@@ -345,11 +466,29 @@ export function createRecipientResidence(scene) {
           liftState = 'opening-upper';
           liftTimer = 0;
         }
-      } else if (liftState === 'opening-upper' && liftTimer >= 0.6) {
-        player.position.set(102.8, 4.35, 1.55);
-        liftState = 'idle';
+      } else if (liftState === 'opening-upper' && liftTimer >= 0.55) {
+        if (cabin.position.y < 2) {
+          setLiftDoors(false);
+          liftState = 'closing-upper';
+          liftTimer = 0;
+        } else {
+          player.position.set(102.8, 4.35, 1.55);
+          liftState = 'idle';
+          liftTimer = 0;
+          return false;
+        }
+      } else if (liftState === 'closing-upper' && liftTimer >= 0.55) {
+        liftState = 'moving-down';
         liftTimer = 0;
-        return false;
+      } else if (liftState === 'moving-down') {
+        const progress = THREE.MathUtils.clamp(liftTimer / 2.2, 0, 1);
+        cabin.position.y = 4.35 * (1 - progress);
+        player.position.y = 4.35 * (1 - progress);
+        if (progress >= 1) {
+          setLiftDoors(true);
+          liftState = 'opening-ground';
+          liftTimer = 0;
+        }
       }
       return true;
     },
