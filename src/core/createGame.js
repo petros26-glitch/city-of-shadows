@@ -806,7 +806,7 @@ export function createGame(root) {
       if (locationLabel) {
         if (residence.isInterior()) {
           locationLabel.textContent = playerFloorY >= 3.8
-            ? (playerPosition.z < -7.1 ? 'PRIVATE RESIDENCE · PRIVATE OFFICE' : 'PRIVATE RESIDENCE · UPPER FLOOR')
+            ? (playerPosition.z < -7.1 ? 'PRIVATE RESIDENCE · PRIVATE OFFICE' : 'PRIVATE RESIDENCE · UPSTAIRS RECEPTION')
             : 'PRIVATE RESIDENCE · MAIN LOBBY';
         } else if (missionState.stage === 'reach-mansion' || missionState.stage === 'enter-estate') {
           locationLabel.textContent = 'ORIYABA · GUARDED ESTATE';
@@ -1052,6 +1052,7 @@ export function createGame(root) {
       if (secretaryStandingUp) {
         secretaryStandProgress = Math.min(1, secretaryStandProgress + delta / 0.72);
         const t = secretaryStandProgress * secretaryStandProgress * (3 - 2 * secretaryStandProgress);
+        secretary.head.rotation.y = THREE.MathUtils.damp(secretary.head.rotation.y, 0, 8, delta);
         secretary.torso.position.y = THREE.MathUtils.lerp(0.88, 1.04, t);
         secretary.head.position.y = THREE.MathUtils.lerp(1.53, 1.69, t);
         secretary.hair.position.y = THREE.MathUtils.lerp(1.61, 1.77, t);
