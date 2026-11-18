@@ -147,7 +147,7 @@ export function createRecipientResidence(scene) {
   // Lobby columns, reception console, seating and warm ceiling fixtures.
   for (const x of [101.3, 110.7]) {
     for (const z of [-5.5, 8.5]) {
-      addBox(interior, [0.38, 4.1, 0.38], [x, 2.05, z], dark);
+      addSolid(interior, [0.38, 4.1, 0.38], [x, 2.05, z], dark, colliders, 0, 4.1);
       addBox(interior, [0.55, 0.16, 0.55], [x, 4.12, z], gold);
     }
   }
@@ -247,7 +247,7 @@ export function createRecipientResidence(scene) {
     addBox(interior, [0.1, 0.09, 0.66], [105.5 + side * 0.45, 5.08, -1.48], gold);
     addBox(interior, [0.08, 0.32, 0.08], [105.5 + side * 0.45, 4.92, -1.48], dark);
   }
-  addBox(interior, [0.92, 0.12, 0.92], [108.65, 4.65, -0.35], wood);
+  addSolid(interior, [0.92, 0.52, 0.92], [108.65, 4.85, -0.35], wood, colliders, 4.35, 5.11);
   addBox(interior, [0.96, 0.1, 0.96], [108.65, 5.02, -0.35], gold);
   addBox(interior, [0.34, 0.46, 0.34], [108.65, 5.29, -0.35], dark);
   const receptionLamp = new THREE.PointLight(0xffd29a, 0.55, 6);
@@ -365,6 +365,9 @@ export function createRecipientResidence(scene) {
 
   let liftState = 'idle';
   let liftTimer = 0;
+  let stairClimbState = 'idle';
+  let stairClimbTimer = 0;
+  const stairClimbDuration = 2.8;
   function setLiftDoors(open) {
     leftDoor.position.x = open ? -0.82 : -0.42;
     rightDoor.position.x = open ? 0.82 : 0.42;
@@ -376,10 +379,6 @@ export function createRecipientResidence(scene) {
 
   function getBaseFloorY(x, z, currentY = 0) {
     if (!interior.visible) return 0;
-    if (isOnStairs(x, z)) {
-      const progress = THREE.MathUtils.clamp((stairBottomZ - z) / (stairBottomZ - stairTopZ), 0, 1);
-      return progress * 4.35;
-    }
     const onUpper = x >= 100.8 && x <= 111.2 && z >= -12.1 && z <= 4.8;
     if (currentY > 3.8 && onUpper) return 4.35;
     return 0;
@@ -475,6 +474,34 @@ export function createRecipientResidence(scene) {
       return true;
     },
     isOnStairs,
+    isStairClimbing() { return stairClimbState !== 'idle'; },
+    startStairClimb(player) {
+      if (!interior.visible || stairClimbState !== 'idle' || player.position.y > 2.5) return false;
+      stairClimbState = 'climbing';
+      stairClimbTimer = 0;
+      player.position.set(stairX, 0, stairBottomZ + 0.12);
+      player.rotation.y = Math.PI;
+      return true;
+    },
+    updateStairClimb(delta, player) {
+      if (stairClimbState === 'idle') return false;
+      stairClimbTimer = Math.min(stairClimbDuration, stairClimbTimer + delta);
+      const progress = THREE.MathUtils.clamp(stairClimbTimer / stairClimbDuration, 0, 1);
+      const eased = progress * progress * (3 - 2 * progress);
+      player.position.set(
+        stairX,
+        4.35 * eased,
+        THREE.MathUtils.lerp(stairBottomZ + 0.12, stairTopZ - 0.12, eased)
+      );
+      player.rotation.y = Math.PI;
+      if (progress >= 1) {
+        player.position.set(stairX, 4.35, stairTopZ - 0.12);
+        stairClimbState = 'idle';
+        stairClimbTimer = 0;
+        return false;
+      }
+      return true;
+    },
     isNearStairs(x, z) {
       return interior.visible && Math.hypot(x - stairX, z - stairBottomZ) <= 2.0;
     },
