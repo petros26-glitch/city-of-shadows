@@ -403,7 +403,7 @@ export function createRecipientResidence(scene) {
     gatekeeperPosition: new THREE.Vector3(8.4, 0, -37.2),
     recipientPosition: new THREE.Vector3(106, 4.35, -11.05),
     secretaryPosition: new THREE.Vector3(105.5, 4.35, -1.28),
-    secretaryEscortPosition: new THREE.Vector3(106, 4.35, -5.55),
+    secretaryEscortPosition: new THREE.Vector3(108.35, 4.35, -5.55),
     enterInterior(player) {
       if (interior.visible || entryPending) return false;
       entryPending = true;
