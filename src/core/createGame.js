@@ -913,7 +913,7 @@ export function createGame(root) {
         gatekeeper.arms[1].rotation.x = THREE.MathUtils.damp(gatekeeper.arms[1].rotation.x, 0, 7, delta);
       }
       if (secretary.group.visible && nearSecretary && missionManager.getState().stage === 'meet-secretary') {
-        secretary.group.rotation.y = Math.atan2(
+        secretary.head.rotation.y = Math.atan2(
           playerPosition.x - secretary.group.position.x,
           playerPosition.z - secretary.group.position.z
         );
