@@ -184,7 +184,7 @@ export function createGame(root) {
     const arms = [];
     for (const side of [-1, 1]) {
       const arm = new THREE.Group();
-      arm.position.set(side * 0.34, role === 'secretary' ? 1.14 : 1.37, 0);
+      arm.position.set(side * 0.34, role === 'secretary' ? 1.0 : 1.37, 0);
       if (role === 'secretary') arm.rotation.x = -Math.PI / 2;
       const sleeve = new THREE.Mesh(new THREE.CapsuleGeometry(0.095, 0.42, 2, 6), role === 'older' ? trousers : shirt);
       sleeve.position.y = -0.25;
@@ -1066,7 +1066,7 @@ export function createGame(root) {
         });
         secretary.shoes.forEach((shoe) => { shoe.position.z = THREE.MathUtils.lerp(0.58, 0.07, t); });
         secretary.arms.forEach((arm) => {
-          arm.position.y = THREE.MathUtils.lerp(1.14, 1.37, t);
+          arm.position.y = THREE.MathUtils.lerp(1.0, 1.37, t);
           arm.rotation.x = THREE.MathUtils.lerp(-Math.PI / 2, 0, t);
         });
         if (secretaryStandProgress >= 1) {
