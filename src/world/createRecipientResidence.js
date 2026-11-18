@@ -189,6 +189,20 @@ export function createRecipientResidence(scene) {
   addBox(cabin, [0.1, 2.35, 1.68], [0.81, 1.2, 0], dark);
   addBox(cabin, [1.68, 2.35, 0.1], [0, 1.2, -0.81], dark);
   addBox(cabin, [1.72, 0.1, 1.72], [0, 2.4, 0], dark);
+  addBox(cabin, [1.45, 0.07, 1.4], [0, 0.11, 0], floor);
+  addBox(cabin, [0.55, 0.07, 0.42], [0.63, 1.45, -0.7], gold);
+  addBox(cabin, [0.24, 0.18, 0.06], [0.63, 1.45, -0.65], interiorLight);
+  for (let i = 0; i < 3; i += 1) {
+    const button = new THREE.Mesh(
+      new THREE.CircleGeometry(0.045, 8),
+      new THREE.MeshStandardMaterial({ color: i === 0 ? 0x72b58a : 0xd6a75e, emissive: i === 0 ? 0x245b38 : 0x79501e, emissiveIntensity: 0.6 })
+    );
+    button.position.set(0.63, 1.25 - i * 0.16, -0.62);
+    cabin.add(button);
+  }
+  const cabinLamp = new THREE.PointLight(0xffd9a8, 0.65, 4);
+  cabinLamp.position.set(0, 2.05, 0);
+  cabin.add(cabinLamp);
   const leftDoor = addBox(cabin, [0.82, 2.25, 0.1], [-0.42, 1.15, 0.82], gold);
   const rightDoor = addBox(cabin, [0.82, 2.25, 0.1], [0.42, 1.15, 0.82], gold);
   addBox(leftDoor, [0.58, 1.7, 0.035], [0, 0, 0.06], glass);

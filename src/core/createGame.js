@@ -118,23 +118,84 @@ export function createGame(root) {
 
   scene.add(npc);
 
-  function createMissionPerson(x, z, shirtColor) {
+  function createMissionPerson(x, z, shirtColor, role = 'street') {
     const person = new THREE.Group();
     person.position.set(x, 0, z);
-    const skin = new THREE.MeshStandardMaterial({ color: 0x805039, roughness: 0.92 });
+    const skin = new THREE.MeshStandardMaterial({ color: role === 'older' ? 0x75462f : 0x805039, roughness: 0.92 });
     const shirt = new THREE.MeshStandardMaterial({ color: shirtColor, roughness: 0.9 });
-    const trousers = new THREE.MeshStandardMaterial({ color: 0x202631, roughness: 0.95 });
-    const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.27, 0.55, 3, 7), shirt);
-    torso.position.y = 1.03;
+    const trousers = new THREE.MeshStandardMaterial({ color: role === 'guard' ? 0x182c3a : 0x202631, roughness: 0.95 });
+    const trim = new THREE.MeshStandardMaterial({ color: role === 'older' ? 0xc7a36c : 0xd6a75e, metalness: 0.12, roughness: 0.72 });
+    const dark = new THREE.MeshStandardMaterial({ color: 0x171717, roughness: 1 });
+    const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.29, 0.58, 3, 8), shirt);
+    torso.position.y = 1.04;
     person.add(torso);
-    const head = new THREE.Mesh(new THREE.SphereGeometry(0.22, 9, 7), skin);
-    head.position.y = 1.62;
+    if (role === 'older') {
+      const jacket = new THREE.Mesh(new THREE.BoxGeometry(0.58, 0.76, 0.18), trousers);
+      jacket.position.set(0, 1.1, 0.19);
+      person.add(jacket);
+      const tie = new THREE.Mesh(new THREE.BoxGeometry(0.075, 0.48, 0.035), trim);
+      tie.position.set(0, 1.23, 0.30);
+      person.add(tie);
+    }
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.235, 12, 10), skin);
+    head.position.y = 1.69;
     person.add(head);
-    const legs = new THREE.CylinderGeometry(0.105, 0.12, 0.62, 6);
+    const hair = new THREE.Mesh(
+      new THREE.SphereGeometry(0.24, 11, 7, 0, Math.PI * 2, 0, Math.PI * 0.5),
+      role === 'older' ? new THREE.MeshStandardMaterial({ color: 0xaaa69a, roughness: 1 }) : dark
+    );
+    hair.position.y = 1.77;
+    person.add(hair);
+    const eyeWhite = new THREE.MeshStandardMaterial({ color: 0xf2e8d9, roughness: 0.8 });
+    for (const side of [-1, 1]) {
+      const eye = new THREE.Mesh(new THREE.SphereGeometry(0.035, 7, 6), eyeWhite);
+      eye.position.set(side * 0.085, 1.71, 0.214);
+      person.add(eye);
+      const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.017, 6, 5), dark);
+      pupil.position.set(side * 0.085, 1.71, 0.245);
+      person.add(pupil);
+    }
+    const nose = new THREE.Mesh(new THREE.SphereGeometry(0.045, 7, 6), skin);
+    nose.position.set(0, 1.64, 0.25);
+    person.add(nose);
+    const legs = new THREE.CapsuleGeometry(0.105, 0.48, 2, 6);
     for (const side of [-1, 1]) {
       const leg = new THREE.Mesh(legs, trousers);
-      leg.position.set(side * 0.13, 0.42, 0);
+      leg.position.set(side * 0.14, 0.43, 0);
       person.add(leg);
+      const shoe = new THREE.Mesh(new THREE.BoxGeometry(0.23, 0.12, 0.34), dark);
+      shoe.position.set(side * 0.14, 0.12, 0.07);
+      person.add(shoe);
+    }
+    const arms = [];
+    for (const side of [-1, 1]) {
+      const arm = new THREE.Group();
+      arm.position.set(side * 0.34, 1.37, 0);
+      const sleeve = new THREE.Mesh(new THREE.CapsuleGeometry(0.095, 0.42, 2, 6), role === 'older' ? trousers : shirt);
+      sleeve.position.y = -0.25;
+      arm.add(sleeve);
+      const hand = new THREE.Mesh(new THREE.SphereGeometry(0.085, 7, 6), skin);
+      hand.position.set(0, -0.53, 0.02);
+      arm.add(hand);
+      person.add(arm);
+      arms.push(arm);
+    }
+    if (role === 'guard') {
+      const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.24, 0.11, 10), dark);
+      cap.position.set(0, 1.94, 0);
+      person.add(cap);
+      const capPeak = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.035, 0.18), dark);
+      capPeak.position.set(0, 1.91, 0.18);
+      person.add(capPeak);
+      const badge = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.16, 0.025), trim);
+      badge.position.set(0, 1.14, 0.31);
+      person.add(badge);
+    }
+    if (role === 'older') {
+      const beard = new THREE.Mesh(new THREE.SphereGeometry(0.12, 9, 7), new THREE.MeshStandardMaterial({ color: 0x8c8981, roughness: 1 }));
+      beard.scale.set(1, 0.7, 0.65);
+      beard.position.set(0, 1.52, 0.22);
+      person.add(beard);
     }
     const marker = new THREE.Mesh(
       new THREE.TorusGeometry(0.4, 0.03, 6, 20),
@@ -144,7 +205,7 @@ export function createGame(root) {
     marker.position.y = 0.07;
     person.add(marker);
     scene.add(person);
-    return { group: person, marker };
+    return { group: person, marker, arms, role };
   }
 
   const suspiciousMen = [
@@ -153,11 +214,13 @@ export function createGame(root) {
   ];
   suspiciousMen.forEach((person) => { person.group.visible = false; });
   const residence = createRecipientResidence(scene);
-  const gatekeeper = createMissionPerson(8.35, -34.6, 0x344d57);
+  const gatekeeper = createMissionPerson(8.35, -34.6, 0x344d57, 'guard');
   gatekeeper.group.visible = false;
-  const recipient = createMissionPerson(16.5, -38.2, 0x4b5365);
+  gatekeeper.marker.visible = false;
+  const recipient = createMissionPerson(16.5, -38.2, 0x4b5365, 'older');
   recipient.group.position.copy(residence.recipientPosition);
   recipient.group.visible = false;
+  recipient.marker.visible = false;
   const collisionWorld = createCollisionWorld([...districtColliders, ...residence.colliders]);
   const collisionActors = [npc, ...suspiciousMen.map((person) => person.group), gatekeeper.group, recipient.group];
 
@@ -255,6 +318,7 @@ export function createGame(root) {
   const mobileControls = document.querySelector('#mobile-controls');
   const sceneHint = document.querySelector('.scene-hint');
   const locationLabel = document.querySelector('#location-label');
+  const locationLabel = document.querySelector('#location-label');
   const buildLabel = document.querySelector('.build-label');
   const interactionLabel = document.querySelector('#interaction-label');
   const dialogueTag = document.querySelector('.dialogue-tag');
@@ -278,6 +342,7 @@ export function createGame(root) {
   let playerFloorY = 0;
   let dialoguePurpose = null;
   let missionNoticeTimer = 0;
+  let gatekeeperGestureTime = 0;
 
   function updateMissionHud(state) {
     if (missionHud) missionHud.hidden = state.status === 'inactive';
@@ -462,7 +527,8 @@ export function createGame(root) {
       moveToDelivery();
     } else if (completedPurpose === 'gateman') {
       residence.openGate();
-      missionManager.setStage('enter-estate', 'Enter the mansion compound and find the main entrance.');
+      gatekeeperGestureTime = 1.15;
+      missionManager.setStage('enter-estate', 'Walk through the open gate, follow the driveway and enter through the mansion doorway.');
       showMissionNotice('GATE OPEN · ENTER THE ESTATE');
     } else if (completedPurpose === 'recipient') {
       missionManager.complete();
@@ -506,10 +572,10 @@ export function createGame(root) {
 
     if (stage === 'reach-mansion' && nearGatekeeper) {
       openDialogue('GATEMAN', 'MANSION SECURITY', [
-        'The gateman steps forward. “Good afternoon. Who are you looking for?”',
+        'The uniformed gateman steps out of his security booth. “Good afternoon. Who are you looking for?”',
         '“I have a delivery for someone inside. Kola sent me.”',
-        'The gateman studies you for a moment, then reaches for the gate controls. “Wait here. I will let them know.”',
-        'A buzzer sounds. “You can go in. Follow the driveway and use the main entrance.”'
+        'He checks the visitor list, then presses the gate control and gives you a nod. “All right. I will open up for you.”',
+        'The gate motor hums as both panels swing aside. “You can go in now. Follow the driveway and use the main entrance.”'
       ], 'gateman');
       return;
     }
@@ -532,7 +598,7 @@ export function createGame(root) {
           controls.update();
         }
         missionManager.setStage('climb-stairs', 'Explore the mansion lobby. Walk to the visible staircase and climb to the upstairs office, or use the elevator.');
-        showMissionNotice('MANSION INTERIOR · YOU ARE INSIDE');
+        showMissionNotice('THE MAIN DOORS ARE OPENING');
       }
       return;
     }
@@ -612,6 +678,7 @@ export function createGame(root) {
     if (sceneHint) sceneHint.hidden = false;
     if (buildLabel) buildLabel.hidden = false;
     if (locationLabel) locationLabel.hidden = false;
+    if (locationLabel) locationLabel.hidden = false;
     cameraOffset.set(13, 8.65, 15);
     const target = new THREE.Vector3(0, 1.35, 3);
     camera.position.copy(target).add(cameraOffset);
@@ -659,10 +726,21 @@ export function createGame(root) {
       nearPackage = packagePickup.visible && Math.hypot(playerPosition.x - packagePickup.position.x, playerPosition.z - packagePickup.position.z) <= 2.5;
       nearRecipient = recipient.group.visible && Math.hypot(playerPosition.x - recipient.group.position.x, playerPosition.z - recipient.group.position.z) <= 3.0;
       nearGatekeeper = gatekeeper.group.visible && Math.hypot(playerPosition.x - gatekeeper.group.position.x, playerPosition.z - gatekeeper.group.position.z) <= 2.8;
-      nearMansionDoor = !residence.isInterior() && playerPosition.x >= 15.2 && playerPosition.x <= 18.8 && playerPosition.z >= -40.0 && playerPosition.z <= -33.0;
+      nearMansionDoor = !residence.isInterior() && playerPosition.x >= 16.35 && playerPosition.x <= 17.65 && playerPosition.z >= -34.45 && playerPosition.z <= -32.85;
       nearStairs = residence.isNearStairs(playerPosition.x, playerPosition.z);
       nearLift = residence.isNearLift(playerPosition.x, playerPosition.z);
       const missionState = missionManager.getState();
+      if (locationLabel) {
+        if (residence.isInterior()) {
+          locationLabel.textContent = playerFloorY >= 3.8
+            ? 'PRIVATE RESIDENCE · UPPER FLOOR'
+            : 'PRIVATE RESIDENCE · MAIN LOBBY';
+        } else if (missionState.stage === 'reach-mansion' || missionState.stage === 'enter-estate') {
+          locationLabel.textContent = 'ORIYABA · GUARDED ESTATE';
+        } else {
+          locationLabel.textContent = 'ORIYABA · STREET DISTRICT';
+        }
+      }
       if (locationLabel) {
         if (residence.isInterior()) {
           locationLabel.textContent = playerFloorY >= 3.8
@@ -729,6 +807,25 @@ export function createGame(root) {
         person.marker.rotation.z += delta * 0.7;
         person.marker.position.y = 0.07 + Math.sin(frameTime * 0.003 + index) * 0.025;
       });
+      residence.updateGate(delta);
+      const enteringInterior = residence.isEnteringInterior();
+      residence.updateEntry(delta);
+      if (enteringInterior && !residence.isEnteringInterior()) {
+        showMissionNotice('MANSION INTERIOR · YOU ARE INSIDE');
+      }
+      if (gatekeeperGestureTime > 0) {
+        gatekeeperGestureTime = Math.max(0, gatekeeperGestureTime - delta);
+        const gesture = Math.sin((1.15 - gatekeeperGestureTime) * 5.2);
+        if (gatekeeper.arms[1]) gatekeeper.arms[1].rotation.x = -Math.max(0, gesture) * 1.15;
+      } else if (gatekeeper.arms[1]) {
+        gatekeeper.arms[1].rotation.x = THREE.MathUtils.damp(gatekeeper.arms[1].rotation.x, 0, 7, delta);
+      }
+      if (recipient.group.visible && nearRecipient) {
+        recipient.group.rotation.y = Math.atan2(
+          playerPosition.x - recipient.group.position.x,
+          playerPosition.z - recipient.group.position.z
+        );
+      }
 
       if (residence.isLiftRunning()) {
         const liftStillRunning = residence.updateLift(delta, activeCharacter.group);
@@ -742,7 +839,7 @@ export function createGame(root) {
         }
       }
 
-      const movementLocked = dialogueOpen || encounterChoiceOpen || transportChoiceOpen || residence.isLiftRunning();
+      const movementLocked = dialogueOpen || encounterChoiceOpen || transportChoiceOpen || residence.isLiftRunning() || residence.isEnteringInterior() || residence.isGateOpening();
       let inputX = movementLocked ? 0 : stickState.x;
       let inputZ = movementLocked ? 0 : stickState.y;
       if (!movementLocked && (keys.has('a') || keys.has('arrowleft'))) inputX -= 1;
