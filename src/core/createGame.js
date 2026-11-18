@@ -232,7 +232,7 @@ export function createGame(root) {
   }
 
   function jump() {
-    if (!gameStarted || !onGround) return;
+    if (!gameStarted || dialogueOpen || !onGround) return;
     jumpVelocity = 6.2;
     onGround = false;
   }
@@ -283,6 +283,8 @@ export function createGame(root) {
     }
     if (!nearNpc) return;
     dialogueOpen = true;
+    resetStick();
+    keys.clear();
     dialogueIndex = 0;
     if (dialogueName) dialogueName.textContent = 'KOLA · KIOSK OWNER';
     if (dialogueText) dialogueText.textContent = dialogueLines[dialogueIndex];
