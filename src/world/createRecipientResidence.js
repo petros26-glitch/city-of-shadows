@@ -232,8 +232,8 @@ export function createRecipientResidence(scene) {
   addBox(interior, [0.12, 0.06, 0.12], [106.65, 5.47, -0.72], dark);
 
   // Reception chair and visitor seating.
-  addPlatform(interior, [0.82, 0.18, 0.78], [105.5, 4.88, -1.82], dark, colliders, platforms, 4.35);
-  addSolid(interior, [0.78, 0.82, 0.16], [105.5, 5.28, -2.18], dark, colliders, 4.35, 5.7);
+  addPlatform(interior, [0.82, 0.18, 0.78], [105.5, 4.88, -1.5], dark, colliders, platforms, 4.35);
+  addSolid(interior, [0.78, 0.82, 0.16], [105.5, 5.28, -1.86], dark, colliders, 4.35, 5.7);
   addBox(interior, [0.92, 0.12, 0.92], [108.65, 4.65, -0.35], wood);
   addBox(interior, [0.96, 0.1, 0.96], [108.65, 5.02, -0.35], gold);
   addBox(interior, [0.34, 0.46, 0.34], [108.65, 5.29, -0.35], dark);
