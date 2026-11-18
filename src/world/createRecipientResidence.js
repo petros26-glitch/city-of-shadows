@@ -410,7 +410,7 @@ export function createRecipientResidence(scene) {
     colliders,
     getLandingY,
     gatekeeperPosition: new THREE.Vector3(8.4, 0, -37.2),
-    recipientPosition: new THREE.Vector3(106, 4.35, -11.05),
+    recipientPosition: new THREE.Vector3(106, 4.35, -10.65),
     secretaryPosition: new THREE.Vector3(105.5, 4.35, -1.28),
     secretaryEscortPosition: new THREE.Vector3(108.35, 4.35, -5.55),
     enterInterior(player) {
