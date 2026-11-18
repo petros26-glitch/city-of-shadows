@@ -91,7 +91,7 @@ export function createRecipientResidence(scene) {
     box(estate, [1.15, 1.35, 0.08], [x, 2.55, -34.91], glass);
     box(estate, [1.25, 0.08, 0.12], [x, 2.55, -34.84], gold);
   }
-  box(estate, [9.65, 0.35, 8.85], [17, 4.48, -39.2], roof);
+  // The stairwell opening stays clear; the upper floor pieces form the first-floor ceiling.
 
   // Front approach steps, aligned with the actual doorway.
   for (let i = 0; i < 3; i += 1) {
