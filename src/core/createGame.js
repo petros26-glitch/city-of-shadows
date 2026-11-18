@@ -376,7 +376,7 @@ export function createGame(root) {
   }
 
   function jump() {
-    if (!gameStarted || dialogueOpen || !onGround) return;
+    if (!gameStarted || dialogueOpen || encounterChoiceOpen || !onGround) return;
     jumpVelocity = 6.2;
     onGround = false;
   }
