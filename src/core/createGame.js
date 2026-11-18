@@ -4,6 +4,7 @@ import { createStarterDistrict } from '../world/createStarterDistrict.js';
 import { createProtagonists } from '../characters/createProtagonists.js';
 import { createMissionManager } from '../missions/missionManager.js';
 import { createRecipientResidence } from '../world/createRecipientResidence.js';
+import { createCollisionWorld } from '../world/collisionWorld.js';
 
 export function createGame(root) {
   if (!root) throw new Error('The game root element was not found.');
@@ -52,7 +53,7 @@ export function createGame(root) {
   moonLight.position.set(-18, 30, 12);
   scene.add(moonLight);
 
-  createStarterDistrict(scene);
+  const districtColliders = createStarterDistrict(scene);
 
   const protagonists = createProtagonists(scene);
   let selectedIndex = 0;
@@ -154,10 +155,11 @@ export function createGame(root) {
   const residence = createRecipientResidence(scene);
   const gatekeeper = createMissionPerson(8.35, -34.6, 0x344d57);
   gatekeeper.group.visible = false;
-  const recipient = createMissionPerson(19, -38, 0x4b5365);
-  recipient.group.position.y = 4.375;
+  const recipient = createMissionPerson(16.5, -38.2, 0x4b5365);
+  recipient.group.position.y = 4.25;
   recipient.group.visible = false;
-  const stairsPosition = new THREE.Vector3(12.6, 0, -38);
+  const collisionWorld = createCollisionWorld([...districtColliders, ...residence.colliders]);
+  const collisionActors = [npc, ...suspiciousMen.map((person) => person.group), gatekeeper.group, recipient.group];
 
   const packagePickup = new THREE.Group();
   packagePickup.position.set(6.4, 0, -6.5);
@@ -386,7 +388,7 @@ export function createGame(root) {
   }
 
   function jump() {
-    if (!gameStarted || dialogueOpen || encounterChoiceOpen || !onGround) return;
+    if (!gameStarted || dialogueOpen || encounterChoiceOpen || !onGround || residence.isOnStairs(activeCharacter.group.position.x, activeCharacter.group.position.z)) return;
     jumpVelocity = 6.2;
     onGround = false;
   }
@@ -488,13 +490,8 @@ export function createGame(root) {
     }
 
     if (stage === 'go-upstairs' && nearStairs) {
-      activeCharacter.group.position.set(14.2, 4.375, -38);
-      playerFloorY = 4.375;
-      onGround = true;
-      jumpVelocity = 0;
-      recipient.group.visible = true;
-      missionManager.setStage('meet-recipient', 'Find the older man in his upstairs private office.');
-      showMissionNotice('UPSTAIRS · FIND THE OLDER MAN');
+      missionManager.setStage('climb-stairs', 'Walk up the visible staircase to reach the private upstairs office.');
+      showMissionNotice('STAIRCASE · WALK UP TO THE OFFICE');
       return;
     }
 
@@ -608,8 +605,8 @@ export function createGame(root) {
       nearPackage = packagePickup.visible && Math.hypot(playerPosition.x - packagePickup.position.x, playerPosition.z - packagePickup.position.z) <= 2.5;
       nearRecipient = recipient.group.visible && Math.hypot(playerPosition.x - recipient.group.position.x, playerPosition.z - recipient.group.position.z) <= 3.0;
       nearGatekeeper = gatekeeper.group.visible && Math.hypot(playerPosition.x - gatekeeper.group.position.x, playerPosition.z - gatekeeper.group.position.z) <= 2.8;
-      nearMansionDoor = Math.hypot(playerPosition.x - 12.1, playerPosition.z + 38) <= 2.4;
-      nearStairs = Math.hypot(playerPosition.x - stairsPosition.x, playerPosition.z - stairsPosition.z) <= 2.5;
+      nearMansionDoor = Math.hypot(playerPosition.x - 17, playerPosition.z + 34.2) <= 2.4;
+      nearStairs = residence.isNearStairs(playerPosition.x, playerPosition.z);
       const missionState = missionManager.getState();
 
       if (missionState.stage === 'reach-encounter') {
@@ -644,7 +641,10 @@ export function createGame(root) {
           promptText = 'ENTER MANSION';
           promptVisible = true;
         } else if (missionState.stage === 'go-upstairs' && nearStairs) {
-          promptText = 'GO UPSTAIRS';
+          promptText = 'USE STAIRCASE';
+          promptVisible = true;
+        } else if (missionState.stage === 'climb-stairs' && nearStairs) {
+          promptText = 'WALK UP THE STAIRS';
           promptVisible = true;
         } else if (missionState.stage === 'meet-recipient' && nearRecipient) {
           promptText = 'DELIVER PACKAGE';
@@ -687,8 +687,24 @@ export function createGame(root) {
         const movement = forward.multiplyScalar(-inputZ).add(right.multiplyScalar(inputX)).normalize();
         const isRunning = keys.has('shift') || Math.abs(stickState.x) > 0.82 || Math.abs(stickState.y) > 0.82;
         const speed = isRunning ? 7.0 : 4.8;
-        activeCharacter.group.position.x = THREE.MathUtils.clamp(activeCharacter.group.position.x + movement.x * speed * delta, -8.7, 24);
-        activeCharacter.group.position.z = THREE.MathUtils.clamp(activeCharacter.group.position.z + movement.z * speed * delta, -53, 43);
+        const resolved = collisionWorld.moveCircle(
+          activeCharacter.group.position,
+          movement.x * speed * delta,
+          movement.z * speed * delta,
+          playerFloorY,
+          collisionActors,
+          activeCharacter.group
+        );
+        activeCharacter.group.position.x = THREE.MathUtils.clamp(resolved.x, -8.7, 24);
+        activeCharacter.group.position.z = THREE.MathUtils.clamp(resolved.z, -53, 43);
+        if (onGround) {
+          playerFloorY = residence.getFloorY(
+            activeCharacter.group.position.x,
+            activeCharacter.group.position.z,
+            playerFloorY
+          );
+          activeCharacter.group.position.y = playerFloorY;
+        }
         activeCharacter.group.rotation.y = Math.atan2(movement.x, movement.z);
         activeCharacter.walkTime += delta * (isRunning ? 14.5 : 9.5);
         const stride = Math.sin(activeCharacter.walkTime);
@@ -706,6 +722,14 @@ export function createGame(root) {
         activeCharacter.rightArm.rotation.x = THREE.MathUtils.damp(activeCharacter.rightArm.rotation.x, 0, 7, delta);
         activeCharacter.body.position.y = Math.sin(frameTime * 0.0018) * 0.018;
         activeCharacter.head.rotation.x = Math.sin(frameTime * 0.0011) * 0.012;
+      }
+
+      if (missionManager.getState().stage === 'climb-stairs' && playerFloorY >= 4.2 && onGround) {
+        playerFloorY = 4.25;
+        activeCharacter.group.position.y = playerFloorY;
+        recipient.group.visible = true;
+        missionManager.setStage('meet-recipient', 'Find the older man in his enclosed upstairs private office.');
+        showMissionNotice('UPSTAIRS · FIND THE OLDER MAN');
       }
 
       if (!onGround) {

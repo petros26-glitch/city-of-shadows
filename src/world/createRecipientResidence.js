@@ -7,98 +7,181 @@ function box(parent, size, position, material) {
   return mesh;
 }
 
+function solidBox(parent, size, position, material, colliders, minY = 0, maxY = size[1]) {
+  const mesh = box(parent, size, position, material);
+  colliders.push({
+    minX: position[0] - size[0] / 2,
+    maxX: position[0] + size[0] / 2,
+    minZ: position[2] - size[2] / 2,
+    maxZ: position[2] + size[2] / 2,
+    minY,
+    maxY
+  });
+  return mesh;
+}
+
 export function createRecipientResidence(scene) {
+  const colliders = [];
   const stone = new THREE.MeshStandardMaterial({ color: 0x77766f, roughness: 0.95 });
   const darkStone = new THREE.MeshStandardMaterial({ color: 0x343a42, roughness: 0.9 });
   const cream = new THREE.MeshStandardMaterial({ color: 0xc4b79e, roughness: 0.92 });
   const roof = new THREE.MeshStandardMaterial({ color: 0x252b35, roughness: 0.88 });
   const gold = new THREE.MeshStandardMaterial({ color: 0xb88b4d, metalness: 0.55, roughness: 0.38 });
-  const glass = new THREE.MeshStandardMaterial({ color: 0x243c50, metalness: 0.3, roughness: 0.25 });
+  const glass = new THREE.MeshStandardMaterial({
+    color: 0x243c50, metalness: 0.3, roughness: 0.25,
+    emissive: 0x101c29, emissiveIntensity: 0.18
+  });
   const lawn = new THREE.MeshStandardMaterial({ color: 0x344b37, roughness: 1 });
   const driveway = new THREE.MeshStandardMaterial({ color: 0x77746c, roughness: 1 });
 
   const estate = new THREE.Group();
-  estate.position.set(0, 0, 0);
   scene.add(estate);
 
-  // Walled estate grounds, set back from the road.
   box(estate, [13.5, 0.12, 22], [16.7, 0.02, -38], lawn);
   box(estate, [3.2, 0.1, 22], [10.3, 0.08, -38], driveway);
-  box(estate, [0.45, 2.8, 22], [23.5, 1.4, -38], stone);
-  box(estate, [13.5, 2.8, 0.45], [16.7, 1.4, -49], stone);
-  box(estate, [13.5, 2.8, 0.45], [16.7, 1.4, -27], stone);
-  box(estate, [0.45, 2.8, 6.5], [10, 1.4, -45.75], stone);
-  box(estate, [0.45, 2.8, 5.5], [10, 1.4, -30.25], stone);
 
-  // Tall gate pillars and two metal leaves that swing open after security clearance.
+  // Perimeter walls leave a real opening for the guarded entrance.
+  solidBox(estate, [0.45, 2.8, 7.25], [10, 1.4, -31.125], stone, colliders, 0, 2.8);
+  solidBox(estate, [0.45, 2.8, 7.25], [10, 1.4, -44.875], stone, colliders, 0, 2.8);
+  solidBox(estate, [0.45, 2.8, 22], [23.5, 1.4, -38], stone, colliders, 0, 2.8);
+  solidBox(estate, [13.5, 2.8, 0.45], [16.7, 1.4, -27], stone, colliders, 0, 2.8);
+  solidBox(estate, [13.5, 2.8, 0.45], [16.7, 1.4, -49], stone, colliders, 0, 2.8);
+
   for (const z of [-41.5, -34.5]) {
-    box(estate, [0.8, 3.8, 0.8], [10, 1.9, z], darkStone);
+    solidBox(estate, [0.8, 3.8, 0.8], [10, 1.9, z], darkStone, colliders, 0, 3.8);
     box(estate, [1.05, 0.25, 1.05], [10, 3.85, z], gold);
     const lamp = new THREE.Mesh(new THREE.SphereGeometry(0.16, 8, 6), gold);
     lamp.position.set(10, 4.1, z);
     estate.add(lamp);
   }
-  const gateLeft = new THREE.Group();
-  gateLeft.position.set(10, 0, -38);
-  const leafA = box(gateLeft, [0.12, 2.35, 3.25], [0, 1.2, 1.63], darkStone);
-  const leafB = box(gateLeft, [0.12, 2.35, 3.25], [0, 1.2, -1.63], darkStone);
-  for (let i = 0; i < 6; i += 1) {
-    box(gateLeft, [0.16, 2.55, 0.08], [0, 1.25, -2.8 + i * 1.12], gold);
-  }
-  estate.add(gateLeft);
 
-  // Security gatehouse and canopy.
-  box(estate, [2.6, 2.6, 2.3], [8.0, 1.3, -34.2], cream);
-  box(estate, [2.9, 0.2, 2.6], [8.0, 2.7, -34.2], roof);
+  const gate = new THREE.Group();
+  gate.position.set(10, 0, -38);
+  box(gate, [0.12, 2.35, 3.25], [0, 1.2, 1.63], darkStone);
+  box(gate, [0.12, 2.35, 3.25], [0, 1.2, -1.63], darkStone);
+  for (let i = 0; i < 6; i += 1) {
+    box(gate, [0.16, 2.55, 0.08], [0, 1.25, -2.8 + i * 1.12], gold);
+  }
+  estate.add(gate);
+  const gateCollider = {
+    minX: 9.88, maxX: 10.16, minZ: -41.25, maxZ: -34.75,
+    minY: 0, maxY: 2.5, active: true
+  };
+  colliders.push(gateCollider);
+
+  // Security gatehouse.
+  solidBox(estate, [2.6, 2.6, 2.3], [8, 1.3, -34.2], cream, colliders, 0, 2.6);
+  box(estate, [2.9, 0.2, 2.6], [8, 2.7, -34.2], roof);
   box(estate, [0.08, 1.0, 1.0], [6.67, 1.65, -34.2], glass);
 
-  // Main two-storey mansion exterior.
-  box(estate, [9.2, 5.0, 8.4], [17.0, 2.5, -39.2], cream);
-  box(estate, [9.65, 0.35, 8.85], [17.0, 5.15, -39.2], roof);
-  box(estate, [1.8, 2.3, 0.12], [14.1, 1.75, -34.94], darkStone);
-  box(estate, [1.4, 2.5, 0.16], [17.0, 3.25, -34.88], glass);
-  box(estate, [1.4, 2.5, 0.16], [20.0, 3.25, -34.88], glass);
-  box(estate, [1.4, 1.3, 0.16], [14.0, 4.0, -34.88], glass);
-  box(estate, [1.4, 1.3, 0.16], [20.0, 4.0, -34.88], glass);
-  box(estate, [2.2, 0.18, 1.4], [17.0, 5.2, -34.2], gold);
+  // Mansion ground floor: four real walls, with a proper front entrance.
+  box(estate, [9.2, 0.18, 8.4], [17, 0.02, -39.2], darkStone);
+  solidBox(estate, [0.25, 4.25, 8.4], [12.525, 2.125, -39.2], cream, colliders, 0, 4.25);
+  solidBox(estate, [0.25, 4.25, 8.4], [21.475, 2.125, -39.2], cream, colliders, 0, 4.25);
+  solidBox(estate, [9.2, 4.25, 0.25], [17, 2.125, -43.275], cream, colliders, 0, 4.25);
+  solidBox(estate, [3.6, 4.25, 0.25], [14.2, 2.125, -35.075], cream, colliders, 0, 4.25);
+  solidBox(estate, [3.6, 4.25, 0.25], [19.8, 2.125, -35.075], cream, colliders, 0, 4.25);
 
-  // Decorative front steps and entrance columns.
-  for (let i = 0; i < 4; i += 1) {
-    box(estate, [3.1, 0.18, 0.42], [17.0, 0.12 + i * 0.18, -34.3 + i * 0.42], stone);
+  // Door frame and front windows.
+  for (const x of [15.95, 18.05]) {
+    box(estate, [0.18, 3.2, 0.2], [x, 1.6, -34.91], gold);
   }
-  for (const x of [15.4, 18.6]) {
-    box(estate, [0.28, 4.0, 0.28], [x, 2.0, -34.75], cream);
+  box(estate, [2.25, 0.18, 0.2], [17, 3.15, -34.91], gold);
+  for (const x of [13.8, 20.2]) {
+    box(estate, [1.15, 1.35, 0.08], [x, 2.55, -34.91], glass);
+    box(estate, [1.25, 0.08, 0.12], [x, 2.55, -34.84], gold);
+  }
+  box(estate, [9.65, 0.35, 8.85], [17, 4.48, -39.2], roof);
+
+  // Front approach steps, aligned with the actual doorway.
+  for (let i = 0; i < 3; i += 1) {
+    box(estate, [2.8, 0.14, 0.42], [17, 0.07 + i * 0.14, -34.25 - i * 0.4], stone);
   }
 
-  // Visible exterior staircase leading toward the upper floor.
-  for (let i = 0; i < 8; i += 1) {
-    box(estate, [1.15, 0.28, 0.72], [12.7 + i * 0.38, 0.18 + i * 0.28, -41.0], stone);
+  // Upstairs floor has a deliberate stairwell opening.
+  box(estate, [5.55, 0.2, 7.4], [15.575, 4.25, -39.2], cream);
+  box(estate, [0.95, 0.2, 7.4], [20.725, 4.25, -39.2], cream);
+  box(estate, [1.9, 0.2, 0.9], [19.3, 4.25, -35.95], cream);
+  box(estate, [1.9, 0.2, 2.0], [19.3, 4.25, -41.9], cream);
+  box(estate, [1.9, 0.2, 0.5], [19.3, 4.25, -40.65], cream);
+
+  // Visible staircase: ten individual treads with a continuous walkable incline.
+  const stairBottomZ = -35.6;
+  const stairTopZ = -40.6;
+  for (let i = 0; i < 10; i += 1) {
+    const tread = box(
+      estate,
+      [1.55, 0.08, 0.5],
+      [19.3, (i + 0.5) * 0.425 - 0.04, stairBottomZ - (i + 0.5) * 0.5],
+      stone
+    );
+    tread.material = i % 2 === 0 ? stone : darkStone;
   }
-  box(estate, [0.12, 2.5, 6.2], [11.9, 1.2, -38], darkStone);
+  const railMaterial = new THREE.MeshStandardMaterial({ color: 0x343a42, metalness: 0.35, roughness: 0.7 });
+  for (const x of [18.42, 20.18]) {
+    const rail = box(estate, [0.12, 1.05, 5.25], [x, 2.35, -38.1], railMaterial);
+    rail.rotation.x = 0.70;
+    colliders.push({
+      minX: x - 0.16, maxX: x + 0.16, minZ: -40.75, maxZ: -35.45,
+      minY: 0, maxY: 4.5
+    });
+  }
 
-  // Upstairs private office: an open-front playable room on a raised floor.
-  const office = new THREE.Group();
-  office.position.set(0, 4.25, 0);
-  scene.add(office);
-  box(office, [8.4, 0.25, 8.0], [17.0, 0, -39.0], cream);
-  box(office, [8.4, 2.9, 0.25], [17.0, 1.45, -43.0], cream);
-  box(office, [0.25, 2.9, 8.0], [12.8, 1.45, -39.0], cream);
-  box(office, [0.25, 2.9, 8.0], [21.2, 1.45, -39.0], cream);
-  box(office, [8.4, 0.2, 0.25], [17.0, 2.9, -35.0], roof);
-  box(office, [2.8, 0.9, 1.0], [18.6, 0.65, -41.4], darkStone);
-  box(office, [2.4, 0.12, 0.85], [18.6, 1.16, -41.4], gold);
-  box(office, [0.12, 1.7, 2.0], [18.6, 2.05, -42.0], glass);
-  box(office, [0.08, 1.0, 1.1], [14.2, 2.0, -42.82], glass);
+  // Fully enclosed upstairs office: four walls, roof, windows and interior.
+  const upperWallY = 5.72;
+  solidBox(estate, [0.22, 2.9, 7.6], [12.8, upperWallY, -39.2], cream, colliders, 4.3, 7.2);
+  solidBox(estate, [0.22, 2.9, 7.6], [21.2, upperWallY, -39.2], cream, colliders, 4.3, 7.2);
+  solidBox(estate, [8.4, 2.9, 0.22], [17, upperWallY, -43], cream, colliders, 4.3, 7.2);
+  solidBox(estate, [8.4, 2.9, 0.22], [17, upperWallY, -35.4], cream, colliders, 4.3, 7.2);
+  box(estate, [8.8, 0.28, 8.0], [17, 7.3, -39.2], roof);
 
-  // Warm ceiling lights and a restrained estate entrance marker.
-  const light = new THREE.PointLight(0xffc77c, 1.0, 9);
-  light.position.set(17, 2.5, -38);
-  office.add(light);
+  // Window panes remain visible on all sides of the upper room.
+  for (const x of [14.5, 19.5]) {
+    box(estate, [1.2, 1.25, 0.07], [x, 5.85, -35.26], glass);
+    box(estate, [1.2, 0.07, 0.1], [x, 5.85, -35.2], gold);
+  }
+  for (const z of [-37.3, -41.1]) {
+    box(estate, [0.07, 1.2, 1.25], [12.66, 5.85, z], glass);
+    box(estate, [0.1, 0.07, 1.25], [12.62, 5.85, z], gold);
+    box(estate, [0.07, 1.2, 1.25], [21.34, 5.85, z], glass);
+  }
+
+  // Desk and furnishings in the private office.
+  box(estate, [2.8, 0.9, 1.0], [15.6, 4.9, -38.2], darkStone);
+  box(estate, [2.4, 0.12, 0.85], [15.6, 5.38, -38.2], gold);
+  box(estate, [0.12, 1.7, 2.0], [17.2, 5.25, -42.0], glass);
+  const officeLight = new THREE.PointLight(0xffc77c, 1.0, 9);
+  officeLight.position.set(17, 6.35, -38);
+  estate.add(officeLight);
+
+  function isOnStairs(x, z) {
+    return x >= 18.62 && x <= 19.98 && z <= stairBottomZ + 0.2 && z >= stairTopZ - 0.15;
+  }
+
+  function getFloorY(x, z, currentY = 0) {
+    if (isOnStairs(x, z)) {
+      const progress = THREE.MathUtils.clamp((stairBottomZ - z) / (stairBottomZ - stairTopZ), 0, 1);
+      return progress * 4.25;
+    }
+    const insideUpperRoom =
+      x >= 12.95 && x <= 21.05 &&
+      z >= -42.85 && z <= -35.55;
+    if (currentY > 3.8 && insideUpperRoom) return 4.25;
+    return 0;
+  }
 
   return {
+    colliders,
     gatekeeperPosition: new THREE.Vector3(8.35, 0, -34.6),
+    stairsPosition: new THREE.Vector3(19.3, 0, -35.6),
+    isOnStairs,
+    isNearStairs(x, z) {
+      return Math.hypot(x - 19.3, z - stairBottomZ) <= 1.85;
+    },
+    getFloorY,
     openGate() {
-      gateLeft.rotation.y = -Math.PI * 0.42;
+      gate.rotation.y = -Math.PI * 0.42;
+      gateCollider.active = false;
     }
   };
 }

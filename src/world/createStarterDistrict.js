@@ -20,10 +20,15 @@ function addBox(parent, size, position, material) {
   return mesh;
 }
 
-function addBuilding(scene, x, z, width, depth, height, color, seed) {
+function addBuilding(scene, x, z, width, depth, height, color, seed, colliders) {
   const group = new THREE.Group();
   group.position.set(x, 0, z);
   scene.add(group);
+  colliders.push({
+    minX: x - width / 2 - 0.12, maxX: x + width / 2 + 0.12,
+    minZ: z - depth / 2 - 0.12, maxZ: z + depth / 2 + 0.12,
+    minY: 0, maxY: height + 0.3
+  });
 
   const wallMaterial = new THREE.MeshStandardMaterial({
     color,
@@ -108,6 +113,7 @@ function addStreetlight(scene, x, z) {
 }
 
 export function createStarterDistrict(scene) {
+  const colliders = [];
   const ground = new THREE.Mesh(
     new THREE.PlaneGeometry(110, 110),
     new THREE.MeshStandardMaterial({ color: 0x343b38, roughness: 1 })
@@ -150,7 +156,8 @@ export function createStarterDistrict(scene) {
       8,
       height,
       buildingPalette[index % buildingPalette.length],
-      index
+      index,
+      colliders
     );
     // The first right-side plot is reserved for the guarded mansion
     // used by the opening delivery mission.
@@ -163,7 +170,8 @@ export function createStarterDistrict(scene) {
         8,
         height + ((index % 2) * 2),
         buildingPalette[(index + 2) % buildingPalette.length],
-        index + 3
+        index + 3,
+        colliders
       );
     }
   });
@@ -183,12 +191,18 @@ export function createStarterDistrict(scene) {
     const x = index % 2 === 0 ? -43 - (index % 4) : 43 + (index % 4);
     const z = -42 + index * 7;
     addBox(scene, [width, height, 7], [x, height / 2, z], distantMaterial);
+    colliders.push({
+      minX: x - width / 2, maxX: x + width / 2,
+      minZ: z - 3.5, maxZ: z + 3.5,
+      minY: 0, maxY: height
+    });
   }
 
   // A small roadside kiosk gives the first district a recognisable local detail.
   const kiosk = new THREE.Group();
   kiosk.position.set(10.5, 0, 1);
   scene.add(kiosk);
+  colliders.push({ minX: 8.6, maxX: 12.4, minZ: -0.4, maxZ: 2.4, minY: 0, maxY: 2.7 });
   addBox(kiosk, [3.8, 2.5, 2.8], [0, 1.25, 0], new THREE.MeshStandardMaterial({
     color: 0x9b6845,
     roughness: 0.95
@@ -198,5 +212,5 @@ export function createStarterDistrict(scene) {
     roughness: 0.8
   }));
 
-  return scene;
+  return colliders;
 }
