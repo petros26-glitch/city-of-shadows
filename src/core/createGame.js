@@ -621,14 +621,16 @@ export function createGame(root) {
         playerFloorY = 0;
         onGround = true;
         jumpVelocity = 0;
-        cameraOffset.set(0, 4.2, 7.2);
+        // Lower, closer follow camera for the mansion interior so the player
+        // remains visible and the view feels like a real third-person walkthrough.
+        cameraOffset.set(0, 2.35, 5.2);
         if (controls) {
           controls.target.set(
             activeCharacter.group.position.x,
             activeCharacter.group.position.y + 1.35,
             activeCharacter.group.position.z
           );
-          camera.position.copy(controls.target).add(new THREE.Vector3(0, 4.2, 7.2));
+          camera.position.copy(controls.target).add(cameraOffset);
           controls.update();
         }
         missionManager.setStage('climb-stairs', 'Explore the lobby, then climb the visible staircase or take the elevator to the upstairs reception desk.');
