@@ -166,7 +166,7 @@ export function createRecipientResidence(scene) {
     const insideUpperRoom =
       x >= 12.95 && x <= 21.05 &&
       z >= -42.85 && z <= -35.55;
-    if (currentY > 3.8 && insideUpperRoom) return 4.25;
+    if (currentY > 3.8 && insideUpperRoom) return 4.35;
     return 0;
   }
 
