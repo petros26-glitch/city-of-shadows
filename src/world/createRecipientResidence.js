@@ -233,6 +233,16 @@ export function createRecipientResidence(scene) {
   // Reception chair and visitor seating.
   addPlatform(interior, [0.82, 0.18, 0.78], [105.5, 4.88, -1.5], dark, colliders, platforms, 4.35);
   addSolid(interior, [0.78, 0.82, 0.16], [105.5, 5.28, -1.86], dark, colliders, 4.35, 5.7);
+  const chairStem = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.09, 0.38, 8), gold);
+  chairStem.position.set(105.5, 4.59, -1.5);
+  interior.add(chairStem);
+  const chairBase = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.36, 0.07, 8), dark);
+  chairBase.position.set(105.5, 4.39, -1.5);
+  interior.add(chairBase);
+  for (const side of [-1, 1]) {
+    addBox(interior, [0.1, 0.09, 0.66], [105.5 + side * 0.45, 5.08, -1.48], gold);
+    addBox(interior, [0.08, 0.32, 0.08], [105.5 + side * 0.45, 4.92, -1.48], dark);
+  }
   addBox(interior, [0.92, 0.12, 0.92], [108.65, 4.65, -0.35], wood);
   addBox(interior, [0.96, 0.1, 0.96], [108.65, 5.02, -0.35], gold);
   addBox(interior, [0.34, 0.46, 0.34], [108.65, 5.29, -0.35], dark);
