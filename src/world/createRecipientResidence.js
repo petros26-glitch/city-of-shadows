@@ -1,14 +1,14 @@
 import * as THREE from 'three';
 
-function box(parent, size, position, material) {
+function addBox(parent, size, position, material) {
   const mesh = new THREE.Mesh(new THREE.BoxGeometry(...size), material);
   mesh.position.set(...position);
   parent.add(mesh);
   return mesh;
 }
 
-function solidBox(parent, size, position, material, colliders, minY = 0, maxY = size[1]) {
-  const mesh = box(parent, size, position, material);
+function addSolid(parent, size, position, material, colliders, minY = 0, maxY = size[1]) {
+  addBox(parent, size, position, material);
   colliders.push({
     minX: position[0] - size[0] / 2,
     maxX: position[0] + size[0] / 2,
@@ -17,241 +17,229 @@ function solidBox(parent, size, position, material, colliders, minY = 0, maxY = 
     minY,
     maxY
   });
-  return mesh;
 }
 
 export function createRecipientResidence(scene) {
   const colliders = [];
   const stone = new THREE.MeshStandardMaterial({ color: 0x77766f, roughness: 0.95 });
-  const darkStone = new THREE.MeshStandardMaterial({ color: 0x343a42, roughness: 0.9 });
-  const cream = new THREE.MeshStandardMaterial({ color: 0xc4b79e, roughness: 0.92 });
-  const roof = new THREE.MeshStandardMaterial({ color: 0x252b35, roughness: 0.88 });
-  const gold = new THREE.MeshStandardMaterial({ color: 0xb88b4d, metalness: 0.55, roughness: 0.38 });
-  const glass = new THREE.MeshStandardMaterial({
-    color: 0x243c50, metalness: 0.3, roughness: 0.25,
-    emissive: 0x101c29, emissiveIntensity: 0.18
-  });
-  const lawn = new THREE.MeshStandardMaterial({ color: 0x344b37, roughness: 1 });
-  const driveway = new THREE.MeshStandardMaterial({ color: 0x77746c, roughness: 1 });
+  const dark = new THREE.MeshStandardMaterial({ color: 0x252d38, roughness: 0.88 });
+  const cream = new THREE.MeshStandardMaterial({ color: 0xc9bda7, roughness: 0.92 });
+  const gold = new THREE.MeshStandardMaterial({ color: 0xb88b4d, metalness: 0.45, roughness: 0.42 });
+  const glass = new THREE.MeshStandardMaterial({ color: 0x29485c, metalness: 0.22, roughness: 0.28, transparent: true, opacity: 0.36 });
+  const floor = new THREE.MeshStandardMaterial({ color: 0x9b927f, roughness: 0.95 });
+  const wood = new THREE.MeshStandardMaterial({ color: 0x573b2b, roughness: 0.86 });
+  const interiorLight = new THREE.MeshStandardMaterial({ color: 0xffd69a, emissive: 0xb56b27, emissiveIntensity: 0.55 });
 
-  const estate = new THREE.Group();
-  scene.add(estate);
+  // Exterior estate remains in Oriyaba and is visible before the player enters.
+  const exterior = new THREE.Group();
+  scene.add(exterior);
+  addBox(exterior, [13.5, 0.12, 22], [16.7, 0.02, -38], new THREE.MeshStandardMaterial({ color: 0x344a37, roughness: 1 }));
+  addBox(exterior, [3.2, 0.1, 22], [10.3, 0.08, -38], stone);
 
-  box(estate, [13.5, 0.12, 22], [16.7, 0.02, -38], lawn);
-  box(estate, [3.2, 0.1, 22], [10.3, 0.08, -38], driveway);
-
-  // Perimeter walls leave a real opening for the guarded entrance.
-  solidBox(estate, [0.45, 2.8, 7.25], [10, 1.4, -31.125], stone, colliders, 0, 2.8);
-  solidBox(estate, [0.45, 2.8, 7.25], [10, 1.4, -44.875], stone, colliders, 0, 2.8);
-  solidBox(estate, [0.45, 2.8, 22], [23.5, 1.4, -38], stone, colliders, 0, 2.8);
-  solidBox(estate, [13.5, 2.8, 0.45], [16.7, 1.4, -27], stone, colliders, 0, 2.8);
-  solidBox(estate, [13.5, 2.8, 0.45], [16.7, 1.4, -49], stone, colliders, 0, 2.8);
-
-  for (const z of [-41.5, -34.5]) {
-    solidBox(estate, [0.8, 3.8, 0.8], [10, 1.9, z], darkStone, colliders, 0, 3.8);
-    box(estate, [1.05, 0.25, 1.05], [10, 3.85, z], gold);
-    const lamp = new THREE.Mesh(new THREE.SphereGeometry(0.16, 8, 6), gold);
-    lamp.position.set(10, 4.1, z);
-    estate.add(lamp);
-  }
+  addSolid(exterior, [0.45, 2.8, 7.25], [10, 1.4, -31.125], stone, colliders, 0, 2.8);
+  addSolid(exterior, [0.45, 2.8, 7.25], [10, 1.4, -44.875], stone, colliders, 0, 2.8);
+  addSolid(exterior, [0.45, 2.8, 22], [23.5, 1.4, -38], stone, colliders, 0, 2.8);
+  addSolid(exterior, [13.5, 2.8, 0.45], [16.7, 1.4, -27], stone, colliders, 0, 2.8);
+  addSolid(exterior, [13.5, 2.8, 0.45], [16.7, 1.4, -49], stone, colliders, 0, 2.8);
 
   const gate = new THREE.Group();
   gate.position.set(10, 0, -38);
-  box(gate, [0.12, 2.35, 3.25], [0, 1.2, 1.63], darkStone);
-  box(gate, [0.12, 2.35, 3.25], [0, 1.2, -1.63], darkStone);
-  for (let i = 0; i < 6; i += 1) {
-    box(gate, [0.16, 2.55, 0.08], [0, 1.25, -2.8 + i * 1.12], gold);
-  }
-  estate.add(gate);
-  const gateCollider = {
-    minX: 9.88, maxX: 10.16, minZ: -41.25, maxZ: -34.75,
-    minY: 0, maxY: 2.5, active: true
-  };
+  addBox(gate, [0.12, 2.35, 3.25], [0, 1.2, 1.63], dark);
+  addBox(gate, [0.12, 2.35, 3.25], [0, 1.2, -1.63], dark);
+  for (let i = 0; i < 6; i += 1) addBox(gate, [0.16, 2.55, 0.08], [0, 1.25, -2.8 + i * 1.12], gold);
+  exterior.add(gate);
+  const gateCollider = { minX: 9.88, maxX: 10.16, minZ: -41.25, maxZ: -34.75, minY: 0, maxY: 2.5, active: true };
   colliders.push(gateCollider);
 
-  // Security gatehouse.
-  solidBox(estate, [2.6, 2.6, 2.3], [8, 1.3, -34.2], cream, colliders, 0, 2.6);
-  box(estate, [2.9, 0.2, 2.6], [8, 2.7, -34.2], roof);
-  box(estate, [0.08, 1.0, 1.0], [6.67, 1.65, -34.2], glass);
+  addSolid(exterior, [2.6, 2.6, 2.3], [8, 1.3, -34.2], cream, colliders, 0, 2.6);
+  addBox(exterior, [2.9, 0.2, 2.6], [8, 2.7, -34.2], dark);
 
-  // Mansion ground floor: four real walls, with a proper front entrance.
-  box(estate, [9.2, 0.18, 8.4], [17, 0.02, -39.2], darkStone);
-  solidBox(estate, [0.25, 4.25, 8.4], [12.525, 2.125, -39.2], cream, colliders, 0, 4.25);
-  solidBox(estate, [0.25, 4.25, 8.4], [21.475, 2.125, -39.2], cream, colliders, 0, 4.25);
-  solidBox(estate, [9.2, 4.25, 0.25], [17, 2.125, -43.275], cream, colliders, 0, 4.25);
-  solidBox(estate, [3.6, 4.25, 0.25], [14.2, 2.125, -35.075], cream, colliders, 0, 4.25);
-  solidBox(estate, [3.6, 4.25, 0.25], [19.8, 2.125, -35.075], cream, colliders, 0, 4.25);
-
-  // Door frame and front windows.
-  for (const x of [15.95, 18.05]) {
-    box(estate, [0.18, 3.2, 0.2], [x, 1.6, -34.91], gold);
-  }
-  box(estate, [2.25, 0.18, 0.2], [17, 3.15, -34.91], gold);
+  // Mansion facade: the doorway is deliberately open so the entry point is obvious.
+  addBox(exterior, [9.2, 0.22, 8.4], [17, 0.02, -39.2], dark);
+  addSolid(exterior, [0.28, 4.5, 8.4], [12.46, 2.25, -39.2], cream, colliders, 0, 4.5);
+  addSolid(exterior, [0.28, 4.5, 8.4], [21.54, 2.25, -39.2], cream, colliders, 0, 4.5);
+  addSolid(exterior, [9.35, 4.5, 0.28], [17, 2.25, -43.4], cream, colliders, 0, 4.5);
+  addSolid(exterior, [3.55, 4.5, 0.28], [14.15, 2.25, -35], cream, colliders, 0, 4.5);
+  addSolid(exterior, [3.55, 4.5, 0.28], [19.85, 2.25, -35], cream, colliders, 0, 4.5);
+  addBox(exterior, [9.8, 0.45, 9], [17, 4.65, -39.2], dark);
   for (const x of [13.8, 20.2]) {
-    box(estate, [1.15, 1.35, 0.08], [x, 2.55, -34.91], glass);
-    box(estate, [1.25, 0.08, 0.12], [x, 2.55, -34.84], gold);
+    addBox(exterior, [1.15, 1.35, 0.08], [x, 2.6, -34.82], glass);
+    addBox(exterior, [1.25, 0.08, 0.12], [x, 2.6, -34.76], gold);
   }
-  // The stairwell opening stays clear; the upper floor pieces form the first-floor ceiling.
+  for (let i = 0; i < 3; i += 1) addBox(exterior, [2.8, 0.14, 0.42], [17, 0.07 + i * 0.14, -34.25 - i * 0.4], stone);
+  const doorGlow = new THREE.PointLight(0xffc77c, 0.8, 7);
+  doorGlow.position.set(17, 3.1, -34.2);
+  exterior.add(doorGlow);
 
-  // Front approach steps, aligned with the actual doorway.
-  for (let i = 0; i < 3; i += 1) {
-    box(estate, [2.8, 0.14, 0.42], [17, 0.07 + i * 0.14, -34.25 - i * 0.4], stone);
+  // The interior is a separate lightweight walkable environment. It is switched on
+  // only after the player reaches and enters the exterior front door.
+  const interior = new THREE.Group();
+  interior.visible = false;
+  scene.add(interior);
+  const lobbyX = 106;
+  const lobbyZ = 2;
+  addBox(interior, [12, 0.24, 20], [lobbyX, -0.12, lobbyZ], floor);
+  addBox(interior, [12.4, 0.3, 20.4], [lobbyX, -0.34, lobbyZ], dark);
+
+  // Enclosing ground-floor walls, with a wide front doorway.
+  addSolid(interior, [0.25, 4.4, 20], [100, 2.2, 2], cream, colliders, 0, 4.4);
+  addSolid(interior, [0.25, 4.4, 20], [112, 2.2, 2], cream, colliders, 0, 4.4);
+  addSolid(interior, [12, 4.4, 0.25], [106, 2.2, -8], cream, colliders, 0, 4.4);
+  addSolid(interior, [3.8, 4.4, 0.25], [101.9, 2.2, 12], cream, colliders, 0, 4.4);
+  addSolid(interior, [3.8, 4.4, 0.25], [110.1, 2.2, 12], cream, colliders, 0, 4.4);
+
+  // Lobby columns, reception console, seating and warm ceiling fixtures.
+  for (const x of [101.3, 110.7]) {
+    for (const z of [-5.5, 8.5]) {
+      addBox(interior, [0.38, 4.1, 0.38], [x, 2.05, z], dark);
+      addBox(interior, [0.55, 0.16, 0.55], [x, 4.12, z], gold);
+    }
+  }
+  addBox(interior, [3.2, 0.95, 0.85], [105.5, 0.48, 8.3], wood);
+  addBox(interior, [3.35, 0.12, 0.95], [105.5, 1.0, 8.3], gold);
+  addBox(interior, [2.4, 0.48, 0.85], [102.7, 0.24, -4.8], wood);
+  addBox(interior, [2.4, 0.48, 0.85], [109.3, 0.24, -4.8], wood);
+  for (const x of [103, 106, 109]) {
+    const lamp = new THREE.PointLight(0xffd29a, 0.7, 9);
+    lamp.position.set(x, 3.75, 3);
+    interior.add(lamp);
+    addBox(interior, [0.65, 0.08, 0.65], [x, 4.25, 3], interiorLight);
   }
 
-  // Upstairs floor has separate openings for the staircase and elevator shaft.
-  box(estate, [0.55, 0.2, 7.4], [13.075, 4.25, -39.2], cream);
-  box(estate, [3.1, 0.2, 7.4], [16.8, 4.25, -39.2], cream);
-  box(estate, [1.9, 0.2, 3.5], [14.3, 4.25, -37.1], cream);
-  box(estate, [1.9, 0.2, 2.0], [14.3, 4.25, -41.85], cream);
-  box(estate, [0.95, 0.2, 7.4], [20.725, 4.25, -39.2], cream);
-  box(estate, [1.9, 0.2, 0.9], [19.3, 4.25, -35.95], cream);
-  box(estate, [1.9, 0.2, 2.0], [19.3, 4.25, -41.9], cream);
-  box(estate, [1.9, 0.2, 0.5], [19.3, 4.25, -40.65], cream);
-
-  // Visible staircase: ten individual treads with a continuous walkable incline.
-  const stairBottomZ = -35.6;
-  const stairTopZ = -40.6;
+  // Broad, clearly visible staircase: ten real treads rising toward the upper landing.
+  const stairX = 109;
+  const stairBottomZ = 5.2;
+  const stairTopZ = -1.8;
   for (let i = 0; i < 10; i += 1) {
-    const tread = box(
-      estate,
-      [1.55, 0.08, 0.5],
-      [19.3, (i + 0.5) * 0.435 - 0.04, stairBottomZ - (i + 0.5) * 0.5],
-      stone
-    );
-    tread.material = i % 2 === 0 ? stone : darkStone;
+    const rise = (i + 1) * 0.435;
+    const z = stairBottomZ - (i + 0.5) * 0.7;
+    addBox(interior, [2.25, 0.12, 0.74], [stairX, rise - 0.06, z], i % 2 ? dark : stone);
+    addBox(interior, [2.3, 0.08, 0.12], [stairX, rise + 0.02, z - 0.31], gold);
   }
-  const railMaterial = new THREE.MeshStandardMaterial({ color: 0x343a42, metalness: 0.35, roughness: 0.7 });
-  for (const x of [18.42, 20.18]) {
-    const rail = box(estate, [0.12, 1.05, 5.25], [x, 2.35, -38.1], railMaterial);
-    rail.rotation.x = 0.70;
-    colliders.push({
-      minX: x - 0.16, maxX: x + 0.16, minZ: -40.75, maxZ: -35.45,
-      minY: 0, maxY: 4.5
-    });
+  for (const x of [107.78, 110.22]) {
+    const rail = addBox(interior, [0.12, 1.05, 7.2], [x, 2.3, 1.7], gold);
+    rail.rotation.x = -Math.atan(4.35 / 7);
+    colliders.push({ minX: x - 0.09, maxX: x + 0.09, minZ: -1.95, maxZ: 5.35, minY: 0, maxY: 4.7 });
   }
 
-  // Elevator shaft, glass enclosure and moving cabin.
-  const liftFrame = new THREE.MeshStandardMaterial({ color: 0x9a7445, metalness: 0.62, roughness: 0.36 });
-  const liftMetal = new THREE.MeshStandardMaterial({ color: 0x343b45, metalness: 0.55, roughness: 0.42 });
-  const liftGlass = new THREE.MeshStandardMaterial({ color: 0x30495c, metalness: 0.28, roughness: 0.22, transparent: true, opacity: 0.48 });
-  for (const x of [13.3, 15.3]) {
-    box(estate, [0.08, 7.1, 1.85], [x, 3.62, -39.85], liftGlass);
-  }
-  box(estate, [2.0, 7.1, 0.08], [14.3, 3.62, -40.8], liftGlass);
-  box(estate, [0.12, 7.25, 0.12], [13.3, 3.63, -40.8], liftFrame);
-  box(estate, [0.12, 7.25, 0.12], [15.3, 3.63, -40.8], liftFrame);
-  for (const x of [13.3, 15.3]) {
-    box(estate, [0.12, 7.25, 0.12], [x, 3.63, -38.85], liftFrame);
-    colliders.push({ minX: x - 0.07, maxX: x + 0.07, minZ: -40.9, maxZ: -38.8, minY: 0, maxY: 7.3 });
-  }
-  colliders.push({ minX: 13.3, maxX: 15.3, minZ: -40.9, maxZ: -40.72, minY: 0, maxY: 7.3 });
+  // Upper level is built in sections so the stair opening remains open.
+  addBox(interior, [6.5, 0.22, 10], [103.25, 4.35, -3], floor);
+  addBox(interior, [3.0, 0.22, 3.2], [109.5, 4.35, -6.4], floor);
+  addBox(interior, [3.0, 0.22, 3.4], [109.5, 4.35, 2.2], floor);
+  addBox(interior, [3.0, 0.22, 2.0], [109.5, 4.35, -3.9], floor);
 
-  const liftCar = new THREE.Group();
-  liftCar.position.set(14.3, 0, -39.85);
-  estate.add(liftCar);
-  box(liftCar, [1.72, 0.14, 1.72], [0, -0.07, 0], liftMetal);
-  box(liftCar, [0.1, 2.42, 1.68], [-0.81, 1.21, 0], liftMetal);
-  box(liftCar, [0.1, 2.42, 1.68], [0.81, 1.21, 0], liftMetal);
-  box(liftCar, [1.68, 2.42, 0.1], [0, 1.21, -0.81], liftMetal);
-  box(liftCar, [1.72, 0.12, 1.72], [0, 2.44, 0], liftMetal);
-  const liftLeftDoor = box(liftCar, [0.76, 2.28, 0.09], [-0.39, 1.17, 0.82], liftFrame);
-  const liftRightDoor = box(liftCar, [0.76, 2.28, 0.09], [0.39, 1.17, 0.82], liftFrame);
-  const liftDoorInset = new THREE.MeshStandardMaterial({ color: 0x1b2734, metalness: 0.5, roughness: 0.38 });
-  box(liftLeftDoor, [0.52, 1.75, 0.035], [0, 0, 0.055], liftDoorInset);
-  box(liftRightDoor, [0.52, 1.75, 0.035], [0, 0, 0.055], liftDoorInset);
+  // Upper corridor and enclosed private office with a real doorway.
+  addSolid(interior, [0.22, 2.8, 7.8], [100.5, 5.85, -3.1], cream, colliders, 4.4, 7.3);
+  addSolid(interior, [0.22, 2.8, 7.8], [111.5, 5.85, -3.1], cream, colliders, 4.4, 7.3);
+  addSolid(interior, [5.4, 2.8, 0.22], [103.2, 5.85, -7], cream, colliders, 4.4, 7.3);
+  addSolid(interior, [5.4, 2.8, 0.22], [108.8, 5.85, -7], cream, colliders, 4.4, 7.3);
+  addSolid(interior, [0.22, 2.8, 4.8], [109.5, 5.85, -3.1], cream, colliders, 4.4, 7.3);
+  addBox(interior, [11.6, 0.25, 8.2], [106, 7.3, -3.1], dark);
+  for (const x of [102.2, 109.8]) {
+    addBox(interior, [1.2, 1.2, 0.07], [x, 6.0, 0.42], glass);
+    addBox(interior, [1.25, 0.08, 0.1], [x, 6.0, 0.48], gold);
+  }
+  addBox(interior, [2.2, 0.85, 1.0], [104.2, 4.9, -4.3], wood);
+  addBox(interior, [2.4, 0.12, 1.1], [104.2, 5.36, -4.3], gold);
+  addBox(interior, [1.5, 1.8, 0.12], [106.2, 5.25, -6.1], dark);
+  const officeLamp = new THREE.PointLight(0xffc77c, 0.9, 8);
+  officeLamp.position.set(106, 6.5, -3.8);
+  interior.add(officeLamp);
+
+  // Glass elevator shaft and a visible cabin with three enclosed sides.
+  const shaft = new THREE.Group();
+  shaft.position.set(102.8, 0, 0.1);
+  interior.add(shaft);
+  addBox(shaft, [2.0, 7.0, 2.0], [0, 3.5, 0], glass);
+  addBox(shaft, [0.1, 7.0, 2.0], [-1.0, 3.5, 0], gold);
+  addBox(shaft, [0.1, 7.0, 2.0], [1.0, 3.5, 0], gold);
+  addBox(shaft, [2.0, 7.0, 0.1], [0, 3.5, -1.0], gold);
+  const cabin = new THREE.Group();
+  shaft.add(cabin);
+  addBox(cabin, [1.72, 0.14, 1.72], [0, 0, 0], dark);
+  addBox(cabin, [0.1, 2.35, 1.68], [-0.81, 1.2, 0], dark);
+  addBox(cabin, [0.1, 2.35, 1.68], [0.81, 1.2, 0], dark);
+  addBox(cabin, [1.68, 2.35, 0.1], [0, 1.2, -0.81], dark);
+  addBox(cabin, [1.72, 0.1, 1.72], [0, 2.4, 0], dark);
+  const leftDoor = addBox(cabin, [0.82, 2.25, 0.1], [-0.42, 1.15, 0.82], gold);
+  const rightDoor = addBox(cabin, [0.82, 2.25, 0.1], [0.42, 1.15, 0.82], gold);
+  addBox(leftDoor, [0.58, 1.7, 0.035], [0, 0, 0.06], glass);
+  addBox(rightDoor, [0.58, 1.7, 0.035], [0, 0, 0.06], glass);
+
   let liftState = 'idle';
   let liftTimer = 0;
-
   function setLiftDoors(open) {
-    liftLeftDoor.position.x = open ? -0.78 : -0.39;
-    liftRightDoor.position.x = open ? 0.78 : 0.39;
+    leftDoor.position.x = open ? -0.82 : -0.42;
+    rightDoor.position.x = open ? 0.82 : 0.42;
   }
-
-  // Fully enclosed upstairs office: four walls, roof, windows and interior.
-  const upperWallY = 5.72;
-  solidBox(estate, [0.22, 2.9, 7.6], [12.8, upperWallY, -39.2], cream, colliders, 4.3, 7.2);
-  solidBox(estate, [0.22, 2.9, 7.6], [21.2, upperWallY, -39.2], cream, colliders, 4.3, 7.2);
-  solidBox(estate, [8.4, 2.9, 0.22], [17, upperWallY, -43], cream, colliders, 4.3, 7.2);
-  solidBox(estate, [8.4, 2.9, 0.22], [17, upperWallY, -35.4], cream, colliders, 4.3, 7.2);
-  box(estate, [8.8, 0.28, 8.0], [17, 7.3, -39.2], roof);
-
-  // Window panes remain visible on all sides of the upper room.
-  for (const x of [14.5, 19.5]) {
-    box(estate, [1.2, 1.25, 0.07], [x, 5.85, -35.26], glass);
-    box(estate, [1.2, 0.07, 0.1], [x, 5.85, -35.2], gold);
-  }
-  for (const z of [-37.3, -41.1]) {
-    box(estate, [0.07, 1.2, 1.25], [12.66, 5.85, z], glass);
-    box(estate, [0.1, 0.07, 1.25], [12.62, 5.85, z], gold);
-    box(estate, [0.07, 1.2, 1.25], [21.34, 5.85, z], glass);
-  }
-
-  // Desk and furnishings in the private office.
-  box(estate, [2.8, 0.9, 1.0], [15.6, 4.9, -38.2], darkStone);
-  box(estate, [2.4, 0.12, 0.85], [15.6, 5.38, -38.2], gold);
-  box(estate, [0.12, 1.7, 2.0], [17.2, 5.25, -42.0], glass);
-  const officeLight = new THREE.PointLight(0xffc77c, 1.0, 9);
-  officeLight.position.set(17, 6.35, -38);
-  estate.add(officeLight);
 
   function isOnStairs(x, z) {
-    return x >= 18.62 && x <= 19.98 && z <= stairBottomZ + 0.2 && z >= stairTopZ - 0.15;
+    return x >= 107.8 && x <= 110.2 && z <= stairBottomZ + 0.25 && z >= stairTopZ - 0.25;
   }
 
   function getFloorY(x, z, currentY = 0) {
+    if (!interior.visible) return 0;
     if (isOnStairs(x, z)) {
       const progress = THREE.MathUtils.clamp((stairBottomZ - z) / (stairBottomZ - stairTopZ), 0, 1);
       return progress * 4.35;
     }
-    const insideUpperRoom =
-      x >= 12.95 && x <= 21.05 &&
-      z >= -42.85 && z <= -35.55;
-    if (currentY > 3.8 && insideUpperRoom) return 4.35;
+    const onUpper = x >= 100.8 && x <= 111.2 && z >= -6.7 && z <= 4.8;
+    if (currentY > 3.8 && onUpper) return 4.35;
     return 0;
   }
 
   return {
     colliders,
     gatekeeperPosition: new THREE.Vector3(8.35, 0, -34.6),
-    stairsPosition: new THREE.Vector3(19.3, 0, -35.6),
+    recipientPosition: new THREE.Vector3(106, 4.35, -4.6),
+    enterInterior(player) {
+      if (interior.visible) return false;
+      exterior.visible = false;
+      interior.visible = true;
+      player.position.set(106, 0, 10.1);
+      player.rotation.y = Math.PI;
+      return true;
+    },
+    isInterior() { return interior.visible; },
     isOnStairs,
     isNearStairs(x, z) {
-      return Math.hypot(x - 19.3, z - stairBottomZ) <= 1.85;
+      return interior.visible && Math.hypot(x - stairX, z - stairBottomZ) <= 2.0;
+    },
+    isNearLift(x, z) {
+      return interior.visible && Math.hypot(x - 102.8, z - 1.9) <= 1.8;
     },
     getFloorY,
     startLiftRide(player) {
-      if (liftState !== 'idle') return false;
-      player.position.set(14.3, 0, -39.85);
-      liftCar.position.y = 0;
+      if (!interior.visible || liftState !== 'idle') return false;
+      player.position.set(102.8, 0, 0.1);
+      cabin.position.y = 0;
       setLiftDoors(true);
       liftState = 'opening-ground';
       liftTimer = 0;
       return true;
     },
-    isLiftRunning() {
-      return liftState !== 'idle';
-    },
+    isLiftRunning() { return liftState !== 'idle'; },
     updateLift(delta, player) {
       if (liftState === 'idle') return false;
       liftTimer += delta;
-      if (liftState === 'opening-ground' && liftTimer >= 0.45) {
+      if (liftState === 'opening-ground' && liftTimer >= 0.55) {
         setLiftDoors(false);
         liftState = 'closing-ground';
         liftTimer = 0;
-      } else if (liftState === 'closing-ground' && liftTimer >= 0.45) {
+      } else if (liftState === 'closing-ground' && liftTimer >= 0.55) {
         liftState = 'moving-up';
         liftTimer = 0;
       } else if (liftState === 'moving-up') {
-        const progress = THREE.MathUtils.clamp(liftTimer / 1.8, 0, 1);
-        liftCar.position.y = progress * 4.35;
+        const progress = THREE.MathUtils.clamp(liftTimer / 2.2, 0, 1);
+        cabin.position.y = progress * 4.35;
         player.position.y = progress * 4.35;
         if (progress >= 1) {
           setLiftDoors(true);
           liftState = 'opening-upper';
           liftTimer = 0;
         }
-      } else if (liftState === 'opening-upper' && liftTimer >= 0.5) {
-        player.position.set(14.3, 4.35, -38.35);
+      } else if (liftState === 'opening-upper' && liftTimer >= 0.6) {
+        player.position.set(102.8, 4.35, 1.55);
         liftState = 'idle';
         liftTimer = 0;
         return false;

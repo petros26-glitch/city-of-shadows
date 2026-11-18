@@ -156,7 +156,7 @@ export function createGame(root) {
   const gatekeeper = createMissionPerson(8.35, -34.6, 0x344d57);
   gatekeeper.group.visible = false;
   const recipient = createMissionPerson(16.5, -38.2, 0x4b5365);
-  recipient.group.position.y = 4.35;
+  recipient.group.position.copy(residence.recipientPosition);
   recipient.group.visible = false;
   const collisionWorld = createCollisionWorld([...districtColliders, ...residence.colliders]);
   const collisionActors = [npc, ...suspiciousMen.map((person) => person.group), gatekeeper.group, recipient.group];
@@ -273,6 +273,7 @@ export function createGame(root) {
   let nearGatekeeper = false;
   let nearMansionDoor = false;
   let nearStairs = false;
+  let nearLift = false;
   let playerFloorY = 0;
   let dialoguePurpose = null;
   let missionNoticeTimer = 0;
@@ -513,17 +514,27 @@ export function createGame(root) {
     }
 
     if (stage === 'enter-estate' && nearMansionDoor) {
-      transportChoiceOpen = true;
       resetStick();
       keys.clear();
-      if (transportChoice) transportChoice.hidden = false;
-      if (interactionPrompt) interactionPrompt.hidden = true;
+      if (residence.enterInterior(activeCharacter.group)) {
+        playerFloorY = 0;
+        onGround = true;
+        jumpVelocity = 0;
+        cameraOffset.set(0, 4.2, 7.2);
+        missionManager.setStage('climb-stairs', 'Explore the mansion lobby. Walk to the visible staircase and climb to the upstairs office, or use the elevator.');
+        showMissionNotice('MANSION INTERIOR · YOU ARE INSIDE');
+      }
       return;
     }
 
-    if (stage === 'go-upstairs' && nearStairs) {
-      missionManager.setStage('climb-stairs', 'Walk up the visible staircase to reach the private upstairs office.');
-      showMissionNotice('STAIRCASE · WALK UP TO THE OFFICE');
+    if (stage === 'climb-stairs' && nearLift) {
+      if (residence.startLiftRide(activeCharacter.group)) {
+        playerFloorY = 0;
+        onGround = true;
+        jumpVelocity = 0;
+        missionManager.setStage('take-lift', 'Ride the elevator to the upper floor, then walk to the private office.');
+        showMissionNotice('ELEVATOR · DOORS CLOSING');
+      }
       return;
     }
 
@@ -637,8 +648,9 @@ export function createGame(root) {
       nearPackage = packagePickup.visible && Math.hypot(playerPosition.x - packagePickup.position.x, playerPosition.z - packagePickup.position.z) <= 2.5;
       nearRecipient = recipient.group.visible && Math.hypot(playerPosition.x - recipient.group.position.x, playerPosition.z - recipient.group.position.z) <= 3.0;
       nearGatekeeper = gatekeeper.group.visible && Math.hypot(playerPosition.x - gatekeeper.group.position.x, playerPosition.z - gatekeeper.group.position.z) <= 2.8;
-      nearMansionDoor = playerPosition.x >= 15.2 && playerPosition.x <= 18.8 && playerPosition.z >= -40.0 && playerPosition.z <= -33.0;
+      nearMansionDoor = !residence.isInterior() && playerPosition.x >= 15.2 && playerPosition.x <= 18.8 && playerPosition.z >= -40.0 && playerPosition.z <= -33.0;
       nearStairs = residence.isNearStairs(playerPosition.x, playerPosition.z);
+      nearLift = residence.isNearLift(playerPosition.x, playerPosition.z);
       const missionState = missionManager.getState();
 
       if (missionState.stage === 'reach-encounter') {
@@ -673,7 +685,10 @@ export function createGame(root) {
           promptText = 'ENTER MANSION';
           promptVisible = true;
         } else if (missionState.stage === 'climb-stairs' && nearStairs) {
-          promptText = 'WALK UP THE STAIRS';
+          promptText = 'CLIMB THE STAIRS';
+          promptVisible = true;
+        } else if (missionState.stage === 'climb-stairs' && nearLift) {
+          promptText = 'ENTER ELEVATOR';
           promptVisible = true;
         } else if (missionState.stage === 'meet-recipient' && nearRecipient) {
           promptText = 'DELIVER PACKAGE';
@@ -736,8 +751,13 @@ export function createGame(root) {
           collisionActors,
           activeCharacter.group
         );
-        activeCharacter.group.position.x = THREE.MathUtils.clamp(resolved.x, -8.7, 24);
-        activeCharacter.group.position.z = THREE.MathUtils.clamp(resolved.z, -53, 43);
+        const insideMansion = residence.isInterior();
+        activeCharacter.group.position.x = insideMansion
+          ? THREE.MathUtils.clamp(resolved.x, 100.65, 111.35)
+          : THREE.MathUtils.clamp(resolved.x, -8.7, 24);
+        activeCharacter.group.position.z = insideMansion
+          ? THREE.MathUtils.clamp(resolved.z, -7.45, 11.45)
+          : THREE.MathUtils.clamp(resolved.z, -53, 43);
         if (onGround) {
           playerFloorY = residence.getFloorY(
             activeCharacter.group.position.x,
