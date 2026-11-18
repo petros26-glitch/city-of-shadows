@@ -963,7 +963,7 @@ export function createGame(root) {
           activeCharacter.group.position,
           movement.x * speed * delta,
           movement.z * speed * delta,
-          playerFloorY,
+          activeCharacter.group.position.y,
           collisionActors,
           activeCharacter.group
         );
