@@ -456,7 +456,7 @@ export function createGame(root) {
       playerFloorY = 0;
       onGround = true;
       jumpVelocity = 0;
-      missionManager.setStage('take-lift', 'Ride the elevator to the upstairs reception desk.');
+      missionManager.setStage('climb-stairs', 'Ride the elevator to the upstairs reception desk.');
       showMissionNotice('LIFT SELECTED · GOING UP');
     }
   }
@@ -911,6 +911,12 @@ export function createGame(root) {
         if (gatekeeper.arms[1]) gatekeeper.arms[1].rotation.x = -Math.max(0, gesture) * 1.15;
       } else if (gatekeeper.arms[1]) {
         gatekeeper.arms[1].rotation.x = THREE.MathUtils.damp(gatekeeper.arms[1].rotation.x, 0, 7, delta);
+      }
+      if (secretary.group.visible && nearSecretary && missionManager.getState().stage === 'meet-secretary') {
+        secretary.group.rotation.y = Math.atan2(
+          playerPosition.x - secretary.group.position.x,
+          playerPosition.z - secretary.group.position.z
+        );
       }
       if (recipient.group.visible && nearRecipient) {
         recipient.group.rotation.y = Math.atan2(
