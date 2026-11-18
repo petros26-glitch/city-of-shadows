@@ -447,7 +447,7 @@ export function createGame(root) {
     keys.clear();
 
     if (method === 'stairs') {
-      missionManager.setStage('climb-stairs', 'Walk to the staircase and climb up to the private upstairs office.');
+      missionManager.setStage('climb-stairs', 'Walk to the staircase or elevator and reach the upstairs reception desk.');
       showMissionNotice('STAIRCASE SELECTED · WALK UPSTAIRS');
       return;
     }
@@ -456,7 +456,7 @@ export function createGame(root) {
       playerFloorY = 0;
       onGround = true;
       jumpVelocity = 0;
-      missionManager.setStage('take-lift', 'Take the elevator to the private upstairs office.');
+      missionManager.setStage('take-lift', 'Ride the elevator to the upstairs reception desk.');
       showMissionNotice('LIFT SELECTED · GOING UP');
     }
   }
@@ -628,7 +628,7 @@ export function createGame(root) {
           camera.position.copy(controls.target).add(new THREE.Vector3(0, 4.2, 7.2));
           controls.update();
         }
-        missionManager.setStage('climb-stairs', 'Explore the mansion lobby. Walk to the visible staircase and climb to the upstairs office, or use the elevator.');
+        missionManager.setStage('climb-stairs', 'Explore the lobby, then climb the visible staircase or take the elevator to the upstairs reception desk.');
         showMissionNotice('THE MAIN DOORS ARE OPENING');
       }
       return;
@@ -846,8 +846,12 @@ export function createGame(root) {
         } else if (missionState.stage === 'climb-stairs' && nearStairs) {
           promptText = 'CLIMB THE STAIRS';
           promptVisible = true;
-        } else if ((missionState.stage === 'climb-stairs' || missionState.stage === 'reach-office-door') && nearLift && playerFloorY < 2.5) {
+        } else if (nearLift && playerFloorY < 2.5
+          && ['climb-stairs', 'meet-secretary', 'secretary-stand', 'follow-secretary', 'open-office-door', 'opening-office-door', 'meet-recipient', 'completed'].includes(missionState.stage)) {
           promptText = 'TAKE ELEVATOR UP';
+          promptVisible = true;
+        } else if (nearLift && playerFloorY > 2.5 && missionState.stage !== 'inactive') {
+          promptText = 'TAKE ELEVATOR DOWN';
           promptVisible = true;
         } else if (missionState.stage === 'meet-secretary' && nearSecretary) {
           promptText = 'SPEAK TO SECRETARY';
@@ -865,7 +869,7 @@ export function createGame(root) {
           promptText = 'EXIT MANSION';
           promptVisible = true;
         }
-        interactionPrompt.hidden = !promptVisible || dialogueOpen || encounterChoiceOpen || residence.isOfficeDoorOpening() || residence.isExitingInterior();
+        interactionPrompt.hidden = !promptVisible || dialogueOpen || encounterChoiceOpen || residence.isLiftRunning() || residence.isOfficeDoorOpening() || residence.isExitingInterior();
         if (interactionLabel) interactionLabel.textContent = promptText;
       }
 
