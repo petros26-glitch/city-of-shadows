@@ -199,6 +199,13 @@ export function createRecipientResidence(scene) {
     rail.rotation.x = -Math.atan(4.35 / 7);
     colliders.push({ minX: x - 0.09, maxX: x + 0.09, minZ: -1.95, maxZ: 5.35, minY: 0, maxY: 4.7 });
   }
+  // Keep the stairwell physically blocked to free movement. The E-triggered
+  // stair animation moves the player through this volume without manual input.
+  colliders.push({
+    minX: 107.95, maxX: 110.05,
+    minZ: stairTopZ - 0.35, maxZ: stairBottomZ + 0.35,
+    minY: 0, maxY: 4.4
+  });
 
   // Upper level is built in sections so the stair opening remains open.
   addBox(interior, [6.5, 0.22, 10], [103.25, 4.35, -3], floor);
