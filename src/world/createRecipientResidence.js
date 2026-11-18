@@ -134,15 +134,17 @@ export function createRecipientResidence(scene) {
   let officeDoorOpening = false;
   const lobbyX = 106;
   const lobbyZ = 2;
-  addBox(interior, [12, 0.24, 20], [lobbyX, -0.12, lobbyZ], floor);
-  addBox(interior, [12.4, 0.3, 20.4], [lobbyX, -0.34, lobbyZ], dark);
+  // The lobby is deliberately wider than the original blockout, leaving a
+  // clear walking area around the reception counter, seating and lift.
+  addBox(interior, [16, 0.24, 20], [lobbyX, -0.12, lobbyZ], floor);
+  addBox(interior, [16.4, 0.3, 20.4], [lobbyX, -0.34, lobbyZ], dark);
 
   // Enclosing ground-floor walls, with a wide front doorway.
-  addSolid(interior, [0.25, 4.4, 20], [100, 2.2, 2], cream, colliders, 0, 4.4);
-  addSolid(interior, [0.25, 4.4, 20], [112, 2.2, 2], cream, colliders, 0, 4.4);
-  addSolid(interior, [12, 4.4, 0.25], [106, 2.2, -8], cream, colliders, 0, 4.4);
-  addSolid(interior, [3.8, 4.4, 0.25], [101.9, 2.2, 12], cream, colliders, 0, 4.4);
-  addSolid(interior, [3.8, 4.4, 0.25], [110.1, 2.2, 12], cream, colliders, 0, 4.4);
+  addSolid(interior, [0.25, 4.4, 20], [98, 2.2, 2], cream, colliders, 0, 4.4);
+  addSolid(interior, [0.25, 4.4, 20], [114, 2.2, 2], cream, colliders, 0, 4.4);
+  addSolid(interior, [16, 4.4, 0.25], [106, 2.2, -8], cream, colliders, 0, 4.4);
+  addSolid(interior, [5.8, 4.4, 0.25], [100.9, 2.2, 12], cream, colliders, 0, 4.4);
+  addSolid(interior, [5.8, 4.4, 0.25], [111.1, 2.2, 12], cream, colliders, 0, 4.4);
 
   // Lobby columns, reception console, seating and warm ceiling fixtures.
   for (const x of [101.3, 110.7]) {
