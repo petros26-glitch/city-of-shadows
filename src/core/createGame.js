@@ -637,7 +637,7 @@ export function createGame(root) {
       nearPackage = packagePickup.visible && Math.hypot(playerPosition.x - packagePickup.position.x, playerPosition.z - packagePickup.position.z) <= 2.5;
       nearRecipient = recipient.group.visible && Math.hypot(playerPosition.x - recipient.group.position.x, playerPosition.z - recipient.group.position.z) <= 3.0;
       nearGatekeeper = gatekeeper.group.visible && Math.hypot(playerPosition.x - gatekeeper.group.position.x, playerPosition.z - gatekeeper.group.position.z) <= 2.8;
-      nearMansionDoor = Math.hypot(playerPosition.x - 17, playerPosition.z + 34.55) <= 2.65;
+      nearMansionDoor = playerPosition.x >= 15.2 && playerPosition.x <= 18.8 && playerPosition.z >= -40.0 && playerPosition.z <= -33.0;
       nearStairs = residence.isNearStairs(playerPosition.x, playerPosition.z);
       const missionState = missionManager.getState();
 

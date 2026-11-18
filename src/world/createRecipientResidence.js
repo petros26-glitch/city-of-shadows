@@ -135,7 +135,6 @@ export function createRecipientResidence(scene) {
   const liftMetal = new THREE.MeshStandardMaterial({ color: 0x343b45, metalness: 0.55, roughness: 0.42 });
   const liftGlass = new THREE.MeshStandardMaterial({ color: 0x30495c, metalness: 0.28, roughness: 0.22, transparent: true, opacity: 0.48 });
   for (const x of [13.3, 15.3]) {
-    box(estate, [0.12, 7.25, 0.12], [x, 3.63, -38.85], liftFrame);
     box(estate, [0.08, 7.1, 1.85], [x, 3.62, -39.85], liftGlass);
   }
   box(estate, [2.0, 7.1, 0.08], [14.3, 3.62, -40.8], liftGlass);
@@ -150,13 +149,13 @@ export function createRecipientResidence(scene) {
   const liftCar = new THREE.Group();
   liftCar.position.set(14.3, 0, -39.85);
   estate.add(liftCar);
-  box(liftCar, [1.72, 0.14, 1.72], [0, 0.12, 0], liftMetal);
-  box(liftCar, [0.1, 2.42, 1.68], [-0.81, 1.39, 0], liftMetal);
-  box(liftCar, [0.1, 2.42, 1.68], [0.81, 1.39, 0], liftMetal);
-  box(liftCar, [1.68, 2.42, 0.1], [0, 1.39, -0.81], liftMetal);
-  box(liftCar, [1.72, 0.12, 1.72], [0, 2.62, 0], liftMetal);
-  const liftLeftDoor = box(liftCar, [0.76, 2.28, 0.09], [-0.39, 1.35, 0.82], liftFrame);
-  const liftRightDoor = box(liftCar, [0.76, 2.28, 0.09], [0.39, 1.35, 0.82], liftFrame);
+  box(liftCar, [1.72, 0.14, 1.72], [0, -0.07, 0], liftMetal);
+  box(liftCar, [0.1, 2.42, 1.68], [-0.81, 1.21, 0], liftMetal);
+  box(liftCar, [0.1, 2.42, 1.68], [0.81, 1.21, 0], liftMetal);
+  box(liftCar, [1.68, 2.42, 0.1], [0, 1.21, -0.81], liftMetal);
+  box(liftCar, [1.72, 0.12, 1.72], [0, 2.44, 0], liftMetal);
+  const liftLeftDoor = box(liftCar, [0.76, 2.28, 0.09], [-0.39, 1.17, 0.82], liftFrame);
+  const liftRightDoor = box(liftCar, [0.76, 2.28, 0.09], [0.39, 1.17, 0.82], liftFrame);
   const liftDoorInset = new THREE.MeshStandardMaterial({ color: 0x1b2734, metalness: 0.5, roughness: 0.38 });
   box(liftLeftDoor, [0.52, 1.75, 0.035], [0, 0, 0.055], liftDoorInset);
   box(liftRightDoor, [0.52, 1.75, 0.035], [0, 0, 0.055], liftDoorInset);
