@@ -463,20 +463,18 @@ export function createRecipientResidence(scene) {
         player.position.y = progress * 4.35;
         if (progress >= 1) {
           setLiftDoors(true);
-          liftState = 'opening-upper';
+          liftState = 'arriving-upper';
           liftTimer = 0;
         }
+      } else if (liftState === 'arriving-upper' && liftTimer >= 0.55) {
+        player.position.set(102.8, 4.35, 1.55);
+        liftState = 'idle';
+        liftTimer = 0;
+        return false;
       } else if (liftState === 'opening-upper' && liftTimer >= 0.55) {
-        if (cabin.position.y < 2) {
-          setLiftDoors(false);
-          liftState = 'closing-upper';
-          liftTimer = 0;
-        } else {
-          player.position.set(102.8, 4.35, 1.55);
-          liftState = 'idle';
-          liftTimer = 0;
-          return false;
-        }
+        setLiftDoors(false);
+        liftState = 'closing-upper';
+        liftTimer = 0;
       } else if (liftState === 'closing-upper' && liftTimer >= 0.55) {
         liftState = 'moving-down';
         liftTimer = 0;
@@ -486,9 +484,14 @@ export function createRecipientResidence(scene) {
         player.position.y = 4.35 * (1 - progress);
         if (progress >= 1) {
           setLiftDoors(true);
-          liftState = 'opening-ground';
+          liftState = 'arriving-ground';
           liftTimer = 0;
         }
+      } else if (liftState === 'arriving-ground' && liftTimer >= 0.55) {
+        player.position.set(102.8, 0, 1.55);
+        liftState = 'idle';
+        liftTimer = 0;
+        return false;
       }
       return true;
     },
