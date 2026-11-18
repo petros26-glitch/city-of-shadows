@@ -40,10 +40,33 @@
         <div class="selection-bottomline">18+ PROTAGONISTS <span>·</span> OPEN-WORLD ACTION ADVENTURE</div>
       </section>
 
+      <section id="mission-hud" class="mission-hud" hidden aria-live="polite">
+        <div class="mission-hud-kicker">CURRENT MISSION</div>
+        <h2 id="mission-title">A FRESH START</h2>
+        <p id="mission-objective">Find Kola at his kiosk.</p>
+        <div id="mission-reward" class="mission-reward">REWARD · ₦500</div>
+      </section>
+
+      <div id="mission-notice" class="mission-notice" hidden role="status"></div>
+
       <div id="interaction-prompt" class="interaction-prompt" hidden>
         <span class="interaction-key">E</span>
-        <span>TALK TO KOLA</span>
+        <span id="interaction-label">TALK TO KOLA</span>
       </div>
+
+      <section id="encounter-choice" class="encounter-choice" hidden aria-label="Choose how to handle the men">
+        <div class="encounter-card">
+          <span class="encounter-kicker">ORIYABA · STREET ENCOUNTER</span>
+          <h2>THEY WANT TO KNOW WHAT YOU'RE CARRYING</h2>
+          <p>Two men step into your path. How will you handle this?</p>
+          <div class="encounter-actions">
+            <button type="button" data-approach="talk">TALK TO THEM</button>
+            <button type="button" data-approach="run">RUN</button>
+            <button type="button" data-approach="fight">FIGHT</button>
+          </div>
+          <span class="encounter-footnote">YOUR DECISION WILL BE REMEMBERED</span>
+        </div>
+      </section>
 
       <section id="dialogue-panel" class="dialogue-panel" hidden aria-label="Conversation with Kola">
         <div class="dialogue-heading">
