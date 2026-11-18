@@ -507,7 +507,10 @@ export function createGame(root) {
   }
 
   function jump() {
-    if (!gameStarted || dialogueOpen || encounterChoiceOpen || !onGround || residence.isOnStairs(activeCharacter.group.position.x, activeCharacter.group.position.z)) return;
+    if (!gameStarted || dialogueOpen || encounterChoiceOpen || transportChoiceOpen
+      || secretaryStandingUp || residence.isLiftRunning() || residence.isEnteringInterior()
+      || residence.isExitingInterior() || residence.isOfficeDoorOpening() || residence.isGateOpening()
+      || !onGround || residence.isOnStairs(activeCharacter.group.position.x, activeCharacter.group.position.z)) return;
     jumpVelocity = 6.2;
     onGround = false;
   }
@@ -861,9 +864,6 @@ export function createGame(root) {
           promptVisible = true;
         } else if (missionState.stage === 'meet-recipient' && nearRecipient) {
           promptText = 'DELIVER PACKAGE';
-          promptVisible = true;
-        } else if (missionState.stage === 'completed' && nearLift && playerFloorY > 2.5) {
-          promptText = 'TAKE ELEVATOR DOWN';
           promptVisible = true;
         } else if (missionState.stage === 'completed' && nearExit) {
           promptText = 'EXIT MANSION';
