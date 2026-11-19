@@ -223,11 +223,6 @@ export function createGame(root) {
     return { group: person, marker, arms, legs, shoes, torso, head, hair, eyes, pupils, nose, role };
   }
 
-  const suspiciousMen = [
-    createMissionPerson(-0.72, -14.5, 0x693d3b),
-    createMissionPerson(0.72, -14.5, 0x353e50)
-  ];
-  suspiciousMen.forEach((person) => { person.group.visible = false; });
   const residence = createRecipientResidence(scene);
   const gatekeeper = createMissionPerson(8.4, -37.2, 0x344d57, 'guard');
   gatekeeper.group.visible = false;
@@ -241,7 +236,7 @@ export function createGame(root) {
   secretary.group.visible = false;
   secretary.marker.visible = false;
   const collisionWorld = createCollisionWorld([...districtColliders, ...residence.colliders]);
-  const collisionActors = [npc, ...suspiciousMen.map((person) => person.group), gatekeeper.group, secretary.group, recipient.group];
+  const collisionActors = [npc, gatekeeper.group, secretary.group, recipient.group];
 
   const packagePickup = new THREE.Group();
   packagePickup.position.set(6.4, 0, -6.5);
@@ -266,7 +261,6 @@ export function createGame(root) {
   packagePickup.add(packageMarker);
   packagePickup.visible = false;
   scene.add(packagePickup);
-  const encounterPosition = new THREE.Vector3(0, 0, -14.5);
 
   // Touch devices use a fixed-distance follow camera. A horizontal drag
   // on the open right side rotates the camera without enabling pinch zoom.
@@ -345,11 +339,8 @@ export function createGame(root) {
   const missionObjective = document.querySelector('#mission-objective');
   const missionReward = document.querySelector('#mission-reward');
   const missionNotice = document.querySelector('#mission-notice');
-  const encounterChoice = document.querySelector('#encounter-choice');
-  const approachButtons = document.querySelectorAll('[data-approach]');
   const transportChoice = document.querySelector('#transport-choice');
   const transportButtons = document.querySelectorAll('[data-transport]');
-  let encounterChoiceOpen = false;
   let transportChoiceOpen = false;
   let nearPackage = false;
   let nearRecipient = false;
@@ -406,38 +397,6 @@ export function createGame(root) {
     if (dialoguePanel) dialoguePanel.hidden = false;
     if (interactionPrompt) interactionPrompt.hidden = true;
   }
-
-  function moveToDelivery() {
-    suspiciousMen.forEach((person) => { person.group.visible = false; });
-    missionManager.setStage('reach-mansion', 'Take the sealed package to the large mansion at the end of the road.');
-    gatekeeper.group.visible = true;
-    showMissionNotice('DELIVERY ADDRESS · THE GUARDED MANSION');
-  }
-
-  function handleApproachChoice(event) {
-    const approach = event.currentTarget.dataset.approach;
-    encounterChoiceOpen = false;
-    if (encounterChoice) encounterChoice.hidden = true;
-    missionManager.chooseApproach(approach);
-    if (approach === 'run') {
-      showMissionNotice('Run! Get clear of the two men.');
-      return;
-    }
-    if (approach === 'talk') {
-      openDialogue('TWO SUSPICIOUS MEN', 'STREET ENCOUNTER', [
-        'One of the men blocks your way. “Where are you taking that package?”',
-        'You keep your voice calm. “Just a delivery. I have no trouble with anybody.”',
-        'The second man studies you, then steps aside. “Go. And be careful who you work for.”'
-      ], 'talk-men');
-      return;
-    }
-    openDialogue('TWO SUSPICIOUS MEN', 'SCRIPTED STREET CONFRONTATION', [
-      'You refuse to back down. The men move toward you and a brief struggle breaks out.',
-      'After a tense moment, you manage to get past them. Your package is still with you.'
-    ], 'fight-men');
-  }
-
-  approachButtons.forEach((button) => button.addEventListener('click', handleApproachChoice));
 
   function handleTransportChoice(event) {
     const method = event.currentTarget.dataset.transport;
@@ -507,7 +466,7 @@ export function createGame(root) {
   }
 
   function jump() {
-    if (!gameStarted || dialogueOpen || encounterChoiceOpen || transportChoiceOpen
+    if (!gameStarted || dialogueOpen || transportChoiceOpen
       || secretaryStandingUp || residence.isLiftRunning() || residence.isEnteringInterior()
       || residence.isExitingInterior() || residence.isOfficeDoorOpening() || residence.isGateOpening()
       || !onGround || residence.isOnStairs(activeCharacter.group.position.x, activeCharacter.group.position.z)) return;
@@ -551,8 +510,6 @@ export function createGame(root) {
       packagePickup.visible = true;
       missionManager.setStage('collect-package', 'Collect the sealed package near the kiosk.');
       showMissionNotice('NEW OBJECTIVE · COLLECT THE SEALED PACKAGE');
-    } else if (completedPurpose === 'talk-men' || completedPurpose === 'fight-men') {
-      moveToDelivery();
     } else if (completedPurpose === 'gateman') {
       residence.openGate();
       gatekeeperGestureTime = 1.15;
@@ -599,7 +556,7 @@ export function createGame(root) {
 
     if (stage === 'collect-package' && nearPackage) {
       packagePickup.visible = false;
-      missionManager.setStage('reach-encounter', 'Take the package down the road to the delivery address.');
+      moveToDelivery();
       showMissionNotice('PACKAGE COLLECTED · KEEP IT SAFE');
       return;
     }
@@ -829,22 +786,6 @@ export function createGame(root) {
         }
       }
 
-      if (missionState.stage === 'reach-encounter') {
-        const encounterDistance = Math.hypot(playerPosition.x - encounterPosition.x, playerPosition.z - encounterPosition.z);
-        if (encounterDistance <= 2.9) {
-          suspiciousMen.forEach((person) => { person.group.visible = true; });
-          resetStick();
-          keys.clear();
-          encounterChoiceOpen = true;
-          if (encounterChoice) encounterChoice.hidden = false;
-          missionManager.setStage('choose-approach', 'Choose how to handle the two men.');
-          showMissionNotice('TWO MEN BLOCK YOUR WAY');
-        }
-      } else if (missionState.stage === 'escape') {
-        const encounterDistance = Math.hypot(playerPosition.x - encounterPosition.x, playerPosition.z - encounterPosition.z);
-        if (encounterDistance >= 7) moveToDelivery();
-      }
-
       if (interactionPrompt) {
         let promptText = '';
         let promptVisible = false;
@@ -883,7 +824,7 @@ export function createGame(root) {
           promptText = 'EXIT MANSION';
           promptVisible = true;
         }
-        interactionPrompt.hidden = !promptVisible || dialogueOpen || encounterChoiceOpen || residence.isStairClimbing() || residence.isLiftRunning() || residence.isOfficeDoorOpening() || residence.isExitingInterior();
+        interactionPrompt.hidden = !promptVisible || dialogueOpen || residence.isStairClimbing() || residence.isLiftRunning() || residence.isOfficeDoorOpening() || residence.isExitingInterior();
         if (interactionLabel) interactionLabel.textContent = promptText;
       }
 
@@ -892,10 +833,6 @@ export function createGame(root) {
       packageMarker.rotation.z += delta * 0.8;
       packageMarker.position.y = 0.08 + Math.sin(frameTime * 0.003 + 1) * 0.035;
       recipient.marker.rotation.z += delta * 0.8;
-      suspiciousMen.forEach((person, index) => {
-        person.marker.rotation.z += delta * 0.7;
-        person.marker.position.y = 0.07 + Math.sin(frameTime * 0.003 + index) * 0.025;
-      });
       residence.updateGate(delta);
       const enteringInterior = residence.isEnteringInterior();
       residence.updateEntry(delta);
@@ -969,7 +906,7 @@ export function createGame(root) {
         }
       }
 
-      const movementLocked = dialogueOpen || encounterChoiceOpen || transportChoiceOpen || secretaryStandingUp || residence.isStairClimbing() || residence.isLiftRunning() || residence.isEnteringInterior() || residence.isExitingInterior() || residence.isOfficeDoorOpening() || residence.isGateOpening();
+      const movementLocked = dialogueOpen || transportChoiceOpen || secretaryStandingUp || residence.isStairClimbing() || residence.isLiftRunning() || residence.isEnteringInterior() || residence.isExitingInterior() || residence.isOfficeDoorOpening() || residence.isGateOpening();
       let inputX = movementLocked ? 0 : stickState.x;
       let inputZ = movementLocked ? 0 : stickState.y;
       if (!movementLocked && (keys.has('a') || keys.has('arrowleft'))) inputX -= 1;
@@ -1003,11 +940,11 @@ export function createGame(root) {
         const insideMansion = residence.isInterior();
         activeCharacter.group.position.x = insideMansion
           ? (playerFloorY >= 3.8
-            ? THREE.MathUtils.clamp(resolved.x, 100.65, 111.35)
-            : THREE.MathUtils.clamp(resolved.x, 98.65, 113.35))
+            ? THREE.MathUtils.clamp(resolved.x, 96.95, 115.05)
+            : THREE.MathUtils.clamp(resolved.x, 94.65, 117.35))
           : THREE.MathUtils.clamp(resolved.x, -8.7, 24);
         activeCharacter.group.position.z = insideMansion
-          ? THREE.MathUtils.clamp(resolved.z, -12.15, 11.45)
+          ? THREE.MathUtils.clamp(resolved.z, -14.15, 14.45)
           : THREE.MathUtils.clamp(resolved.z, -53, 43);
         if (onGround) {
           const supportedFloor = residence.getFloorY(
@@ -1187,7 +1124,6 @@ export function createGame(root) {
       jumpButton?.removeEventListener('pointerdown', jump);
       actionButton?.removeEventListener('pointerdown', handleActionDown);
       dialogueNextButton?.removeEventListener('click', handleDialogueNext);
-      approachButtons.forEach((button) => button.removeEventListener('click', handleApproachChoice));
       transportButtons.forEach((button) => button.removeEventListener('click', handleTransportChoice));
       window.clearTimeout(actionPressTimer);
       window.clearTimeout(missionNoticeTimer);
