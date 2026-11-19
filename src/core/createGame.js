@@ -556,7 +556,8 @@ export function createGame(root) {
 
     if (stage === 'collect-package' && nearPackage) {
       packagePickup.visible = false;
-      moveToDelivery();
+      missionManager.setStage('reach-mansion', 'Take the sealed package to the large mansion at the end of the road.');
+      gatekeeper.group.visible = true;
       showMissionNotice('PACKAGE COLLECTED · KEEP IT SAFE');
       return;
     }
@@ -717,7 +718,6 @@ export function createGame(root) {
     if (mobileControls) mobileControls.hidden = false;
     if (sceneHint) sceneHint.hidden = false;
     if (buildLabel) buildLabel.hidden = false;
-    if (locationLabel) locationLabel.hidden = false;
     if (locationLabel) locationLabel.hidden = false;
     cameraOffset.set(13, 8.65, 15);
     const target = new THREE.Vector3(0, 1.35, 3);
