@@ -187,8 +187,12 @@ export function createRecipientResidence(scene) {
     addBox(interior, [0.65, 0.08, 0.65], [x, 4.25, 3], interiorLight);
   }
 
-  // Continuous upper-floor slab: the elevator is now the only route between floors.
-  addBox(interior, [19, 0.22, 20], [106, 4.35, -3], floor);
+  // Upper floor is continuous around the lift, with a clear shaft opening so
+  // the cabin can reach the upper landing without clipping through the floor.
+  addBox(interior, [5.22, 0.22, 20], [99.11, 4.35, -3], floor);
+  addBox(interior, [11.62, 0.22, 20], [109.69, 4.35, -3], floor);
+  addBox(interior, [2.16, 0.22, 11.9], [102.8, 4.35, -7.05], floor);
+  addBox(interior, [2.16, 0.22, 5.9], [102.8, 4.35, 4.05], floor);
 
   // Upper corridor and enclosed private office with a real doorway.
   addSolid(interior, [0.22, 2.8, 18.0], [96.5, 5.85, -3.1], cream, colliders, 4.4, 7.3);
