@@ -187,33 +187,8 @@ export function createRecipientResidence(scene) {
     addBox(interior, [0.65, 0.08, 0.65], [x, 4.25, 3], interiorLight);
   }
 
-  // Broad, clearly visible staircase: ten real treads rising toward the upper landing.
-  const stairX = 109;
-  const stairBottomZ = 5.2;
-  const stairTopZ = -1.8;
-  for (let i = 0; i < 10; i += 1) {
-    const rise = (i + 1) * 0.435;
-    const z = stairBottomZ - (i + 0.5) * 0.7;
-    addBox(interior, [2.25, 0.12, 0.74], [stairX, rise - 0.06, z], i % 2 ? dark : stone);
-    addBox(interior, [2.3, 0.08, 0.12], [stairX, rise + 0.02, z - 0.31], gold);
-  }
-  for (const x of [107.78, 110.22]) {
-    const rail = addBox(interior, [0.12, 1.05, 7.2], [x, 2.3, 1.7], gold);
-    rail.rotation.x = -Math.atan(4.35 / 7);
-    colliders.push({ minX: x - 0.09, maxX: x + 0.09, minZ: -1.95, maxZ: 5.35, minY: 0, maxY: 4.7 });
-  }
-
-  // Upper level includes broad open wings around the reception and stairwell.
-  addBox(interior, [6.5, 0.22, 10], [103.25, 4.35, -3], floor);
-  addBox(interior, [3.0, 0.22, 17], [98.0, 4.35, -3.5], floor);
-  addBox(interior, [3.0, 0.22, 17], [114.0, 4.35, -3.5], floor);
-  addBox(interior, [16, 0.22, 2.6], [106, 4.35, -13.0], floor);
-  addBox(interior, [16, 0.22, 2.0], [106, 4.35, 5.0], floor);
-  addBox(interior, [3.0, 0.22, 3.2], [109.5, 4.35, -6.4], floor);
-  addBox(interior, [3.0, 0.22, 3.4], [109.5, 4.35, 2.2], floor);
-  addBox(interior, [3.0, 0.22, 2.0], [109.5, 4.35, -3.9], floor);
-  addBox(interior, [3.0, 0.22, 1.8], [109.5, 4.35, -0.3], floor);
-  addBox(interior, [3.0, 0.22, 2.2], [109.5, 4.35, -2.0], floor);
+  // Continuous upper-floor slab: the elevator is now the only route between floors.
+  addBox(interior, [19, 0.22, 20], [106, 4.35, -3], floor);
 
   // Upper corridor and enclosed private office with a real doorway.
   addSolid(interior, [0.22, 2.8, 18.0], [96.5, 5.85, -3.1], cream, colliders, 4.4, 7.3);
@@ -230,7 +205,7 @@ export function createRecipientResidence(scene) {
     addBox(interior, [1.2, 1.2, 0.07], [x, 6.0, 0.42], glass);
     addBox(interior, [1.25, 0.08, 0.1], [x, 6.0, 0.48], gold);
   }
-  // Upstairs reception: one shared destination for the staircase and elevator.
+  // Upstairs reception is served by the elevator.
   // The desk faces the open landing; the secretary sits behind it with a chair,
   // computer, keyboard, desk phone and a small visitor bell.
   addPlatform(interior, [3.25, 1.12, 0.92], [105.5, 4.79, -0.55], wood, colliders, platforms, 4.35);
@@ -372,30 +347,14 @@ export function createRecipientResidence(scene) {
 
   let liftState = 'idle';
   let liftTimer = 0;
-  let stairClimbState = 'idle';
-  let stairClimbDirection = 'up';
-  let stairClimbTimer = 0;
-  const stairClimbDuration = 2.8;
   function setLiftDoors(open) {
     leftDoor.position.x = open ? -0.82 : -0.42;
     rightDoor.position.x = open ? 0.82 : 0.42;
   }
 
-  function isOnStairs(x, z) {
-    return x >= 107.8 && x <= 110.2 && z <= stairBottomZ + 0.25 && z >= stairTopZ - 0.25;
-  }
-
   function getBaseFloorY(x, z, currentY = 0) {
     if (!interior.visible) return 0;
-    if (isOnStairs(x, z)) {
-      const step = THREE.MathUtils.clamp(
-        Math.floor((stairBottomZ - z + 0.35) / 0.7),
-        0,
-        10
-      );
-      return step * 0.435;
-    }
-    const onUpper = x >= 96.8 && x <= 115.2 && z >= -14.2 && z <= 5.8;
+    const onUpper = x >= 96.8 && x <= 115.2 && z >= -14.2 && z <= 6.8;
     if (currentY > 3.8 && onUpper) return 4.35;
     return 0;
   }
@@ -488,56 +447,6 @@ export function createRecipientResidence(scene) {
         return false;
       }
       return true;
-    },
-    isOnStairs,
-    isStairClimbing() { return stairClimbState !== 'idle'; },
-    isStairDescending() { return stairClimbState === 'descending'; },
-    startStairClimb(player) {
-      if (!interior.visible || stairClimbState !== 'idle' || player.position.y > 2.5) return false;
-      stairClimbState = 'climbing';
-      stairClimbDirection = 'up';
-      stairClimbTimer = 0;
-      player.position.set(stairX, 0, stairBottomZ + 0.12);
-      player.rotation.y = Math.PI;
-      return true;
-    },
-    startStairDescent(player) {
-      if (!interior.visible || stairClimbState !== 'idle' || player.position.y <= 2.5) return false;
-      stairClimbState = 'descending';
-      stairClimbDirection = 'down';
-      stairClimbTimer = 0;
-      player.position.set(stairX, 4.35, stairTopZ - 0.12);
-      player.rotation.y = 0;
-      return true;
-    },
-    updateStairClimb(delta, player) {
-      if (stairClimbState === 'idle') return false;
-      stairClimbTimer = Math.min(stairClimbDuration, stairClimbTimer + delta);
-      const progress = THREE.MathUtils.clamp(stairClimbTimer / stairClimbDuration, 0, 1);
-      const eased = progress * progress * (3 - 2 * progress);
-      const descending = stairClimbDirection === 'down';
-      player.position.set(
-        stairX,
-        descending ? 4.35 * (1 - eased) : 4.35 * eased,
-        descending
-          ? THREE.MathUtils.lerp(stairTopZ - 0.12, stairBottomZ + 0.12, eased)
-          : THREE.MathUtils.lerp(stairBottomZ + 0.12, stairTopZ - 0.12, eased)
-      );
-      player.rotation.y = descending ? 0 : Math.PI;
-      if (progress >= 1) {
-        player.position.set(stairX, descending ? 0 : 4.35, descending ? stairBottomZ + 0.12 : stairTopZ - 0.12);
-        stairClimbState = 'idle';
-        stairClimbDirection = 'up';
-        stairClimbTimer = 0;
-        return false;
-      }
-      return true;
-    },
-    isNearStairs(x, z) {
-      if (!interior.visible) return false;
-      const nearBottom = Math.hypot(x - stairX, z - stairBottomZ) <= 2.0;
-      const nearTop = Math.hypot(x - stairX, z - (stairTopZ - 0.12)) <= 2.0;
-      return nearBottom || nearTop;
     },
     isNearLift(x, z) {
       return interior.visible && Math.hypot(x - 102.8, z - 1.9) <= 1.8;
