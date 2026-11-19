@@ -1,7 +1,7 @@
 {
   "name": "city-of-shadows",
   "private": true,
-  "version": "0.5.4",
+  "version": "0.5.5",
   "type": "module",
   "description": "COS - City of Shadows, an original African open-world 3D action-adventure game.",
   "scripts": {
