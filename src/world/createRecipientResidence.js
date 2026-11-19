@@ -136,15 +136,16 @@ export function createRecipientResidence(scene) {
   const lobbyZ = 2;
   // The lobby is deliberately wider than the original blockout, leaving a
   // clear walking area around the reception counter, seating and lift.
-  addBox(interior, [16, 0.24, 20], [lobbyX, -0.12, lobbyZ], floor);
-  addBox(interior, [16.4, 0.3, 20.4], [lobbyX, -0.34, lobbyZ], dark);
+  // Expanded ground-floor lobby: a much wider and deeper open room.
+  addBox(interior, [24, 0.24, 26], [lobbyX, -0.12, lobbyZ], floor);
+  addBox(interior, [24.4, 0.3, 26.4], [lobbyX, -0.34, lobbyZ], dark);
 
-  // Enclosing ground-floor walls, with a wide front doorway.
-  addSolid(interior, [0.25, 4.4, 20], [98, 2.2, 2], cream, colliders, 0, 4.4);
-  addSolid(interior, [0.25, 4.4, 20], [114, 2.2, 2], cream, colliders, 0, 4.4);
-  addSolid(interior, [16, 4.4, 0.25], [106, 2.2, -8], cream, colliders, 0, 4.4);
-  addSolid(interior, [5.8, 4.4, 0.25], [100.9, 2.2, 12], cream, colliders, 0, 4.4);
-  addSolid(interior, [5.8, 4.4, 0.25], [111.1, 2.2, 12], cream, colliders, 0, 4.4);
+  // Enclosing ground-floor walls, preserving the wide front entrance.
+  addSolid(interior, [0.25, 4.4, 26], [94, 2.2, 2], cream, colliders, 0, 4.4);
+  addSolid(interior, [0.25, 4.4, 26], [118, 2.2, 2], cream, colliders, 0, 4.4);
+  addSolid(interior, [24, 4.4, 0.25], [106, 2.2, -11], cream, colliders, 0, 4.4);
+  addSolid(interior, [6.9, 4.4, 0.25], [97.45, 2.2, 15], cream, colliders, 0, 4.4);
+  addSolid(interior, [6.9, 4.4, 0.25], [114.55, 2.2, 15], cream, colliders, 0, 4.4);
 
   // Lobby columns, reception console, seating and warm ceiling fixtures.
   for (const x of [101.3, 110.7]) {
@@ -209,8 +210,12 @@ export function createRecipientResidence(scene) {
     minY: 0, maxY: 4.4
   });
 
-  // Upper level is built in sections so the stair opening remains open.
+  // Upper level includes broad open wings around the reception and stairwell.
   addBox(interior, [6.5, 0.22, 10], [103.25, 4.35, -3], floor);
+  addBox(interior, [3.0, 0.22, 17], [98.0, 4.35, -3.5], floor);
+  addBox(interior, [3.0, 0.22, 17], [114.0, 4.35, -3.5], floor);
+  addBox(interior, [16, 0.22, 2.6], [106, 4.35, -13.0], floor);
+  addBox(interior, [16, 0.22, 2.0], [106, 4.35, 5.0], floor);
   addBox(interior, [3.0, 0.22, 3.2], [109.5, 4.35, -6.4], floor);
   addBox(interior, [3.0, 0.22, 3.4], [109.5, 4.35, 2.2], floor);
   addBox(interior, [3.0, 0.22, 2.0], [109.5, 4.35, -3.9], floor);
@@ -218,8 +223,8 @@ export function createRecipientResidence(scene) {
   addBox(interior, [3.0, 0.22, 2.2], [109.5, 4.35, -2.0], floor);
 
   // Upper corridor and enclosed private office with a real doorway.
-  addSolid(interior, [0.22, 2.8, 7.8], [100.5, 5.85, -3.1], cream, colliders, 4.4, 7.3);
-  addSolid(interior, [0.22, 2.8, 7.8], [111.5, 5.85, -3.1], cream, colliders, 4.4, 7.3);
+  addSolid(interior, [0.22, 2.8, 18.0], [96.5, 5.85, -3.1], cream, colliders, 4.4, 7.3);
+  addSolid(interior, [0.22, 2.8, 18.0], [115.5, 5.85, -3.1], cream, colliders, 4.4, 7.3);
   addSolid(interior, [4.4, 2.8, 0.22], [102.9, 5.85, -7], cream, colliders, 4.4, 7.3);
   addSolid(interior, [4.4, 2.8, 0.22], [109.1, 5.85, -7], cream, colliders, 4.4, 7.3);
   addSolid(interior, [0.22, 2.8, 4.8], [109.5, 5.85, -3.1], cream, colliders, 4.4, 7.3);
@@ -388,7 +393,7 @@ export function createRecipientResidence(scene) {
 
   function getBaseFloorY(x, z, currentY = 0) {
     if (!interior.visible) return 0;
-    const onUpper = x >= 100.8 && x <= 111.2 && z >= -12.1 && z <= 4.8;
+    const onUpper = x >= 96.8 && x <= 115.2 && z >= -14.2 && z <= 5.8;
     if (currentY > 3.8 && onUpper) return 4.35;
     return 0;
   }
