@@ -380,6 +380,7 @@ export function createRecipientResidence(scene) {
   let liftState = 'idle';
   let liftTimer = 0;
   let stairClimbState = 'idle';
+  let stairClimbDirection = 'up';
   let stairClimbTimer = 0;
   const stairClimbDuration = 2.8;
   function setLiftDoors(open) {
@@ -489,12 +490,23 @@ export function createRecipientResidence(scene) {
     },
     isOnStairs,
     isStairClimbing() { return stairClimbState !== 'idle'; },
+    isStairDescending() { return stairClimbState === 'descending'; },
     startStairClimb(player) {
       if (!interior.visible || stairClimbState !== 'idle' || player.position.y > 2.5) return false;
       stairClimbState = 'climbing';
+      stairClimbDirection = 'up';
       stairClimbTimer = 0;
       player.position.set(stairX, 0, stairBottomZ + 0.12);
       player.rotation.y = Math.PI;
+      return true;
+    },
+    startStairDescent(player) {
+      if (!interior.visible || stairClimbState !== 'idle' || player.position.y <= 2.5) return false;
+      stairClimbState = 'descending';
+      stairClimbDirection = 'down';
+      stairClimbTimer = 0;
+      player.position.set(stairX, 4.35, stairTopZ - 0.12);
+      player.rotation.y = 0;
       return true;
     },
     updateStairClimb(delta, player) {
@@ -502,22 +514,29 @@ export function createRecipientResidence(scene) {
       stairClimbTimer = Math.min(stairClimbDuration, stairClimbTimer + delta);
       const progress = THREE.MathUtils.clamp(stairClimbTimer / stairClimbDuration, 0, 1);
       const eased = progress * progress * (3 - 2 * progress);
+      const descending = stairClimbDirection === 'down';
       player.position.set(
         stairX,
-        4.35 * eased,
-        THREE.MathUtils.lerp(stairBottomZ + 0.12, stairTopZ - 0.12, eased)
+        descending ? 4.35 * (1 - eased) : 4.35 * eased,
+        descending
+          ? THREE.MathUtils.lerp(stairTopZ - 0.12, stairBottomZ + 0.12, eased)
+          : THREE.MathUtils.lerp(stairBottomZ + 0.12, stairTopZ - 0.12, eased)
       );
-      player.rotation.y = Math.PI;
+      player.rotation.y = descending ? 0 : Math.PI;
       if (progress >= 1) {
-        player.position.set(stairX, 4.35, stairTopZ - 0.12);
+        player.position.set(stairX, descending ? 0 : 4.35, descending ? stairBottomZ + 0.12 : stairTopZ - 0.12);
         stairClimbState = 'idle';
+        stairClimbDirection = 'up';
         stairClimbTimer = 0;
         return false;
       }
       return true;
     },
     isNearStairs(x, z) {
-      return interior.visible && Math.hypot(x - stairX, z - stairBottomZ) <= 2.0;
+      if (!interior.visible) return false;
+      const nearBottom = Math.hypot(x - stairX, z - stairBottomZ) <= 2.0;
+      const nearTop = Math.hypot(x - stairX, z - (stairTopZ - 0.12)) <= 2.0;
+      return nearBottom || nearTop;
     },
     isNearLift(x, z) {
       return interior.visible && Math.hypot(x - 102.8, z - 1.9) <= 1.8;
