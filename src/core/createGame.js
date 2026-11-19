@@ -627,29 +627,6 @@ export function createGame(root) {
       return;
     }
 
-    if (nearStairs && playerFloorY > 2.5 && missionManager.getState().status !== 'inactive') {
-      if (residence.startStairDescent(activeCharacter.group)) {
-        resetStick();
-        keys.clear();
-        onGround = true;
-        jumpVelocity = 0;
-        showMissionNotice('STAIRCASE · RETURNING TO THE LOBBY');
-      }
-      return;
-    }
-
-    if (nearStairs && playerFloorY <= 2.5 && missionManager.getState().status !== 'inactive') {
-      if (residence.startStairClimb(activeCharacter.group)) {
-        resetStick();
-        keys.clear();
-        playerFloorY = 0;
-        onGround = true;
-        jumpVelocity = 0;
-        showMissionNotice('STAIRCASE · CLIMBING UPSTAIRS');
-      }
-      return;
-    }
-
     if (stage === 'open-office-door' && nearOfficeDoor) {
       residence.openOfficeDoor();
       missionManager.setStage('opening-office-door', 'Wait while the private office doors open.');
@@ -812,12 +789,6 @@ export function createGame(root) {
         } else if (missionState.stage === 'enter-estate' && nearMansionDoor) {
           promptText = 'ENTER MANSION';
           promptVisible = true;
-        } else if (nearStairs && playerFloorY > 2.5 && missionState.status !== 'inactive') {
-          promptText = 'DESCEND THE STAIRS';
-          promptVisible = true;
-        } else if (nearStairs && playerFloorY <= 2.5 && missionState.status !== 'inactive') {
-          promptText = 'CLIMB THE STAIRS';
-          promptVisible = true;
         } else if (nearLift && playerFloorY < 2.5
           && ['climb-stairs', 'take-lift', 'meet-secretary', 'secretary-stand', 'follow-secretary', 'open-office-door', 'opening-office-door', 'meet-recipient', 'completed'].includes(missionState.stage)) {
           promptText = 'TAKE ELEVATOR UP';
@@ -890,26 +861,6 @@ export function createGame(root) {
         );
       }
 
-      if (residence.isStairClimbing()) {
-        const descendingStairs = residence.isStairDescending();
-        const stairStillClimbing = residence.updateStairClimb(delta, activeCharacter.group);
-        if (!stairStillClimbing) {
-          playerFloorY = descendingStairs ? 0 : 4.35;
-          activeCharacter.group.position.y = playerFloorY;
-          onGround = true;
-          jumpVelocity = 0;
-          if (descendingStairs) {
-            showMissionNotice('MAIN LOBBY · YOU ARE BACK DOWNSTAIRS');
-          } else if (missionManager.getState().stage === 'climb-stairs') {
-            secretary.group.visible = true;
-            missionManager.setStage('meet-secretary', 'Go to the upstairs reception desk and speak to the secretary.');
-            showMissionNotice('UPPER FLOOR · RECEPTION');
-          } else {
-            showMissionNotice('UPPER FLOOR · RECEPTION');
-          }
-        }
-      }
-
       if (residence.isLiftRunning()) {
         const liftStillRunning = residence.updateLift(delta, activeCharacter.group);
         if (!liftStillRunning) {
@@ -927,7 +878,7 @@ export function createGame(root) {
         }
       }
 
-      const movementLocked = dialogueOpen || transportChoiceOpen || secretaryStandingUp || residence.isStairClimbing() || residence.isLiftRunning() || residence.isEnteringInterior() || residence.isExitingInterior() || residence.isOfficeDoorOpening() || residence.isGateOpening();
+      const movementLocked = dialogueOpen || transportChoiceOpen || secretaryStandingUp || residence.isLiftRunning() || residence.isEnteringInterior() || residence.isExitingInterior() || residence.isOfficeDoorOpening() || residence.isGateOpening();
       let inputX = movementLocked ? 0 : stickState.x;
       let inputZ = movementLocked ? 0 : stickState.y;
       if (!movementLocked && (keys.has('a') || keys.has('arrowleft'))) inputX -= 1;
@@ -973,13 +924,18 @@ export function createGame(root) {
             activeCharacter.group.position.z,
             playerFloorY
           );
-          if (supportedFloor < playerFloorY - 0.08) {
+          if (supportedFloor < playerFloorY - 0.08 && !residence.isOnStairs(activeCharacter.group.position.x, activeCharacter.group.position.z)) {
             playerFloorY = supportedFloor;
             onGround = false;
             jumpVelocity = 0;
           } else {
             playerFloorY = supportedFloor;
             activeCharacter.group.position.y = playerFloorY;
+          }
+          if (playerFloorY >= 3.8 && missionManager.getState().stage === 'climb-stairs') {
+            secretary.group.visible = true;
+            missionManager.setStage('meet-secretary', 'Go to the upstairs reception desk and speak to the secretary.');
+            showMissionNotice('UPPER FLOOR · RECEPTION');
           }
         }
         activeCharacter.group.rotation.y = Math.atan2(movement.x, movement.z);
