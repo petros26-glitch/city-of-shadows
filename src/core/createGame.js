@@ -638,7 +638,7 @@ export function createGame(root) {
       return;
     }
 
-    if (stage === 'climb-stairs' && nearStairs && playerFloorY <= 2.5) {
+    if (nearStairs && playerFloorY <= 2.5 && missionManager.getState().status !== 'inactive') {
       if (residence.startStairClimb(activeCharacter.group)) {
         resetStick();
         keys.clear();
@@ -815,7 +815,7 @@ export function createGame(root) {
         } else if (nearStairs && playerFloorY > 2.5 && missionState.status !== 'inactive') {
           promptText = 'DESCEND THE STAIRS';
           promptVisible = true;
-        } else if (missionState.stage === 'climb-stairs' && nearStairs && playerFloorY <= 2.5) {
+        } else if (nearStairs && playerFloorY <= 2.5 && missionState.status !== 'inactive') {
           promptText = 'CLIMB THE STAIRS';
           promptVisible = true;
         } else if (nearLift && playerFloorY < 2.5
@@ -900,9 +900,11 @@ export function createGame(root) {
           jumpVelocity = 0;
           if (descendingStairs) {
             showMissionNotice('MAIN LOBBY · YOU ARE BACK DOWNSTAIRS');
-          } else {
+          } else if (missionManager.getState().stage === 'climb-stairs') {
             secretary.group.visible = true;
             missionManager.setStage('meet-secretary', 'Go to the upstairs reception desk and speak to the secretary.');
+            showMissionNotice('UPPER FLOOR · RECEPTION');
+          } else {
             showMissionNotice('UPPER FLOOR · RECEPTION');
           }
         }
