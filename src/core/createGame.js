@@ -627,7 +627,18 @@ export function createGame(root) {
       return;
     }
 
-    if (stage === 'climb-stairs' && nearStairs) {
+    if (nearStairs && playerFloorY > 2.5 && missionManager.getState().status !== 'inactive') {
+      if (residence.startStairDescent(activeCharacter.group)) {
+        resetStick();
+        keys.clear();
+        onGround = true;
+        jumpVelocity = 0;
+        showMissionNotice('STAIRCASE · RETURNING TO THE LOBBY');
+      }
+      return;
+    }
+
+    if (stage === 'climb-stairs' && nearStairs && playerFloorY <= 2.5) {
       if (residence.startStairClimb(activeCharacter.group)) {
         resetStick();
         keys.clear();
@@ -801,7 +812,10 @@ export function createGame(root) {
         } else if (missionState.stage === 'enter-estate' && nearMansionDoor) {
           promptText = 'ENTER MANSION';
           promptVisible = true;
-        } else if (missionState.stage === 'climb-stairs' && nearStairs) {
+        } else if (nearStairs && playerFloorY > 2.5 && missionState.status !== 'inactive') {
+          promptText = 'DESCEND THE STAIRS';
+          promptVisible = true;
+        } else if (missionState.stage === 'climb-stairs' && nearStairs && playerFloorY <= 2.5) {
           promptText = 'CLIMB THE STAIRS';
           promptVisible = true;
         } else if (nearLift && playerFloorY < 2.5
@@ -877,15 +891,20 @@ export function createGame(root) {
       }
 
       if (residence.isStairClimbing()) {
+        const descendingStairs = residence.isStairDescending();
         const stairStillClimbing = residence.updateStairClimb(delta, activeCharacter.group);
         if (!stairStillClimbing) {
-          playerFloorY = 4.35;
+          playerFloorY = descendingStairs ? 0 : 4.35;
           activeCharacter.group.position.y = playerFloorY;
           onGround = true;
           jumpVelocity = 0;
-          secretary.group.visible = true;
-          missionManager.setStage('meet-secretary', 'Go to the upstairs reception desk and speak to the secretary.');
-          showMissionNotice('UPPER FLOOR · RECEPTION');
+          if (descendingStairs) {
+            showMissionNotice('MAIN LOBBY · YOU ARE BACK DOWNSTAIRS');
+          } else {
+            secretary.group.visible = true;
+            missionManager.setStage('meet-secretary', 'Go to the upstairs reception desk and speak to the secretary.');
+            showMissionNotice('UPPER FLOOR · RECEPTION');
+          }
         }
       }
 
