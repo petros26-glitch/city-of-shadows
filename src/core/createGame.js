@@ -339,9 +339,7 @@ export function createGame(root) {
   const missionObjective = document.querySelector('#mission-objective');
   const missionReward = document.querySelector('#mission-reward');
   const missionNotice = document.querySelector('#mission-notice');
-  const transportChoice = document.querySelector('#transport-choice');
-  const transportButtons = document.querySelectorAll('[data-transport]');
-  let transportChoiceOpen = false;
+
   let nearPackage = false;
   let nearRecipient = false;
   let nearSecretary = false;
@@ -349,7 +347,6 @@ export function createGame(root) {
   let nearMansionDoor = false;
   let nearOfficeDoor = false;
   let nearExit = false;
-  let nearStairs = false;
   let nearLift = false;
   let playerFloorY = 0;
   let dialoguePurpose = null;
@@ -398,29 +395,6 @@ export function createGame(root) {
     if (interactionPrompt) interactionPrompt.hidden = true;
   }
 
-  function handleTransportChoice(event) {
-    const method = event.currentTarget.dataset.transport;
-    transportChoiceOpen = false;
-    if (transportChoice) transportChoice.hidden = true;
-    resetStick();
-    keys.clear();
-
-    if (method === 'stairs') {
-      missionManager.setStage('climb-stairs', 'Walk to the staircase or elevator and reach the upstairs reception desk.');
-      showMissionNotice('STAIRCASE SELECTED · WALK UPSTAIRS');
-      return;
-    }
-
-    if (method === 'lift' && residence.startLiftRide(activeCharacter.group)) {
-      playerFloorY = 0;
-      onGround = true;
-      jumpVelocity = 0;
-      missionManager.setStage('climb-stairs', 'Ride the elevator to the upstairs reception desk.');
-      showMissionNotice('LIFT SELECTED · GOING UP');
-    }
-  }
-
-  transportButtons.forEach((button) => button.addEventListener('click', handleTransportChoice));
   let animationFrame = 0;
   let running = false;
   let jumpVelocity = 0;
@@ -466,10 +440,10 @@ export function createGame(root) {
   }
 
   function jump() {
-    if (!gameStarted || dialogueOpen || transportChoiceOpen
+    if (!gameStarted || dialogueOpen
       || secretaryStandingUp || residence.isLiftRunning() || residence.isEnteringInterior()
       || residence.isExitingInterior() || residence.isOfficeDoorOpening() || residence.isGateOpening()
-      || !onGround || residence.isOnStairs(activeCharacter.group.position.x, activeCharacter.group.position.z)) return;
+      || !onGround) return;
     jumpVelocity = 6.2;
     onGround = false;
   }
@@ -541,8 +515,6 @@ export function createGame(root) {
       return;
     }
 
-    if (transportChoiceOpen) return;
-
     const stage = missionManager.getState().stage;
     if (stage === 'meet-kola' && nearNpc) {
       openDialogue('KOLA · KIOSK OWNER', 'LOCAL CONNECTION', [
@@ -591,14 +563,14 @@ export function createGame(root) {
           camera.position.copy(controls.target).add(cameraOffset);
           controls.update();
         }
-        missionManager.setStage('climb-stairs', 'Explore the lobby, then climb the visible staircase or take the elevator to the upstairs reception desk.');
+        missionManager.setStage('take-lift', 'Use the elevator in the main lobby to reach the upstairs reception desk.');
         showMissionNotice('THE MAIN DOORS ARE OPENING');
       }
       return;
     }
 
     if (nearLift && playerFloorY < 2.5
-      && ['climb-stairs', 'take-lift', 'meet-secretary', 'secretary-stand', 'follow-secretary', 'open-office-door', 'opening-office-door', 'meet-recipient', 'completed'].includes(stage)) {
+      && ['take-lift', 'take-lift', 'meet-secretary', 'secretary-stand', 'follow-secretary', 'open-office-door', 'opening-office-door', 'meet-recipient', 'completed'].includes(stage)) {
       if (residence.startLiftRide(activeCharacter.group)) {
         playerFloorY = 0;
         onGround = true;
@@ -759,8 +731,7 @@ export function createGame(root) {
       nearMansionDoor = !residence.isInterior() && playerPosition.x >= 16.35 && playerPosition.x <= 17.65 && playerPosition.z >= -34.45 && playerPosition.z <= -32.85;
       nearOfficeDoor = residence.isNearOfficeDoor(playerPosition.x, playerPosition.z);
       nearExit = residence.isNearExit(playerPosition.x, playerPosition.z);
-      nearStairs = residence.isNearStairs(playerPosition.x, playerPosition.z);
-      nearLift = residence.isNearLift(playerPosition.x, playerPosition.z);
+            nearLift = residence.isNearLift(playerPosition.x, playerPosition.z);
       const missionState = missionManager.getState();
       if (locationLabel) {
         if (residence.isInterior()) {
@@ -790,7 +761,7 @@ export function createGame(root) {
           promptText = 'ENTER MANSION';
           promptVisible = true;
         } else if (nearLift && playerFloorY < 2.5
-          && ['climb-stairs', 'take-lift', 'meet-secretary', 'secretary-stand', 'follow-secretary', 'open-office-door', 'opening-office-door', 'meet-recipient', 'completed'].includes(missionState.stage)) {
+          && ['take-lift', 'take-lift', 'meet-secretary', 'secretary-stand', 'follow-secretary', 'open-office-door', 'opening-office-door', 'meet-recipient', 'completed'].includes(missionState.stage)) {
           promptText = 'TAKE ELEVATOR UP';
           promptVisible = true;
         } else if (nearLift && playerFloorY > 2.5 && missionState.stage !== 'inactive') {
@@ -809,7 +780,7 @@ export function createGame(root) {
           promptText = 'EXIT MANSION';
           promptVisible = true;
         }
-        interactionPrompt.hidden = !promptVisible || dialogueOpen || residence.isStairClimbing() || residence.isLiftRunning() || residence.isOfficeDoorOpening() || residence.isExitingInterior();
+        interactionPrompt.hidden = !promptVisible || dialogueOpen || residence.isLiftRunning() || residence.isOfficeDoorOpening() || residence.isExitingInterior();
         if (interactionLabel) interactionLabel.textContent = promptText;
       }
 
@@ -868,7 +839,7 @@ export function createGame(root) {
           onGround = true;
           jumpVelocity = 0;
           if (playerFloorY > 2.5 && missionManager.getState().status === 'active'
-            && missionManager.getState().stage === 'climb-stairs') {
+            && missionManager.getState().stage === 'take-lift') {
             secretary.group.visible = true;
             missionManager.setStage('meet-secretary', 'Go to the upstairs reception desk and speak to the secretary.');
             showMissionNotice('UPPER FLOOR · RECEPTION');
@@ -878,7 +849,7 @@ export function createGame(root) {
         }
       }
 
-      const movementLocked = dialogueOpen || transportChoiceOpen || secretaryStandingUp || residence.isLiftRunning() || residence.isEnteringInterior() || residence.isExitingInterior() || residence.isOfficeDoorOpening() || residence.isGateOpening();
+      const movementLocked = dialogueOpen || secretaryStandingUp || residence.isLiftRunning() || residence.isEnteringInterior() || residence.isExitingInterior() || residence.isOfficeDoorOpening() || residence.isGateOpening();
       let inputX = movementLocked ? 0 : stickState.x;
       let inputZ = movementLocked ? 0 : stickState.y;
       if (!movementLocked && (keys.has('a') || keys.has('arrowleft'))) inputX -= 1;
@@ -924,18 +895,13 @@ export function createGame(root) {
             activeCharacter.group.position.z,
             playerFloorY
           );
-          if (supportedFloor < playerFloorY - 0.08 && !residence.isOnStairs(activeCharacter.group.position.x, activeCharacter.group.position.z)) {
+          if (supportedFloor < playerFloorY - 0.08) {
             playerFloorY = supportedFloor;
             onGround = false;
             jumpVelocity = 0;
           } else {
             playerFloorY = supportedFloor;
             activeCharacter.group.position.y = playerFloorY;
-          }
-          if (playerFloorY >= 3.8 && missionManager.getState().stage === 'climb-stairs') {
-            secretary.group.visible = true;
-            missionManager.setStage('meet-secretary', 'Go to the upstairs reception desk and speak to the secretary.');
-            showMissionNotice('UPPER FLOOR · RECEPTION');
           }
         }
         activeCharacter.group.rotation.y = Math.atan2(movement.x, movement.z);
@@ -1101,7 +1067,6 @@ export function createGame(root) {
       jumpButton?.removeEventListener('pointerdown', jump);
       actionButton?.removeEventListener('pointerdown', handleActionDown);
       dialogueNextButton?.removeEventListener('click', handleDialogueNext);
-      transportButtons.forEach((button) => button.removeEventListener('click', handleTransportChoice));
       window.clearTimeout(actionPressTimer);
       window.clearTimeout(missionNoticeTimer);
       renderer.domElement.removeEventListener('webglcontextlost', handleContextLost);
