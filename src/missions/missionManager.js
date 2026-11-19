@@ -10,8 +10,7 @@ export function createMissionManager(onChange = () => {}) {
     mission: MISSION.title,
     stage: 'meet-kola',
     objective: 'Find Kola at his kiosk.',
-    reward: 0,
-    approach: null
+    reward: 0
   };
 
   function publish() {
@@ -31,20 +30,6 @@ export function createMissionManager(onChange = () => {}) {
     publish();
   }
 
-  function chooseApproach(approach) {
-    if (state.status !== 'active' || state.stage !== 'choose-approach') return;
-    state.approach = approach;
-    if (approach === 'run') {
-      setStage('escape', 'Get away from the two men.');
-      return;
-    }
-    if (approach === 'fight') {
-      setStage('fight', 'Stand your ground and get past the two men.');
-      return;
-    }
-    setStage('talk', 'Speak to the two men.');
-  }
-
   function complete() {
     if (state.status !== 'active') return;
     state.status = 'completed';
@@ -58,7 +43,6 @@ export function createMissionManager(onChange = () => {}) {
     state,
     start,
     setStage,
-    chooseApproach,
     complete,
     getState: () => ({ ...state })
   };
