@@ -202,13 +202,6 @@ export function createRecipientResidence(scene) {
     rail.rotation.x = -Math.atan(4.35 / 7);
     colliders.push({ minX: x - 0.09, maxX: x + 0.09, minZ: -1.95, maxZ: 5.35, minY: 0, maxY: 4.7 });
   }
-  // Keep the stairwell physically blocked to free movement. The E-triggered
-  // stair animation moves the player through this volume without manual input.
-  colliders.push({
-    minX: 107.95, maxX: 110.05,
-    minZ: stairTopZ - 0.35, maxZ: stairBottomZ + 0.35,
-    minY: 0, maxY: 4.4
-  });
 
   // Upper level includes broad open wings around the reception and stairwell.
   addBox(interior, [6.5, 0.22, 10], [103.25, 4.35, -3], floor);
@@ -394,6 +387,14 @@ export function createRecipientResidence(scene) {
 
   function getBaseFloorY(x, z, currentY = 0) {
     if (!interior.visible) return 0;
+    if (isOnStairs(x, z)) {
+      const step = THREE.MathUtils.clamp(
+        Math.floor((stairBottomZ - z + 0.35) / 0.7),
+        0,
+        10
+      );
+      return step * 0.435;
+    }
     const onUpper = x >= 96.8 && x <= 115.2 && z >= -14.2 && z <= 5.8;
     if (currentY > 3.8 && onUpper) return 4.35;
     return 0;
