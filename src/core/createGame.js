@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { createStarterDistrict } from '../world/createStarterDistrict.js';
+import { createOriyabaExpansion } from '../world/createOriyabaExpansion.js';
 import { createProtagonists } from '../characters/createProtagonists.js';
 import { createMissionManager } from '../missions/missionManager.js';
 import { createRecipientResidence } from '../world/createRecipientResidence.js';
@@ -54,6 +55,7 @@ export function createGame(root) {
   scene.add(moonLight);
 
   const districtColliders = createStarterDistrict(scene);
+  const oriyabaExpansion = createOriyabaExpansion(scene);
 
   const protagonists = createProtagonists(scene);
   let selectedIndex = 0;
@@ -235,8 +237,8 @@ export function createGame(root) {
   secretary.group.position.copy(residence.secretaryPosition);
   secretary.group.visible = false;
   secretary.marker.visible = false;
-  const collisionWorld = createCollisionWorld([...districtColliders, ...residence.colliders]);
-  const collisionActors = [npc, gatekeeper.group, secretary.group, recipient.group];
+  const collisionWorld = createCollisionWorld([...districtColliders, ...oriyabaExpansion.colliders, ...residence.colliders]);
+  const collisionActors = [npc, ...oriyabaExpansion.actors, gatekeeper.group, secretary.group, recipient.group];
 
   const packagePickup = new THREE.Group();
   packagePickup.position.set(6.4, 0, -6.5);
@@ -717,6 +719,7 @@ export function createGame(root) {
     const delta = Math.min(clock.getDelta(), 0.05);
 
     if (gameStarted) {
+      oriyabaExpansion.update(delta, activeCharacter.group.position);
       const npcDistance = Math.hypot(
         activeCharacter.group.position.x - npc.position.x,
         activeCharacter.group.position.z - npc.position.z
