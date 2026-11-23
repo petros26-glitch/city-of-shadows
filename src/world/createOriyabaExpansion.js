@@ -113,7 +113,7 @@ export function createOriyabaExpansion(scene) {
 
   // Public-service buildings occupy the open eastern plots, not the mansion estate.
   makePublicBuilding(scene, 21.0, -3.0, 'POLICE OUTPOST', 0x71808a, colliders, false);
-  makePublicBuilding(scene, 21.0, 18.0, 'COMMUNITY CLINIC', 0xb6b8a9, colliders, true);
+  makePublicBuilding(scene, 21.0, 39.0, 'COMMUNITY CLINIC', 0xb6b8a9, colliders, true);
 
   // Everyday compound details: water drums, laundry lines and benches.
   const drumMaterial = new THREE.MeshStandardMaterial({ color: 0x315d78, roughness: 0.82 });
