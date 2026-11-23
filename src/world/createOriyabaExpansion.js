@@ -7,7 +7,7 @@ function box(parent, size, position, material) {
   return mesh;
 }
 
-function makePedestrian(scene, x, z, shirtColor, route) {
+function makePedestrian(scene, x, z, shirtColor, route, scale = 1) {
   const group = new THREE.Group();
   group.position.set(x, 0, z);
   const skin = new THREE.MeshStandardMaterial({ color: 0x805039, roughness: 0.95 });
@@ -36,8 +36,9 @@ function makePedestrian(scene, x, z, shirtColor, route) {
     group.add(arm);
     arms.push(arm);
   }
+  group.scale.setScalar(scale);
   scene.add(group);
-  return { group, legs, arms, route, routeIndex: 1, walkTime: Math.random() * 6, pause: Math.random() * 2 };
+  return { group, legs, arms, route, routeIndex: 1, walkTime: 1.7, pause: 0.8 };
 }
 
 function makeShopStall(scene, x, z, color, sign, colliders) {
@@ -85,7 +86,20 @@ function makePublicBuilding(scene, x, z, title, wallColor, colliders, isClinic =
   box(group, [1.1, 1.15, 0.08], [-1.25, 1.55, 2.14], trim);
   box(group, [1.1, 1.15, 0.08], [1.25, 1.55, 2.14], trim);
   box(group, [0.95, 1.95, 0.12], [0, 0.98, 2.15], roof);
-  const sign = new THREE.MeshStandardMaterial({ color: isClinic ? 0x2f7768 : 0x284e68, roughness: 0.9 });
+  const signCanvas = document.createElement('canvas');
+  signCanvas.width = 512;
+  signCanvas.height = 96;
+  const context = signCanvas.getContext('2d');
+  context.fillStyle = isClinic ? '#2f7768' : '#284e68';
+  context.fillRect(0, 0, signCanvas.width, signCanvas.height);
+  context.fillStyle = '#ffffff';
+  context.font = 'bold 38px Arial';
+  context.textAlign = 'center';
+  context.textBaseline = 'middle';
+  context.fillText(title, 256, 48, 490);
+  const signTexture = new THREE.CanvasTexture(signCanvas);
+  signTexture.colorSpace = THREE.SRGBColorSpace;
+  const sign = new THREE.MeshStandardMaterial({ map: signTexture, roughness: 0.9 });
   box(group, [2.6, 0.45, 0.12], [0, 2.25, 2.2], sign);
   if (isClinic) {
     box(group, [0.65, 0.12, 0.16], [0, 2.25, 2.31], trim);
@@ -146,6 +160,14 @@ export function createOriyabaExpansion(scene) {
   for (const [x, z, shirt, route] of people) {
     pedestrians.push(makePedestrian(scene, x, z, shirt, route));
   }
+  // Children playing near the residential end of the street.
+  pedestrians.push(makePedestrian(scene, -3.5, 30.2, 0xc18a36, routeC, 0.72));
+  pedestrians.push(makePedestrian(scene, 3.5, 29.0, 0x477b8b, routeC, 0.72));
+  // Visible public-service staff make both neighbourhood facilities feel occupied.
+  pedestrians.push(makePedestrian(scene, 20.0, 0.05, 0x284d70,
+    [{ x: 19.0, z: 0.05 }, { x: 23.0, z: 0.05 }]));
+  pedestrians.push(makePedestrian(scene, 20.0, 42.0, 0x477b70,
+    [{ x: 19.0, z: 42.0 }, { x: 23.0, z: 42.0 }]));
 
   function update(delta, playerPosition) {
     for (const pedestrian of pedestrians) {
