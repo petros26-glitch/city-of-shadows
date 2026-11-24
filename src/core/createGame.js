@@ -15,8 +15,11 @@ export function createGame(root) {
   const frameInterval = isTouchDevice ? 1000 / 30 : 0;
 
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x080d17);
-  scene.fog = new THREE.Fog(0x080d17, 42, 115);
+  // Warm, clear daytime atmosphere: keep distant streets softly hazy without
+  // making the whole neighbourhood look like it is permanently at night.
+  const daylightSky = new THREE.Color(0xa9cfe8);
+  scene.background = daylightSky;
+  scene.fog = new THREE.Fog(0xb8d2e1, 68, 175);
 
   const camera = new THREE.PerspectiveCamera(
     55,
@@ -43,16 +46,18 @@ export function createGame(root) {
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.05;
+  renderer.toneMappingExposure = 1.18;
   renderer.shadowMap.enabled = false;
   renderer.domElement.className = 'game-canvas';
   renderer.domElement.setAttribute('aria-label', 'Interactive 3D view of the COS starter district');
   root.prepend(renderer.domElement);
 
-  scene.add(new THREE.HemisphereLight(0x8297c5, 0x29251f, 1.35));
-  const moonLight = new THREE.DirectionalLight(0x9bb8ed, 1.15);
-  moonLight.position.set(-18, 30, 12);
-  scene.add(moonLight);
+  // Broad sky/ground fill keeps shaded building fronts and characters readable.
+  scene.add(new THREE.HemisphereLight(0xffedcf, 0x77705f, 1.9));
+  // Soft warm daylight gives the world natural colour and clearer shape definition.
+  const sunLight = new THREE.DirectionalLight(0xffe3b8, 2.0);
+  sunLight.position.set(-22, 38, 18);
+  scene.add(sunLight);
 
   const districtColliders = createStarterDistrict(scene);
   const oriyabaExpansion = createOriyabaExpansion(scene);
