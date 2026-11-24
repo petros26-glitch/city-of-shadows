@@ -561,8 +561,9 @@ export function createRecipientResidence(scene) {
       const direction = gateTargetOpen ? 1 : -1;
       gateOpenProgress = THREE.MathUtils.clamp(gateOpenProgress + direction * delta / 1.25, 0, 1);
       const eased = gateOpenProgress * gateOpenProgress * (3 - 2 * gateOpenProgress);
-      leftLeaf.rotation.y = eased * 1.42;
-      rightLeaf.rotation.y = -eased * 1.42;
+      // Swing both gate leaves inward into the estate, away from the gateman and street.
+      leftLeaf.rotation.y = -eased * 1.42;
+      rightLeaf.rotation.y = eased * 1.42;
       gateCollider.active = gateOpenProgress < 0.82;
       if ((gateTargetOpen && gateOpenProgress >= 1)
         || (!gateTargetOpen && gateOpenProgress <= 0)) {
