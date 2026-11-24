@@ -146,9 +146,11 @@ export function createOriyabaExpansion(scene) {
   makeShopStall(scene, 8.55, 19.0, 0x3d7771, 'PROVISIONS', colliders);
   makeShopStall(scene, 8.55, 22.0, 0x9b7940, 'SNACKS', colliders);
   // One stationary trader stands in front of each stall and can be approached.
-  for (const [z, shirt] of [[17.3, 0x8a4e35], [20.3, 0x3d665c], [23.3, 0x725a35]]) {
-    pedestrians.push(makePedestrian(scene, 8.55, z, shirt,
-      [{ x: 8.55, z }, { x: 8.55, z }], 1, 'vendor'));
+  for (const [z, shirt] of [[16.0, 0x8a4e35], [19.0, 0x3d665c], [22.0, 0x725a35]]) {
+    const vendor = makePedestrian(scene, 7.0, z, shirt,
+      [{ x: 7.0, z }, { x: 7.0, z }], 1, 'vendor');
+    vendor.group.rotation.y = -Math.PI / 2;
+    pedestrians.push(vendor);
   }
 
   // Public-service buildings occupy the open eastern plots, not the mansion estate.
