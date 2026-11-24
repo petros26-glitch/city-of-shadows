@@ -715,7 +715,7 @@ export function createGame(root) {
       return;
     }
 
-    if (nearbyExpansionNpc?.role === 'vendor') {
+    if (nearbyExpansionNpc?.role === 'vendor' || nearbyExpansionNpc?.role === 'style') {
       openWardrobe(true);
       return;
     }

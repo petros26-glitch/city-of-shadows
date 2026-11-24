@@ -44,6 +44,7 @@ function makePedestrian(scene, x, z, shirtColor, route, scale = 1, role = 'resid
     resident: 'ORIYABA RESIDENT',
     child: 'LOCAL CHILD',
     vendor: 'MARKET VENDOR',
+    style: 'STYLE ADVISOR',
     police: 'POLICE OFFICER',
     clinic: 'CLINIC WORKER'
   };
@@ -180,6 +181,66 @@ function makePublicBuilding(scene, x, z, title, wallColor, colliders, isClinic =
   }
   scene.add(group);
 }
+
+function makeStyleShop(scene, x, z, colliders) {
+  const group = new THREE.Group();
+  group.position.set(x, 0, z);
+  const wall = new THREE.MeshStandardMaterial({ color: 0xb6a58c, roughness: 0.95 });
+  const trim = new THREE.MeshStandardMaterial({ color: 0x263d4b, roughness: 0.85 });
+  const gold = new THREE.MeshStandardMaterial({ color: 0xd1a45f, metalness: 0.25, roughness: 0.6 });
+  const floor = new THREE.MeshStandardMaterial({ color: 0x8e877a, roughness: 1 });
+  const wood = new THREE.MeshStandardMaterial({ color: 0x65452f, roughness: 0.95 });
+  box(group, [4.5, 0.12, 4.8], [0, 0.02, 0], floor);
+  // Open-front shop: the central entrance remains wide enough for the player.
+  box(group, [4.5, 2.8, 0.18], [0, 1.4, -2.31], wall);
+  box(group, [0.18, 2.8, 4.8], [-2.16, 1.4, 0], wall);
+  box(group, [0.18, 2.8, 4.8], [2.16, 1.4, 0], wall);
+  box(group, [1.25, 2.8, 0.18], [-1.62, 1.4, 2.31], wall);
+  box(group, [1.25, 2.8, 0.18], [1.62, 1.4, 2.31], wall);
+  box(group, [4.75, 0.2, 0.35], [0, 2.85, 2.35], trim);
+  box(group, [4.75, 0.2, 0.35], [0, 2.85, -2.35], trim);
+  // Reception counter and lightweight clothing rails.
+  box(group, [2.0, 0.88, 0.58], [0, 0.48, -1.25], wood);
+  box(group, [2.08, 0.1, 0.64], [0, 0.96, -1.25], gold);
+  for (const side of [-1, 1]) {
+    box(group, [0.08, 1.55, 0.08], [side * 1.72, 1.0, -0.45], trim);
+    box(group, [0.08, 0.08, 1.35], [side * 1.72, 1.72, 0.15], gold);
+    for (let i = 0; i < 3; i += 1) {
+      const shirt = new THREE.Mesh(
+        new THREE.BoxGeometry(0.38, 0.52, 0.08),
+        new THREE.MeshStandardMaterial({ color: [0x3c7180, 0xb06c43, 0x496b4c][i], roughness: 0.95 })
+      );
+      shirt.position.set(side * 1.72, 1.34, -0.32 + i * 0.43);
+      group.add(shirt);
+    }
+  }
+  // Storefront sign is a small canvas texture to stay crisp at mobile resolution.
+  const canvas = document.createElement('canvas');
+  canvas.width = 512;
+  canvas.height = 96;
+  const context = canvas.getContext('2d');
+  context.fillStyle = '#263d4b';
+  context.fillRect(0, 0, 512, 96);
+  context.fillStyle = '#f3dfbd';
+  context.font = 'bold 36px Arial';
+  context.textAlign = 'center';
+  context.textBaseline = 'middle';
+  context.fillText('ORIYABA STYLE HOUSE', 256, 48, 490);
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  const signMaterial = new THREE.MeshStandardMaterial({ map: texture, roughness: 0.9 });
+  box(group, [3.3, 0.52, 0.1], [0, 2.25, 2.43], signMaterial);
+  scene.add(group);
+  colliders.push(
+    { minX: x - 2.25, maxX: x + 2.25, minZ: z - 2.4, maxZ: z - 2.22, minY: 0, maxY: 2.8 },
+    { minX: x - 2.25, maxX: x - 2.07, minZ: z - 2.4, maxZ: z + 2.4, minY: 0, maxY: 2.8 },
+    { minX: x + 2.07, maxX: x + 2.25, minZ: z - 2.4, maxZ: z + 2.4, minY: 0, maxY: 2.8 },
+    { minX: x - 2.25, maxX: x - 0.98, minZ: z + 2.22, maxZ: z + 2.4, minY: 0, maxY: 2.8 },
+    { minX: x + 0.98, maxX: x + 2.25, minZ: z + 2.22, maxZ: z + 2.4, minY: 0, maxY: 2.8 },
+    { minX: x - 1.0, maxX: x + 1.0, minZ: z - 1.6, maxZ: z - 0.9, minY: 0, maxY: 1.05 }
+  );
+}
+
 export function createOriyabaExpansion(scene) {
   const colliders = [];
   const pedestrians = [];
@@ -203,6 +264,8 @@ export function createOriyabaExpansion(scene) {
   // Public-service buildings occupy the open eastern plots, not the mansion estate.
   makePublicBuilding(scene, 21.0, -3.0, 'POLICE OUTPOST', 0x71808a, colliders, false);
   makePublicBuilding(scene, 21.0, 39.0, 'COMMUNITY CLINIC', 0xb6b8a9, colliders, true);
+  // A walk-in clothing and appearance shop gives Phase 2 a real in-world destination.
+  makeStyleShop(scene, 20.5, 19.5, colliders);
 
   // Everyday compound details: water drums, laundry lines and benches.
   const drumMaterial = new THREE.MeshStandardMaterial({ color: 0x315d78, roughness: 0.82 });
@@ -253,6 +316,8 @@ export function createOriyabaExpansion(scene) {
     [{ x: 19.0, z: 0.05 }, { x: 23.0, z: 0.05 }], 1, 'police'));
   pedestrians.push(makePedestrian(scene, 20.0, 42.0, 0x477b70,
     [{ x: 19.0, z: 42.0 }, { x: 23.0, z: 42.0 }], 1, 'clinic'));
+  pedestrians.push(makePedestrian(scene, 20.5, 19.6, 0x8b5938,
+    [{ x: 20.5, z: 19.6 }, { x: 20.5, z: 19.6 }], 1, 'style'));
 
   function update(delta, playerPosition) {
     for (const pedestrian of pedestrians) {
