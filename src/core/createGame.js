@@ -635,6 +635,11 @@ export function createGame(root) {
           'This part of Oriyaba is always busy. The market stalls are just down the road.',
           'Take care of yourself out here.'
         ],
+        vendor: [
+          'Welcome, my friend. What are you looking for today?',
+          'We have fresh produce, everyday provisions and small snacks here at the Oriyaba market.',
+          'Take your time and have a look around.'
+        ],
         child: [
           'Hello! Are you new around here?',
           'My friends and I play around this part of the street. Watch where you step!',
