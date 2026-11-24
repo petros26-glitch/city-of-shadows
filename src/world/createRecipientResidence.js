@@ -61,10 +61,14 @@ export function createRecipientResidence(scene) {
   const rightLeaf = new THREE.Group();
   rightLeaf.position.set(0, 0, -3.25);
   for (const leaf of [leftLeaf, rightLeaf]) {
-    addBox(leaf, [0.14, 2.35, 3.18], [0, 1.2, -1.59], dark);
-    addBox(leaf, [0.18, 2.5, 0.12], [0, 1.25, -0.08], gold);
-    addBox(leaf, [0.18, 2.5, 0.12], [0, 1.25, -3.1], gold);
-    for (let i = 1; i <= 5; i += 1) addBox(leaf, [0.11, 2.2, 0.075], [0, 1.2, -i * 0.51], gold);
+    // The two leaves mirror each other so they meet cleanly at the centre.
+    const direction = leaf === leftLeaf ? -1 : 1;
+    addBox(leaf, [0.14, 2.35, 3.18], [0, 1.2, direction * 1.59], dark);
+    addBox(leaf, [0.18, 2.5, 0.12], [0, 1.25, direction * 0.08], gold);
+    addBox(leaf, [0.18, 2.5, 0.12], [0, 1.25, direction * 3.1], gold);
+    for (let i = 1; i <= 5; i += 1) {
+      addBox(leaf, [0.11, 2.2, 0.075], [0, 1.2, direction * i * 0.51], gold);
+    }
     gate.add(leaf);
   }
   exterior.add(gate);
@@ -72,6 +76,7 @@ export function createRecipientResidence(scene) {
   colliders.push(gateCollider);
   let gateOpening = false;
   let gateOpenProgress = 0;
+  let gateTargetOpen = false;
   for (const z of [-42.1, -33.9]) {
     addBox(exterior, [0.72, 3.0, 0.72], [10, 1.5, z], stone);
     addBox(exterior, [0.9, 0.18, 0.9], [10, 3.05, z], gold);
@@ -542,20 +547,30 @@ export function createRecipientResidence(scene) {
       return true;
     },
     openGate() {
-      if (gateOpening || gateOpenProgress >= 1) return;
+      if (gateTargetOpen && gateOpenProgress >= 1) return;
+      gateTargetOpen = true;
       gateOpening = true;
-      gateOpenProgress = 0;
+    },
+    closeGate() {
+      if (!gateTargetOpen && gateOpenProgress <= 0) return;
+      gateTargetOpen = false;
+      gateOpening = true;
     },
     updateGate(delta) {
       if (!gateOpening) return false;
-      gateOpenProgress = Math.min(1, gateOpenProgress + delta / 1.25);
+      const direction = gateTargetOpen ? 1 : -1;
+      gateOpenProgress = THREE.MathUtils.clamp(gateOpenProgress + direction * delta / 1.25, 0, 1);
       const eased = gateOpenProgress * gateOpenProgress * (3 - 2 * gateOpenProgress);
       leftLeaf.rotation.y = eased * 1.42;
       rightLeaf.rotation.y = -eased * 1.42;
-      if (gateOpenProgress >= 0.82) gateCollider.active = false;
-      if (gateOpenProgress >= 1) gateOpening = false;
+      gateCollider.active = gateOpenProgress < 0.82;
+      if ((gateTargetOpen && gateOpenProgress >= 1)
+        || (!gateTargetOpen && gateOpenProgress <= 0)) {
+        gateOpening = false;
+      }
       return gateOpening;
     },
-    isGateOpening() { return gateOpening; }
+    isGateOpening() { return gateOpening; },
+    isGateOpen() { return gateOpenProgress >= 0.98; }
   };
 }
