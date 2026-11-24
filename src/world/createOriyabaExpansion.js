@@ -42,6 +42,7 @@ function makePedestrian(scene, x, z, shirtColor, route, scale = 1, role = 'resid
   const labels = {
     resident: 'ORIYABA RESIDENT',
     child: 'LOCAL CHILD',
+    vendor: 'MARKET VENDOR',
     police: 'POLICE OFFICER',
     clinic: 'CLINIC WORKER'
   };
@@ -144,6 +145,11 @@ export function createOriyabaExpansion(scene) {
   makeShopStall(scene, 8.55, 16.0, 0x9a553e, 'FRUITS', colliders);
   makeShopStall(scene, 8.55, 19.0, 0x3d7771, 'PROVISIONS', colliders);
   makeShopStall(scene, 8.55, 22.0, 0x9b7940, 'SNACKS', colliders);
+  // One stationary trader stands in front of each stall and can be approached.
+  for (const [z, shirt] of [[17.3, 0x8a4e35], [20.3, 0x3d665c], [23.3, 0x725a35]]) {
+    pedestrians.push(makePedestrian(scene, 8.55, z, shirt,
+      [{ x: 8.55, z }, { x: 8.55, z }], 1, 'vendor'));
+  }
 
   // Public-service buildings occupy the open eastern plots, not the mansion estate.
   makePublicBuilding(scene, 21.0, -3.0, 'POLICE OUTPOST', 0x71808a, colliders, false);
