@@ -38,6 +38,7 @@ function makePedestrian(scene, x, z, shirtColor, route, scale = 1, role = 'resid
   }
   group.scale.setScalar(scale);
   group.userData.collisionRadius = 0.43 * scale;
+  group.userData.collisionHeight = 1.9 * scale;
   scene.add(group);
   const labels = {
     resident: 'ORIYABA RESIDENT',
