@@ -355,6 +355,8 @@ export function createGame(root) {
   let dialoguePurpose = null;
   let missionNoticeTimer = 0;
   let gatekeeperGestureTime = 0;
+  let gatePassageDirection = null;
+  let estateGateExitComplete = false;
   let secretaryStandProgress = 1;
   let secretaryStandingUp = false;
   let secretaryWalking = false;
@@ -489,9 +491,15 @@ export function createGame(root) {
       showMissionNotice('NEW OBJECTIVE · COLLECT THE SEALED PACKAGE');
     } else if (completedPurpose === 'gateman') {
       residence.openGate();
+      gatePassageDirection = 'entry';
       gatekeeperGestureTime = 1.15;
       missionManager.setStage('enter-estate', 'Walk through the open gate, follow the driveway and enter through the mansion doorway.');
       showMissionNotice('GATE OPEN · ENTER THE ESTATE');
+    } else if (completedPurpose === 'gate-exit') {
+      residence.openGate();
+      gatePassageDirection = 'exit';
+      gatekeeperGestureTime = 1.15;
+      showMissionNotice('GATE OPEN · YOU MAY LEAVE THE ESTATE');
     } else if (completedPurpose === 'secretary') {
       secretaryStandProgress = 0;
       secretaryStandingUp = true;
@@ -544,6 +552,15 @@ export function createGame(root) {
         'He checks the visitor list, then presses the gate control and gives you a nod. “All right. I will open up for you.”',
         'The gate motor hums as both panels swing aside. “You can go in now. Follow the driveway and use the main entrance.”'
       ], 'gateman');
+      return;
+    }
+
+    if (stage === 'completed' && nearGatekeeper && !estateGateExitComplete) {
+      openDialogue('GATEMAN', 'MANSION SECURITY · EXIT', [
+        'Good afternoon. Are you leaving the estate?',
+        'Yes. I am heading out now.',
+        'All right. I will open the gate for you. Please close it behind you by passing through.'
+      ], 'gate-exit');
       return;
     }
 
@@ -809,7 +826,8 @@ export function createGame(root) {
         } else if (missionState.stage === 'collect-package' && nearPackage) {
           promptText = 'COLLECT PACKAGE';
           promptVisible = true;
-        } else if (missionState.stage === 'reach-mansion' && nearGatekeeper) {
+        } else if ((missionState.stage === 'reach-mansion' && nearGatekeeper)
+          || (missionState.stage === 'completed' && nearGatekeeper && !estateGateExitComplete)) {
           promptText = 'TALK TO GATEMAN';
           promptVisible = true;
         } else if (missionState.stage === 'enter-estate' && nearMansionDoor) {
@@ -845,6 +863,19 @@ export function createGame(root) {
       packageMarker.position.y = 0.08 + Math.sin(frameTime * 0.003 + 1) * 0.035;
       recipient.marker.rotation.z += delta * 0.8;
       residence.updateGate(delta);
+      // Close the estate gate only after the player has fully cleared its opening.
+      if (gatePassageDirection === 'entry'
+        && playerPosition.x > 10.9 && Math.abs(playerPosition.z + 38) < 3.0) {
+        residence.closeGate();
+        gatePassageDirection = null;
+        showMissionNotice('ESTATE GATE · SECURED');
+      } else if (gatePassageDirection === 'exit'
+        && playerPosition.x < 9.35 && Math.abs(playerPosition.z + 38) < 3.0) {
+        residence.closeGate();
+        gatePassageDirection = null;
+        estateGateExitComplete = true;
+        showMissionNotice('ESTATE GATE · CLOSED');
+      }
       const enteringInterior = residence.isEnteringInterior();
       residence.updateEntry(delta);
       if (enteringInterior && !residence.isEnteringInterior()) {
