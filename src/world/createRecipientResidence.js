@@ -77,8 +77,8 @@ export function createRecipientResidence(scene) {
   let gateOpening = false;
   let gateOpenProgress = 0;
   let gateTargetOpen = false;
-  for (const z of [-42.1, -33.9]) {
-    addBox(exterior, [0.72, 3.0, 0.72], [10, 1.5, z], stone);
+  for (const z of [-41.25, -34.75]) {
+    addSolid(exterior, [0.72, 3.0, 0.72], [10, 1.5, z], stone, colliders, 0, 3.0);
     addBox(exterior, [0.9, 0.18, 0.9], [10, 3.05, z], gold);
     const lantern = new THREE.PointLight(0xffc77c, 0.65, 6);
     lantern.position.set(10, 2.8, z);
