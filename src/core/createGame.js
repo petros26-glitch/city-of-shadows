@@ -447,7 +447,7 @@ export function createGame(root) {
       || secretaryStandingUp || residence.isLiftRunning() || residence.isEnteringInterior()
       || residence.isExitingInterior() || residence.isOfficeDoorOpening() || residence.isGateOpening()
       || !onGround) return;
-    jumpVelocity = 6.2;
+    jumpVelocity = 4.8;
     onGround = false;
   }
 
@@ -926,7 +926,7 @@ export function createGame(root) {
         const right = new THREE.Vector3().crossVectors(forward, new THREE.Vector3(0, 1, 0)).normalize();
         const movement = forward.multiplyScalar(-inputZ).add(right.multiplyScalar(inputX)).normalize();
         const isRunning = keys.has('shift') || Math.abs(stickState.x) > 0.82 || Math.abs(stickState.y) > 0.82;
-        const speed = isRunning ? 7.0 : 4.8;
+        const speed = isRunning ? 5.4 : 3.0;
         const resolved = collisionWorld.moveCircle(
           activeCharacter.group.position,
           movement.x * speed * delta,
@@ -960,7 +960,7 @@ export function createGame(root) {
           }
         }
         activeCharacter.group.rotation.y = Math.atan2(movement.x, movement.z);
-        activeCharacter.walkTime += delta * (isRunning ? 14.5 : 9.5);
+        activeCharacter.walkTime += delta * (isRunning ? 10.0 : 6.3);
         const stride = Math.sin(activeCharacter.walkTime);
         const strideAmount = isRunning ? 0.72 : 0.48;
         activeCharacter.leftLeg.rotation.x = stride * strideAmount;
