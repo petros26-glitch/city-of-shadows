@@ -17,7 +17,8 @@ export function createCollisionWorld(colliders = []) {
       if (actorY > floorY + 1.65 || actorY + 1.85 < floorY) continue;
       const dx = x - actor.position.x;
       const dz = z - actor.position.z;
-      if (dx * dx + dz * dz < (radius + 0.43) ** 2) return true;
+      const actorRadius = actor.userData?.collisionRadius ?? 0.43;
+      if (dx * dx + dz * dz < (radius + actorRadius) ** 2) return true;
     }
     return false;
   }
