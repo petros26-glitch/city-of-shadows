@@ -7,7 +7,7 @@ function box(parent, size, position, material) {
   return mesh;
 }
 
-function makePedestrian(scene, x, z, shirtColor, route, scale = 1) {
+function makePedestrian(scene, x, z, shirtColor, route, scale = 1, role = 'resident') {
   const group = new THREE.Group();
   group.position.set(x, 0, z);
   const skin = new THREE.MeshStandardMaterial({ color: 0x805039, roughness: 0.95 });
@@ -37,8 +37,15 @@ function makePedestrian(scene, x, z, shirtColor, route, scale = 1) {
     arms.push(arm);
   }
   group.scale.setScalar(scale);
+  group.userData.collisionRadius = 0.43 * scale;
   scene.add(group);
-  return { group, legs, arms, route, routeIndex: 1, walkTime: 1.7, pause: 0.8 };
+  const labels = {
+    resident: 'ORIYABA RESIDENT',
+    child: 'LOCAL CHILD',
+    police: 'POLICE OFFICER',
+    clinic: 'CLINIC WORKER'
+  };
+  return { group, legs, arms, route, role, label: labels[role] || labels.resident, routeIndex: 1, walkTime: 1.7, pause: 0.8 };
 }
 
 function makeShopStall(scene, x, z, color, sign, colliders) {
@@ -131,6 +138,7 @@ export function createOriyabaExpansion(scene) {
   const routeA = [{ x: -4.7, z: 16 }, { x: 4.7, z: 16 }, { x: 4.7, z: 21 }, { x: -4.7, z: 21 }];
   const routeB = [{ x: -4.5, z: -17 }, { x: 4.5, z: -17 }, { x: 4.5, z: -12 }, { x: -4.5, z: -12 }];
   const routeC = [{ x: -4.4, z: 28 }, { x: 4.4, z: 28 }, { x: 4.4, z: 32 }, { x: -4.4, z: 32 }];
+  const routeD = [{ x: -3.5, z: 34.5 }, { x: 3.5, z: 34.5 }, { x: 3.5, z: 37.5 }, { x: -3.5, z: 37.5 }];
 
   // Small market row along the eastern pavement, away from the opening mission route.
   makeShopStall(scene, 8.55, 16.0, 0x9a553e, 'FRUITS', colliders);
@@ -183,13 +191,13 @@ export function createOriyabaExpansion(scene) {
     pedestrians.push(makePedestrian(scene, x, z, shirt, route));
   }
   // Children playing near the residential end of the street.
-  pedestrians.push(makePedestrian(scene, -3.5, 30.2, 0xc18a36, routeC, 0.72));
-  pedestrians.push(makePedestrian(scene, 3.5, 29.0, 0x477b8b, routeC, 0.72));
+  pedestrians.push(makePedestrian(scene, -3.5, 35.0, 0xc18a36, routeD, 0.72, 'child'));
+  pedestrians.push(makePedestrian(scene, 3.5, 36.0, 0x477b8b, routeD, 0.72, 'child'));
   // Visible public-service staff make both neighbourhood facilities feel occupied.
   pedestrians.push(makePedestrian(scene, 20.0, 0.05, 0x284d70,
-    [{ x: 19.0, z: 0.05 }, { x: 23.0, z: 0.05 }]));
+    [{ x: 19.0, z: 0.05 }, { x: 23.0, z: 0.05 }], 1, 'police'));
   pedestrians.push(makePedestrian(scene, 20.0, 42.0, 0x477b70,
-    [{ x: 19.0, z: 42.0 }, { x: 23.0, z: 42.0 }]));
+    [{ x: 19.0, z: 42.0 }, { x: 23.0, z: 42.0 }], 1, 'clinic'));
 
   function update(delta, playerPosition) {
     for (const pedestrian of pedestrians) {
@@ -232,5 +240,5 @@ export function createOriyabaExpansion(scene) {
     }
   }
 
-  return { colliders, actors: pedestrians.map((person) => person.group), update };
+  return { colliders, actors: pedestrians.map((person) => person.group), talkTargets: pedestrians, update };
 }
