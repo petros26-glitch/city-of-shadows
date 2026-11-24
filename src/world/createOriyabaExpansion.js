@@ -132,17 +132,17 @@ function makePublicBuilding(scene, x, z, title, wallColor, colliders, isClinic =
     );
 
     // Compact reception counter and examination bed; both are solid to the player.
-    box(group, [1.25, 0.82, 0.42], [-1.05, 0.58, 0.72], trim);
+    box(group, [1.25, 0.82, 0.42], [-1.25, 0.58, 0.72], trim);
     colliders.push({
-      minX: x - 1.68, maxX: x - 0.42,
+      minX: x - 1.88, maxX: x - 0.63,
       minZ: z + 0.48, maxZ: z + 0.96,
       minY: 0, maxY: 1.05
     });
-    box(group, [1.25, 0.18, 0.62], [0.95, 0.78, -0.78], trim);
-    box(group, [0.12, 0.52, 0.12], [0.45, 0.42, -0.78], roof);
-    box(group, [0.12, 0.52, 0.12], [1.45, 0.42, -0.78], roof);
+    box(group, [1.25, 0.18, 0.62], [1.25, 0.78, -0.78], trim);
+    box(group, [0.12, 0.52, 0.12], [0.75, 0.42, -0.78], roof);
+    box(group, [0.12, 0.52, 0.12], [1.75, 0.42, -0.78], roof);
     colliders.push({
-      minX: x + 0.3, maxX: x + 1.6,
+      minX: x + 0.6, maxX: x + 1.9,
       minZ: z - 1.12, maxZ: z - 0.44,
       minY: 0, maxY: 1.05
     });
