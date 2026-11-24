@@ -239,6 +239,7 @@ export function createGame(root) {
   secretary.marker.visible = false;
   const collisionWorld = createCollisionWorld([...districtColliders, ...oriyabaExpansion.colliders, ...residence.colliders]);
   const collisionActors = [npc, ...oriyabaExpansion.actors, gatekeeper.group, secretary.group, recipient.group];
+  let nearbyExpansionNpc = null;
 
   const packagePickup = new THREE.Group();
   packagePickup.position.set(6.4, 0, -6.5);
@@ -624,6 +625,36 @@ export function createGame(root) {
         'Kola? Hmm… I thought that matter was already settled.',
         'Here is your payment. Now leave. And forget you came here.'
       ], 'recipient');
+      return;
+    }
+
+    if (nearbyExpansionNpc) {
+      const conversations = {
+        resident: [
+          'Morning, my friend. How you dey?',
+          'This part of Oriyaba is always busy. The market stalls are just down the road.',
+          'Take care of yourself out here.'
+        ],
+        child: [
+          'Hello! Are you new around here?',
+          'My friends and I play around this part of the street. Watch where you step!',
+          'See you later!'
+        ],
+        police: [
+          'Good day. I am on patrol around this neighbourhood.',
+          'Keep the peace and report trouble at the police outpost.'
+        ],
+        clinic: [
+          'Good afternoon. This is the community clinic.',
+          'If anyone around here needs medical help, come and ask for the clinic staff.'
+        ]
+      };
+      openDialogue(
+        nearbyExpansionNpc.label,
+        'ORIYABA · NEIGHBOURHOOD',
+        conversations[nearbyExpansionNpc.role] || conversations.resident,
+        'neighbour'
+      );
     }
   }
 
@@ -726,6 +757,19 @@ export function createGame(root) {
       );
       nearNpc = npcDistance <= 2.8;
       const playerPosition = activeCharacter.group.position;
+      nearbyExpansionNpc = null;
+      let closestExpansionNpcDistance = 2.5;
+      for (const target of oriyabaExpansion.talkTargets) {
+        if (!target.group.visible) continue;
+        const distance = Math.hypot(
+          playerPosition.x - target.group.position.x,
+          playerPosition.z - target.group.position.z
+        );
+        if (distance < closestExpansionNpcDistance) {
+          closestExpansionNpcDistance = distance;
+          nearbyExpansionNpc = target;
+        }
+      }
       nearPackage = packagePickup.visible && Math.hypot(playerPosition.x - packagePickup.position.x, playerPosition.z - packagePickup.position.z) <= 2.5;
       nearRecipient = recipient.group.visible && Math.hypot(playerPosition.x - recipient.group.position.x, playerPosition.z - recipient.group.position.z) <= 2.25;
       nearSecretary = secretary.group.visible && missionManager.getState().stage === 'meet-secretary'
@@ -753,6 +797,9 @@ export function createGame(root) {
         let promptVisible = false;
         if (missionState.stage === 'meet-kola' && nearNpc) {
           promptText = 'TALK TO KOLA';
+          promptVisible = true;
+        } else if (nearbyExpansionNpc) {
+          promptText = 'TALK TO ' + nearbyExpansionNpc.label;
           promptVisible = true;
         } else if (missionState.stage === 'collect-package' && nearPackage) {
           promptText = 'COLLECT PACKAGE';
