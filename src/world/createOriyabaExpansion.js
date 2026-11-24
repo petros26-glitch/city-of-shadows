@@ -70,9 +70,21 @@ function makeShopStall(scene, x, z, color, sign, colliders) {
     minZ: z - 0.66, maxZ: z + 0.66,
     minY: 0, maxY: 1.9
   });
-  const signMesh = box(group, [1.25, 0.25, 0.05], [0, 1.62, 0.62],
-    new THREE.MeshStandardMaterial({ color: 0x253c48, roughness: 0.9 }));
-  signMesh.userData.label = sign;
+  const signCanvas = document.createElement('canvas');
+  signCanvas.width = 512;
+  signCanvas.height = 96;
+  const signContext = signCanvas.getContext('2d');
+  signContext.fillStyle = '#253c48';
+  signContext.fillRect(0, 0, signCanvas.width, signCanvas.height);
+  signContext.fillStyle = '#ffffff';
+  signContext.font = 'bold 38px Arial';
+  signContext.textAlign = 'center';
+  signContext.textBaseline = 'middle';
+  signContext.fillText(sign, 256, 48, 490);
+  const signTexture = new THREE.CanvasTexture(signCanvas);
+  signTexture.colorSpace = THREE.SRGBColorSpace;
+  const signMaterial = new THREE.MeshStandardMaterial({ map: signTexture, roughness: 0.9 });
+  box(group, [1.25, 0.25, 0.05], [0, 1.62, 0.62], signMaterial);
 }
 
 function makePublicBuilding(scene, x, z, title, wallColor, colliders, isClinic = false) {
@@ -132,21 +144,31 @@ export function createOriyabaExpansion(scene) {
   // Everyday compound details: water drums, laundry lines and benches.
   const drumMaterial = new THREE.MeshStandardMaterial({ color: 0x315d78, roughness: 0.82 });
   const drumLid = new THREE.MeshStandardMaterial({ color: 0x252d35, roughness: 0.9 });
-  for (const [x, z] of [[-5.7, 11], [-5.7, 25], [5.7, -23]]) {
+  for (const [x, z] of [[-7.7, 16], [-7.7, 25], [7.7, -23]]) {
     const drum = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.36, 0.9, 9), drumMaterial);
     drum.position.set(x, 0.47, z);
     scene.add(drum);
     const lid = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 0.07, 9), drumLid);
     lid.position.set(x, 0.95, z);
     scene.add(lid);
+    colliders.push({
+      minX: x - 0.4, maxX: x + 0.4,
+      minZ: z - 0.4, maxZ: z + 0.4,
+      minY: 0, maxY: 1.05
+    });
   }
   const benchMaterial = new THREE.MeshStandardMaterial({ color: 0x684a34, roughness: 1 });
-  for (const [x, z] of [[-5.2, 6], [5.2, -7], [-5.2, 34]]) {
+  for (const [x, z] of [[-7.5, 6], [7.5, -7], [-7.5, 34]]) {
     const bench = new THREE.Group();
     box(bench, [1.35, 0.12, 0.42], [0, 0.55, 0], benchMaterial);
     for (const sx of [-0.5, 0.5]) box(bench, [0.1, 0.55, 0.1], [sx, 0.28, 0], benchMaterial);
     bench.position.set(x, 0, z);
     scene.add(bench);
+    colliders.push({
+      minX: x - 0.72, maxX: x + 0.72,
+      minZ: z - 0.26, maxZ: z + 0.26,
+      minY: 0, maxY: 0.85
+    });
   }
 
   const people = [
