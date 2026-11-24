@@ -356,7 +356,6 @@ export function createGame(root) {
   let missionNoticeTimer = 0;
   let gatekeeperGestureTime = 0;
   let gatePassageDirection = null;
-  let estateGateExitComplete = false;
   let secretaryStandProgress = 1;
   let secretaryStandingUp = false;
   let secretaryWalking = false;
@@ -495,11 +494,12 @@ export function createGame(root) {
       gatekeeperGestureTime = 1.15;
       missionManager.setStage('enter-estate', 'Walk through the open gate, follow the driveway and enter through the mansion doorway.');
       showMissionNotice('GATE OPEN · ENTER THE ESTATE');
-    } else if (completedPurpose === 'gate-exit') {
+    } else if (completedPurpose === 'gate-access') {
       residence.openGate();
-      gatePassageDirection = 'exit';
       gatekeeperGestureTime = 1.15;
-      showMissionNotice('GATE OPEN · YOU MAY LEAVE THE ESTATE');
+      showMissionNotice(gatePassageDirection === 'exit'
+        ? 'GATE OPEN · YOU MAY LEAVE THE ESTATE'
+        : 'GATE OPEN · YOU MAY ENTER THE ESTATE');
     } else if (completedPurpose === 'secretary') {
       secretaryStandProgress = 0;
       secretaryStandingUp = true;
@@ -555,12 +555,18 @@ export function createGame(root) {
       return;
     }
 
-    if (stage === 'completed' && nearGatekeeper && !estateGateExitComplete) {
-      openDialogue('GATEMAN', 'MANSION SECURITY · EXIT', [
+    if (stage === 'completed' && nearGatekeeper) {
+      const leavingEstate = activeCharacter.group.position.x > 10;
+      gatePassageDirection = leavingEstate ? 'exit' : 'entry';
+      openDialogue('GATEMAN', 'MANSION SECURITY', leavingEstate ? [
         'Good afternoon. Are you leaving the estate?',
         'Yes. I am heading out now.',
-        'All right. I will open the gate for you. Please close it behind you by passing through.'
-      ], 'gate-exit');
+        'All right. I will open the gate. Walk through and I will secure it behind you.'
+      ] : [
+        'Welcome back. Are you visiting the estate?',
+        'Yes. I need to go back inside.',
+        'All right. I will open the gate. Walk through and I will secure it behind you.'
+      ], 'gate-access');
       return;
     }
 
@@ -827,7 +833,7 @@ export function createGame(root) {
           promptText = 'COLLECT PACKAGE';
           promptVisible = true;
         } else if ((missionState.stage === 'reach-mansion' && nearGatekeeper)
-          || (missionState.stage === 'completed' && nearGatekeeper && !estateGateExitComplete)) {
+          || (missionState.stage === 'completed' && nearGatekeeper)) {
           promptText = 'TALK TO GATEMAN';
           promptVisible = true;
         } else if (missionState.stage === 'enter-estate' && nearMansionDoor) {
@@ -873,7 +879,6 @@ export function createGame(root) {
         && playerPosition.x < 9.35 && Math.abs(playerPosition.z + 38) < 3.0) {
         residence.closeGate();
         gatePassageDirection = null;
-        estateGateExitComplete = true;
         showMissionNotice('ESTATE GATE · CLOSED');
       }
       const enteringInterior = residence.isEnteringInterior();
