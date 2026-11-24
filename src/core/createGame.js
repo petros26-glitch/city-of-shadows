@@ -290,7 +290,7 @@ export function createGame(root) {
     if (cameraPointerId !== event.pointerId) return;
     cameraPointerId = null;
   }
-  const initialTarget = new THREE.Vector3(0, 1.25, 3);
+  const initialTarget = new THREE.Vector3(0, 1.1, 3);
   if (controls) {
     controls.target.copy(initialTarget);
     controls.enableDamping = true;
@@ -559,7 +559,7 @@ export function createGame(root) {
         if (controls) {
           controls.target.set(
             activeCharacter.group.position.x,
-            activeCharacter.group.position.y + 1.35,
+            activeCharacter.group.position.y + 1.1,
             activeCharacter.group.position.z
           );
           camera.position.copy(controls.target).add(cameraOffset);
@@ -654,7 +654,7 @@ export function createGame(root) {
     });
     if (characterName) characterName.textContent = activeCharacter.name;
     if (characterDescription) characterDescription.textContent = activeCharacter.description;
-    const target = new THREE.Vector3(0, 1.25, 3);
+    const target = new THREE.Vector3(0, 1.1, 3);
     camera.position.copy(target).add(cameraOffset);
     camera.lookAt(target);
     if (controls) {
@@ -682,7 +682,7 @@ export function createGame(root) {
     if (buildLabel) buildLabel.hidden = false;
     if (locationLabel) locationLabel.hidden = false;
     cameraOffset.set(13, 8.65, 15);
-    const target = new THREE.Vector3(0, 1.35, 3);
+    const target = new THREE.Vector3(0, 1.1, 3);
     camera.position.copy(target).add(cameraOffset);
     camera.lookAt(target);
     if (controls) {
@@ -1012,7 +1012,7 @@ export function createGame(root) {
 
     const target = new THREE.Vector3(
       activeCharacter.group.position.x,
-      activeCharacter.group.position.y + 1.35,
+      activeCharacter.group.position.y + 1.1,
       activeCharacter.group.position.z
     );
     if (controls) {
