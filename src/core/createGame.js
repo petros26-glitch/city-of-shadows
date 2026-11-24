@@ -1161,10 +1161,28 @@ export function createGame(root) {
       renderer.domElement.removeEventListener('pointerup', handleCameraUp);
       renderer.domElement.removeEventListener('pointercancel', handleCameraUp);
       controls?.dispose();
+      const disposedGeometries = new Set();
+      const disposedMaterials = new Set();
+      const disposedTextures = new Set();
       scene.traverse((object) => {
-        object.geometry?.dispose?.();
-        if (Array.isArray(object.material)) object.material.forEach((material) => material.dispose());
-        else object.material?.dispose?.();
+        if (object.geometry && !disposedGeometries.has(object.geometry)) {
+          disposedGeometries.add(object.geometry);
+          object.geometry.dispose();
+        }
+        const materials = Array.isArray(object.material)
+          ? object.material
+          : object.material ? [object.material] : [];
+        for (const material of materials) {
+          if (disposedMaterials.has(material)) continue;
+          disposedMaterials.add(material);
+          for (const value of Object.values(material)) {
+            if (value && value.isTexture && !disposedTextures.has(value)) {
+              disposedTextures.add(value);
+              value.dispose();
+            }
+          }
+          material.dispose();
+        }
       });
       renderer.dispose();
       renderer.domElement.remove();
