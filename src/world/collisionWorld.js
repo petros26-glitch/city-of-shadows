@@ -2,7 +2,7 @@ export function createCollisionWorld(colliders = []) {
   function blocked(x, z, floorY, radius, actors, self) {
     for (const wall of colliders) {
       if (wall.active === false) continue;
-      if (floorY >= wall.maxY - 0.05 || floorY + 1.75 <= wall.minY) continue;
+      if (floorY >= wall.maxY - 0.05 || floorY + 1.85 <= wall.minY) continue;
 
       const closestX = Math.max(wall.minX, Math.min(x, wall.maxX));
       const closestZ = Math.max(wall.minZ, Math.min(z, wall.maxZ));
@@ -14,7 +14,8 @@ export function createCollisionWorld(colliders = []) {
     for (const actor of actors) {
       if (!actor || actor === self || !actor.visible) continue;
       const actorY = actor.position.y;
-      if (actorY > floorY + 1.65 || actorY + 1.85 < floorY) continue;
+      const actorHeight = actor.userData?.collisionHeight ?? 1.85;
+      if (actorY > floorY + 1.85 || actorY + actorHeight < floorY) continue;
       const dx = x - actor.position.x;
       const dz = z - actor.position.z;
       const actorRadius = actor.userData?.collisionRadius ?? 0.43;
