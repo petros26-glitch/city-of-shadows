@@ -103,9 +103,9 @@ function createCharacter(config) {
   const rightLeg = makeLeg(0.19);
   const leftArm = makeArm(-0.43, -1);
   const rightArm = makeArm(0.43, 1);
-  // Keep the playable model close to real human scale (about 1.85 m tall).
+  // Keep the playable model close to real human scale (about 1.8 m tall).
   group.position.set(0, 0, 3);
-  group.scale.setScalar(0.68);
+  group.scale.setScalar(0.71);
   group.visible = false;
 
   return { id, name, age: 18, description, group, body, head, leftLeg, rightLeg, leftArm, rightArm, walkTime: 0 };
