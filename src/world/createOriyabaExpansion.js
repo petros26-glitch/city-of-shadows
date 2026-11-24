@@ -106,7 +106,7 @@ function makePublicBuilding(scene, x, z, title, wallColor, colliders, isClinic =
 
   if (isClinic) {
     // Small walk-in clinic: open front doorway, walkable floor and solid side/back walls.
-    box(group, [4.5, 0.16, 4.2], [0, 0.08, 0], interiorFloor);
+    box(group, [4.5, 0.16, 4.2], [0, -0.08, 0], interiorFloor);
     box(group, [4.8, 0.22, 4.5], [0, 2.81, 0], roof);
     const wallY = 1.35;
     const wallHeight = 2.7;
