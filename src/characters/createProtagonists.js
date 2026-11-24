@@ -108,7 +108,93 @@ function createCharacter(config) {
   group.scale.setScalar(0.71);
   group.visible = false;
 
-  return { id, name, age: 18, description, group, body, head, leftLeg, rightLeg, leftArm, rightArm, walkTime: 0 };
+
+  // Lightweight appearance options are built once and toggled without replacing
+  // the character rig, keeping customisation inexpensive on mobile devices.
+  const hairstyleOptions = {};
+  const afroStyle = new THREE.Group();
+  mesh(afroStyle, new THREE.SphereGeometry(0.34, 10, 8), hair, [0, 0.37, -0.01]);
+  mesh(afroStyle, new THREE.SphereGeometry(0.25, 9, 7), hair, [0, 0.48, 0.02]);
+  hairstyleOptions.afro = afroStyle;
+  head.add(afroStyle);
+  const twistsStyle = new THREE.Group();
+  for (let side = -1; side <= 1; side += 1) {
+    mesh(twistsStyle, new THREE.CapsuleGeometry(0.055, 0.22, 2, 6), hair, [side * 0.15, 0.43, 0.02], [0, 0, side * 0.16]);
+  }
+  hairstyleOptions.twists = twistsStyle;
+  head.add(twistsStyle);
+  const braidsStyle = new THREE.Group();
+  for (const side of [-1, 1]) {
+    const braid = new THREE.Group();
+    braid.position.set(side * 0.24, 0.12, -0.01);
+    for (let i = 0; i < 5; i += 1) {
+      mesh(braid, new THREE.SphereGeometry(0.055, 6, 5), hair, [0, -i * 0.095, 0]);
+    }
+    braidsStyle.add(braid);
+  }
+  hairstyleOptions.braids = braidsStyle;
+  head.add(braidsStyle);
+  const accessories = new THREE.Group();
+  body.add(accessories);
+  const accessoryOptions = {};
+  const chainOption = new THREE.Group();
+  const chain = new THREE.Mesh(new THREE.TorusGeometry(0.22, 0.025, 5, 18), trim);
+  chain.rotation.x = Math.PI / 2;
+  chain.position.set(0, 1.53, 0.29);
+  chainOption.add(chain);
+  accessoryOptions.chain = chainOption;
+  accessories.add(chainOption);
+  const capOption = new THREE.Group();
+  const capCrown = new THREE.Mesh(new THREE.SphereGeometry(0.29, 10, 7, 0, Math.PI * 2, 0, Math.PI * 0.48), hair);
+  capCrown.position.set(0, 2.39, 0.01);
+  capOption.add(capCrown);
+  const capBrim = new THREE.Mesh(new THREE.CylinderGeometry(0.30, 0.30, 0.045, 12), hair);
+  capBrim.position.set(0, 2.34, 0.06);
+  capOption.add(capBrim);
+  accessoryOptions.cap = capOption;
+  accessories.add(capOption);
+  const glassesOption = new THREE.Group();
+  for (const side of [-1, 1]) {
+    const lens = new THREE.Mesh(new THREE.TorusGeometry(0.075, 0.012, 4, 12), trim);
+    lens.position.set(side * 0.105, 2.105, 0.295);
+    glassesOption.add(lens);
+  }
+  const bridge = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.018, 0.018), trim);
+  bridge.position.set(0, 2.105, 0.295);
+  glassesOption.add(bridge);
+  accessoryOptions.glasses = glassesOption;
+  accessories.add(glassesOption);
+  const watchOption = new THREE.Group();
+  const watch = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.13, 0.08), trim);
+  watch.position.set(-0.47, 1.04, 0.05);
+  watchOption.add(watch);
+  accessoryOptions.watch = watchOption;
+  accessories.add(watchOption);
+  const outfitPalettes = {
+    street: [shirtColor, jacketColor, trouserColor],
+    smart: [0xf0e6d2, 0x263b50, 0x202a39],
+    native: [0xc98c3f, 0x8a4a2e, 0x352d27],
+    casual: [0x397b86, 0x397b86, 0x263142],
+    dark: [0x292d35, 0x171c25, 0x171c25]
+  };
+  const shoePalettes = { black: 0x171b22, brown: 0x68432c, white: 0xe7e3da, red: 0x8e3434, blue: 0x315b88 };
+  const hairPalettes = { black: 0x171717, brown: 0x4b2e22, auburn: 0x713b2d, grey: 0x77736d };
+  const appearance = { hairstyle: 'natural', outfit: 'street', shoes: 'black', hair: 'black', accessory: 'none' };
+  function applyCustomization(next = {}) {
+    Object.assign(appearance, next);
+    const palette = outfitPalettes[appearance.outfit] || outfitPalettes.street;
+    shirt.color.setHex(palette[0]);
+    jacket.color.setHex(palette[1]);
+    trousers.color.setHex(palette[2]);
+    shoes.color.setHex(shoePalettes[appearance.shoes] || shoePalettes.black);
+    hair.color.setHex(hairPalettes[appearance.hair] || hairPalettes.black);
+    Object.entries(hairstyleOptions).forEach(([key, option]) => { option.visible = appearance.hairstyle === key; });
+    Object.entries(accessoryOptions).forEach(([key, option]) => { option.visible = appearance.accessory === key; });
+    return { ...appearance };
+  }
+  applyCustomization();
+
+  return { id, name, age: 18, description, group, body, head, leftLeg, rightLeg, leftArm, rightArm, walkTime: 0, applyCustomization, appearance };
 }
 
 export function createProtagonists(scene) {

@@ -1111,3 +1111,60 @@ body {
     letter-spacing: 0.12em;
   }
 }
+
+
+/* COS Phase 2 wardrobe and market fitting room. */
+.wardrobe-toggle {
+  position: absolute;
+  z-index: 7;
+  top: max(76px, calc(env(safe-area-inset-top) + 58px));
+  left: max(22px, env(safe-area-inset-left));
+  min-height: 38px;
+  padding: 0 14px;
+  border: 1px solid rgb(214 167 94 / 65%);
+  border-radius: 3px;
+  background: rgb(8 13 23 / 90%);
+  color: #f4f0e8;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: .13em;
+  touch-action: manipulation;
+}
+.wardrobe-toggle[hidden], .wardrobe-panel[hidden] { display: none !important; }
+.wardrobe-panel {
+  position: absolute;
+  z-index: 14;
+  top: 50%;
+  left: 50%;
+  width: min(470px, calc(100% - 28px));
+  max-height: min(88%, 620px);
+  overflow-y: auto;
+  transform: translate(-50%, -50%);
+  padding: clamp(16px, 3vw, 24px);
+  border: 1px solid rgb(214 167 94 / 68%);
+  border-top: 3px solid #d6a75e;
+  border-radius: 5px;
+  background: linear-gradient(145deg, rgb(18 27 41 / 98%), rgb(5 9 16 / 99%));
+  box-shadow: 0 22px 75px rgb(0 0 0 / 72%);
+  color: #f4f0e8;
+}
+.wardrobe-header { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.wardrobe-header span { color:#d6a75e; font-size:8px; font-weight:900; letter-spacing:.2em; }
+.wardrobe-header h2 { margin:6px 0 0; font-size:clamp(18px, 3vw, 25px); letter-spacing:.06em; }
+.wardrobe-header button { width:36px; height:36px; border:1px solid rgb(255 255 255 / 22%); border-radius:3px; background:transparent; color:#fff; font-size:25px; }
+#wardrobe-description { margin:12px 0 16px; color:#b8c2cf; font-size:11px; line-height:1.5; }
+.wardrobe-fields { display:grid; grid-template-columns:1fr 1fr; gap:11px; }
+.wardrobe-fields label { display:grid; gap:6px; color:#d6a75e; font-size:8px; font-weight:900; letter-spacing:.12em; }
+.wardrobe-fields select { width:100%; min-height:42px; padding:0 10px; border:1px solid rgb(214 167 94 / 35%); border-radius:3px; background:#182333; color:#f4f0e8; font:600 11px Arial,sans-serif; }
+.wardrobe-fields label:nth-child(3) { grid-column:1 / -1; }
+.wardrobe-actions { display:flex; gap:9px; margin-top:17px; }
+.wardrobe-actions button { flex:1; min-height:43px; border:1px solid rgb(214 167 94 / 58%); border-radius:3px; background:rgb(214 167 94 / 12%); color:#f4f0e8; font-size:9px; font-weight:900; letter-spacing:.12em; }
+.wardrobe-actions button:last-child { background:linear-gradient(100deg,#d6a75e,#a97536); color:#17130e; }
+#wardrobe-footnote { display:block; margin-top:13px; color:#8591a1; font-size:7px; line-height:1.5; letter-spacing:.09em; text-align:center; }
+@media (max-width:700px), (max-height:480px) and (orientation:landscape) {
+  .wardrobe-toggle { top:max(52px,calc(env(safe-area-inset-top) + 40px)); left:max(12px,env(safe-area-inset-left)); min-height:32px; padding:0 10px; font-size:7px; }
+  .wardrobe-panel { width:min(430px,calc(100% - 22px)); padding:15px; }
+  .wardrobe-fields { gap:9px; }
+  .wardrobe-fields select { min-height:38px; font-size:10px; }
+}
+@media (max-width:380px) { .wardrobe-fields { grid-template-columns:1fr; } .wardrobe-fields label:nth-child(3) { grid-column:auto; } }

@@ -356,9 +356,17 @@ export function createRecipientResidence(scene) {
 
   let liftState = 'idle';
   let liftTimer = 0;
-  function setLiftDoors(open) {
-    leftDoor.position.x = open ? -0.82 : -0.42;
-    rightDoor.position.x = open ? 0.82 : 0.42;
+  function setLiftDoorProgress(progress) {
+    const travel = THREE.MathUtils.clamp(progress, 0, 1) * 0.4;
+    leftDoor.position.x = -0.42 - travel;
+    rightDoor.position.x = 0.42 + travel;
+  }
+  function applyMainDoorProgress(progress) {
+    mainDoorProgress = THREE.MathUtils.clamp(progress, 0, 1);
+    const eased = mainDoorProgress * mainDoorProgress * (3 - 2 * mainDoorProgress);
+    leftMainDoor.rotation.y = -eased * 1.22;
+    rightMainDoor.rotation.y = eased * 1.22;
+    mainDoorCollider.active = mainDoorProgress < 0.82;
   }
 
   function getBaseFloorY(x, z, currentY = 0) {
@@ -410,11 +418,7 @@ export function createRecipientResidence(scene) {
     isEnteringInterior() { return entryPending; },
     updateEntry(delta) {
       if (!entryPending) return false;
-      mainDoorProgress = Math.min(1, mainDoorProgress + delta / 0.85);
-      const eased = mainDoorProgress * mainDoorProgress * (3 - 2 * mainDoorProgress);
-      leftMainDoor.rotation.y = -eased * 1.22;
-      rightMainDoor.rotation.y = eased * 1.22;
-      if (mainDoorProgress >= 0.82) mainDoorCollider.active = false;
+      applyMainDoorProgress(mainDoorProgress + delta / 0.85);
       if (mainDoorProgress >= 1) {
         exterior.visible = false;
         interior.visible = true;
@@ -444,11 +448,13 @@ export function createRecipientResidence(scene) {
       const eased = exitDoorProgress * exitDoorProgress * (3 - 2 * exitDoorProgress);
       leftExitDoor.rotation.y = -eased * 1.18;
       rightExitDoor.rotation.y = eased * 1.18;
+      applyMainDoorProgress(exitDoorProgress);
       if (exitDoorProgress >= 0.8) interiorExitCollider.active = false;
       if (exitDoorProgress >= 1) {
         interior.visible = false;
         overheadShell.visible = true;
         exterior.visible = true;
+        applyMainDoorProgress(1);
         exitPlayer.position.set(17, 0, -32.7);
         exitPlayer.rotation.y = Math.PI;
         exitPlayer = null;
@@ -483,17 +489,10 @@ export function createRecipientResidence(scene) {
     startLiftRide(player) {
       if (!interior.visible || liftState !== 'idle') return false;
       const fromUpper = player.position.y > 2.5;
-      if (fromUpper) {
-        player.position.set(102.8, 4.35, 0.1);
-        cabin.position.y = 4.35;
-        setLiftDoors(true);
-        liftState = 'opening-upper';
-      } else {
-        player.position.set(102.8, 0, 0.1);
-        cabin.position.y = 0;
-        setLiftDoors(true);
-        liftState = 'opening-ground';
-      }
+      player.position.set(102.8, fromUpper ? 4.35 : 0, 0.1);
+      cabin.position.y = fromUpper ? 4.35 : 0;
+      setLiftDoorProgress(0);
+      liftState = fromUpper ? 'opening-upper' : 'opening-ground';
       liftTimer = 0;
       return true;
     },
@@ -501,50 +500,52 @@ export function createRecipientResidence(scene) {
     updateLift(delta, player) {
       if (liftState === 'idle') return false;
       liftTimer += delta;
-      if (liftState === 'opening-ground' && liftTimer >= 0.55) {
-        setLiftDoors(false);
-        liftState = 'closing-ground';
-        liftTimer = 0;
-      } else if (liftState === 'closing-ground' && liftTimer >= 0.55) {
-        liftState = 'moving-up';
-        liftTimer = 0;
-      } else if (liftState === 'moving-up') {
-        const progress = THREE.MathUtils.clamp(liftTimer / 2.2, 0, 1);
-        cabin.position.y = progress * 4.35;
-        player.position.y = progress * 4.35;
-        if (progress >= 1) {
-          setLiftDoors(true);
-          liftState = 'arriving-upper';
+      const doorTime = 0.55;
+      if (liftState === 'opening-ground' || liftState === 'opening-upper'
+        || liftState === 'opening-arrival-ground' || liftState === 'opening-arrival-upper') {
+        setLiftDoorProgress(Math.min(1, liftTimer / doorTime));
+        if (liftTimer >= doorTime) {
+          const upper = liftState.endsWith('upper');
+          liftState = upper
+            ? (liftState === 'opening-upper' ? 'closing-upper' : 'closing-arrival-upper')
+            : (liftState === 'opening-ground' ? 'closing-ground' : 'closing-arrival-ground');
           liftTimer = 0;
         }
-      } else if (liftState === 'arriving-upper' && liftTimer >= 0.55) {
-        player.position.set(102.8, 4.35, 1.55);
-        liftState = 'idle';
-        liftTimer = 0;
-        return false;
-      } else if (liftState === 'opening-upper' && liftTimer >= 0.55) {
-        setLiftDoors(false);
-        liftState = 'closing-upper';
-        liftTimer = 0;
-      } else if (liftState === 'closing-upper' && liftTimer >= 0.55) {
-        liftState = 'moving-down';
-        liftTimer = 0;
-      } else if (liftState === 'moving-down') {
-        const progress = THREE.MathUtils.clamp(liftTimer / 2.2, 0, 1);
-        cabin.position.y = 4.35 * (1 - progress);
-        player.position.y = 4.35 * (1 - progress);
-        if (progress >= 1) {
-          setLiftDoors(true);
-          liftState = 'arriving-ground';
+      } else if (liftState === 'closing-ground' || liftState === 'closing-upper'
+        || liftState === 'closing-arrival-ground' || liftState === 'closing-arrival-upper') {
+        setLiftDoorProgress(1 - Math.min(1, liftTimer / doorTime));
+        if (liftTimer >= doorTime) {
+          if (liftState === 'closing-ground') liftState = 'moving-up';
+          else if (liftState === 'closing-upper') liftState = 'moving-down';
+          else {
+            const upper = liftState.endsWith('upper');
+            player.position.set(102.8, upper ? 4.35 : 0, 1.55);
+            liftState = 'idle';
+            liftTimer = 0;
+            return false;
+          }
           liftTimer = 0;
         }
-      } else if (liftState === 'arriving-ground' && liftTimer >= 0.55) {
-        player.position.set(102.8, 0, 1.55);
-        liftState = 'idle';
-        liftTimer = 0;
-        return false;
+      } else if (liftState === 'moving-up' || liftState === 'moving-down') {
+        const progress = THREE.MathUtils.clamp(liftTimer / 2.2, 0, 1);
+        const height = liftState === 'moving-up' ? progress * 4.35 : 4.35 * (1 - progress);
+        cabin.position.y = height;
+        player.position.y = height;
+        if (progress >= 1) {
+          setLiftDoorProgress(0);
+          liftState = liftState === 'moving-up' ? 'opening-arrival-upper' : 'opening-arrival-ground';
+          liftTimer = 0;
+        }
       }
       return true;
+    },
+    updateExteriorDoor(delta, player) {
+      if (interior.visible || exitPending || mainDoorProgress <= 0) return false;
+      if (player && player.position.z > -31.3) {
+        applyMainDoorProgress(mainDoorProgress - delta / 0.85);
+        return true;
+      }
+      return false;
     },
     openGate() {
       if (gateTargetOpen && gateOpenProgress >= 1) return;

@@ -66,7 +66,24 @@
         <span class="dialogue-help">TAP CONTINUE OR PRESS E</span>
       </section>
 
-      <section id="mobile-controls" hidden aria-label="Game controls">
+      <button id="wardrobe-toggle" class="wardrobe-toggle" type="button" hidden>WARDROBE</button>
+      <section id="wardrobe-panel" class="wardrobe-panel" hidden aria-label="Character customisation">
+        <div class="wardrobe-header">
+          <div><span id="wardrobe-kicker">PLAYER STYLE</span><h2 id="wardrobe-title">YOUR WARDROBE</h2></div>
+          <button id="wardrobe-close" type="button" aria-label="Close wardrobe">×</button>
+        </div>
+        <p id="wardrobe-description">Try a new look. Changes apply immediately to your character.</p>
+        <div class="wardrobe-fields">
+          <label>HAIRSTYLE<select id="style-hair"><option value="natural">Natural / Fade</option><option value="afro">Afro</option><option value="twists">Twists</option><option value="braids">Braids</option></select></label>
+          <label>HAIR COLOUR<select id="style-hair-colour"><option value="black">Black</option><option value="brown">Brown</option><option value="auburn">Auburn</option><option value="grey">Grey</option></select></label>
+          <label>OUTFIT<select id="style-outfit"><option value="street">Original Streetwear</option><option value="smart">Smart Casual</option><option value="native">Nigerian Inspired</option><option value="casual">Everyday Casual</option><option value="dark">All Black</option></select></label>
+          <label>SHOES<select id="style-shoes"><option value="black">Black Trainers</option><option value="brown">Brown Shoes</option><option value="white">White Sneakers</option><option value="red">Red Sneakers</option><option value="blue">Blue Sneakers</option></select></label>
+          <label>ACCESSORY<select id="style-accessory"><option value="none">No Accessory</option><option value="chain">Gold Chain</option><option value="cap">Cap</option><option value="glasses">Glasses</option><option value="watch">Watch</option></select></label>
+        </div>
+        <div class="wardrobe-actions"><button id="wardrobe-reset" type="button">RESET LOOK</button><button id="wardrobe-done" type="button">DONE</button></div>
+        <small id="wardrobe-footnote">STYLE MARKET · TRY-ON PREVIEW · PURCHASES WILL ARRIVE WITH THE MONEY SYSTEM</small>
+      </section>
+            <section id="mobile-controls" hidden aria-label="Game controls">
         <div id="move-joystick" class="joystick-base" aria-label="Movement joystick">
           <span class="joystick-ring"></span>
           <span id="move-stick" class="joystick-stick"></span>

@@ -347,6 +347,24 @@ export function createGame(root) {
   const missionObjective = document.querySelector('#mission-objective');
   const missionReward = document.querySelector('#mission-reward');
   const missionNotice = document.querySelector('#mission-notice');
+  const wardrobeToggle = document.querySelector('#wardrobe-toggle');
+  const wardrobePanel = document.querySelector('#wardrobe-panel');
+  const wardrobeClose = document.querySelector('#wardrobe-close');
+  const wardrobeDone = document.querySelector('#wardrobe-done');
+  const wardrobeReset = document.querySelector('#wardrobe-reset');
+  const wardrobeTitle = document.querySelector('#wardrobe-title');
+  const wardrobeKicker = document.querySelector('#wardrobe-kicker');
+  const wardrobeDescription = document.querySelector('#wardrobe-description');
+  const wardrobeFootnote = document.querySelector('#wardrobe-footnote');
+  const styleControls = {
+    hairstyle: document.querySelector('#style-hair'),
+    hair: document.querySelector('#style-hair-colour'),
+    outfit: document.querySelector('#style-outfit'),
+    shoes: document.querySelector('#style-shoes'),
+    accessory: document.querySelector('#style-accessory')
+  };
+  let wardrobeOpen = false;
+  let wardrobeShopMode = false;
 
   let nearPackage = false;
   let nearRecipient = false;
@@ -388,6 +406,47 @@ export function createGame(root) {
       missionNotice.hidden = true;
     }, 2600);
   }
+
+  function openWardrobe(shopMode = false) {
+    if (!gameStarted || dialogueOpen || residence.isInterior() && residence.isLiftRunning()) return;
+    wardrobeShopMode = shopMode;
+    wardrobeOpen = true;
+    resetStick();
+    keys.clear();
+    if (wardrobePanel) wardrobePanel.hidden = false;
+    if (wardrobeToggle) wardrobeToggle.hidden = true;
+    if (wardrobeTitle) wardrobeTitle.textContent = shopMode ? 'ORIYABA STYLE MARKET' : 'YOUR WARDROBE';
+    if (wardrobeKicker) wardrobeKicker.textContent = shopMode ? 'MARKET FITTING ROOM' : 'PLAYER STYLE';
+    if (wardrobeDescription) wardrobeDescription.textContent = shopMode
+      ? 'Browse hairstyles, outfits, footwear and accessories. Try each look before leaving the market.'
+      : 'Try a new look. Changes apply immediately to your character.';
+    if (wardrobeFootnote) wardrobeFootnote.textContent = shopMode
+      ? 'TRY-ON PREVIEW · COIN PURCHASES WILL BE ADDED WITH THE MONEY SYSTEM'
+      : 'YOUR LOOK IS SAVED FOR THIS CHARACTER DURING THIS GAME SESSION';
+    const appearance = activeCharacter.appearance;
+    for (const [key, control] of Object.entries(styleControls)) {
+      if (control) control.value = appearance[key] || (key === 'hair' ? 'black' : '');
+    }
+  }
+  function closeWardrobe() {
+    wardrobeOpen = false;
+    if (wardrobePanel) wardrobePanel.hidden = true;
+    if (wardrobeToggle) wardrobeToggle.hidden = false;
+  }
+  function updateCharacterStyle(key, value) {
+    activeCharacter.applyCustomization({ [key]: value });
+  }
+  function resetWardrobe() {
+    activeCharacter.applyCustomization({ hairstyle: 'natural', hair: 'black', outfit: 'street', shoes: 'black', accessory: 'none' });
+    openWardrobe(wardrobeShopMode);
+  }
+  wardrobeToggle?.addEventListener('click', () => openWardrobe(false));
+  wardrobeClose?.addEventListener('click', closeWardrobe);
+  wardrobeDone?.addEventListener('click', closeWardrobe);
+  wardrobeReset?.addEventListener('click', resetWardrobe);
+  Object.entries(styleControls).forEach(([key, control]) => {
+    control?.addEventListener('change', () => updateCharacterStyle(key, control.value));
+  });
 
   function openDialogue(name, tag, lines, purpose) {
     dialogueOpen = true;
@@ -518,7 +577,7 @@ export function createGame(root) {
   }
 
   function interact() {
-    if (!gameStarted) return;
+    if (!gameStarted || wardrobeOpen) return;
     if (dialogueOpen) {
       dialogueIndex += 1;
       if (dialogueIndex >= dialogueLines.length) {
@@ -656,6 +715,11 @@ export function createGame(root) {
       return;
     }
 
+    if (nearbyExpansionNpc?.role === 'vendor') {
+      openWardrobe(true);
+      return;
+    }
+
     if (nearbyExpansionNpc) {
       const conversations = {
         resident: [
@@ -742,6 +806,7 @@ export function createGame(root) {
     selectionStage.visible = false;
     if (selectionScreen) selectionScreen.hidden = true;
     if (mobileControls) mobileControls.hidden = false;
+    if (wardrobeToggle) wardrobeToggle.hidden = false;
     if (sceneHint) sceneHint.hidden = false;
     if (buildLabel) buildLabel.hidden = false;
     if (locationLabel) locationLabel.hidden = false;
@@ -901,6 +966,7 @@ export function createGame(root) {
       }
       const exitingInterior = residence.isExitingInterior();
       residence.updateExit(delta);
+      residence.updateExteriorDoor(delta, playerPosition);
       if (exitingInterior && !residence.isExitingInterior()) {
         playerFloorY = 0;
         onGround = true;
@@ -945,7 +1011,7 @@ export function createGame(root) {
         }
       }
 
-      const movementLocked = dialogueOpen || secretaryStandingUp || residence.isLiftRunning() || residence.isEnteringInterior() || residence.isExitingInterior() || residence.isOfficeDoorOpening() || residence.isGateOpening();
+      const movementLocked = dialogueOpen || wardrobeOpen || secretaryStandingUp || residence.isLiftRunning() || residence.isEnteringInterior() || residence.isExitingInterior() || residence.isOfficeDoorOpening() || residence.isGateOpening();
       let inputX = movementLocked ? 0 : stickState.x;
       let inputZ = movementLocked ? 0 : stickState.y;
       if (!movementLocked && (keys.has('a') || keys.has('arrowleft'))) inputX -= 1;
@@ -1010,6 +1076,7 @@ export function createGame(root) {
         activeCharacter.rightArm.rotation.x = stride * (isRunning ? 0.52 : 0.36);
         activeCharacter.body.position.y = Math.abs(Math.cos(activeCharacter.walkTime * 2)) * (isRunning ? 0.075 : 0.035);
         activeCharacter.head.rotation.x = Math.sin(activeCharacter.walkTime) * 0.025;
+        activeCharacter.body.rotation.z = THREE.MathUtils.damp(activeCharacter.body.rotation.z, -movement.x * (isRunning ? 0.11 : 0.065), 7, delta);
       } else {
         activeCharacter.leftLeg.rotation.x = THREE.MathUtils.damp(activeCharacter.leftLeg.rotation.x, 0, 9, delta);
         activeCharacter.rightLeg.rotation.x = THREE.MathUtils.damp(activeCharacter.rightLeg.rotation.x, 0, 9, delta);
@@ -1017,6 +1084,7 @@ export function createGame(root) {
         activeCharacter.rightArm.rotation.x = THREE.MathUtils.damp(activeCharacter.rightArm.rotation.x, 0, 7, delta);
         activeCharacter.body.position.y = Math.sin(frameTime * 0.0018) * 0.018;
         activeCharacter.head.rotation.x = Math.sin(frameTime * 0.0011) * 0.012;
+        activeCharacter.body.rotation.z = THREE.MathUtils.damp(activeCharacter.body.rotation.z, 0, 7, delta);
       }
 
       if (!onGround) {
@@ -1163,6 +1231,11 @@ export function createGame(root) {
       jumpButton?.removeEventListener('pointerdown', jump);
       actionButton?.removeEventListener('pointerdown', handleActionDown);
       dialogueNextButton?.removeEventListener('click', handleDialogueNext);
+      wardrobeToggle?.removeEventListener('click', closeWardrobe);
+      wardrobeClose?.removeEventListener('click', closeWardrobe);
+      wardrobeDone?.removeEventListener('click', closeWardrobe);
+      wardrobeReset?.removeEventListener('click', resetWardrobe);
+      Object.values(styleControls).forEach((control) => control?.replaceWith(control.cloneNode(true)));
       window.clearTimeout(actionPressTimer);
       window.clearTimeout(missionNoticeTimer);
       renderer.domElement.removeEventListener('webglcontextlost', handleContextLost);
