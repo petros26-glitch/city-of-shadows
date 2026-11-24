@@ -41,6 +41,9 @@ jobs:
           path: dist
           name: github-pages-${{ github.run_id }}-${{ github.run_attempt }}
 
+      - name: Wait for Pages artifact indexing
+        run: sleep 15
+
       - name: Publish phone preview
         id: deployment
         uses: actions/deploy-pages@v4
