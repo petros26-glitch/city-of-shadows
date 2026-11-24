@@ -102,11 +102,63 @@ function makePublicBuilding(scene, x, z, title, wallColor, colliders, isClinic =
   const wall = new THREE.MeshStandardMaterial({ color: wallColor, roughness: 0.95 });
   const roof = new THREE.MeshStandardMaterial({ color: 0x303943, roughness: 1 });
   const trim = new THREE.MeshStandardMaterial({ color: 0xe0d2b4, roughness: 0.9 });
-  box(group, [4.5, 2.7, 4.2], [0, 1.35, 0], wall);
-  box(group, [4.8, 0.22, 4.5], [0, 2.81, 0], roof);
-  box(group, [1.1, 1.15, 0.08], [-1.25, 1.55, 2.14], trim);
-  box(group, [1.1, 1.15, 0.08], [1.25, 1.55, 2.14], trim);
-  box(group, [0.95, 1.95, 0.12], [0, 0.98, 2.15], roof);
+  const interiorFloor = new THREE.MeshStandardMaterial({ color: 0xb8ad98, roughness: 1 });
+
+  if (isClinic) {
+    // Small walk-in clinic: open front doorway, walkable floor and solid side/back walls.
+    box(group, [4.5, 0.16, 4.2], [0, 0.08, 0], interiorFloor);
+    box(group, [4.8, 0.22, 4.5], [0, 2.81, 0], roof);
+    const wallY = 1.35;
+    const wallHeight = 2.7;
+    const wallDepth = 0.18;
+    box(group, [4.5, wallHeight, wallDepth], [0, wallY, -2.01], wall);
+    box(group, [wallDepth, wallHeight, 4.2], [-2.16, wallY, 0], wall);
+    box(group, [wallDepth, wallHeight, 4.2], [2.16, wallY, 0], wall);
+    box(group, [1.55, wallHeight, wallDepth], [-1.475, wallY, 2.01], wall);
+    box(group, [1.55, wallHeight, wallDepth], [1.475, wallY, 2.01], wall);
+    box(group, [1.4, 0.22, wallDepth], [0, 2.59, 2.01], wall);
+    // Door jambs and a simple sheltered entrance.
+    box(group, [0.12, 2.2, 0.2], [-0.72, 1.1, 2.04], trim);
+    box(group, [0.12, 2.2, 0.2], [0.72, 1.1, 2.04], trim);
+    box(group, [1.56, 0.12, 0.35], [0, 2.25, 2.18], trim);
+
+    // Accurate wall colliders leave the central 1.44 m doorway unobstructed.
+    colliders.push(
+      { minX: x - 2.25, maxX: x + 2.25, minZ: z - 2.1, maxZ: z - 1.92, minY: 0, maxY: 2.7 },
+      { minX: x - 2.25, maxX: x - 2.07, minZ: z - 2.1, maxZ: z + 2.1, minY: 0, maxY: 2.7 },
+      { minX: x + 2.07, maxX: x + 2.25, minZ: z - 2.1, maxZ: z + 2.1, minY: 0, maxY: 2.7 },
+      { minX: x - 2.25, maxX: x - 0.7, minZ: z + 1.92, maxZ: z + 2.1, minY: 0, maxY: 2.7 },
+      { minX: x + 0.7, maxX: x + 2.25, minZ: z + 1.92, maxZ: z + 2.1, minY: 0, maxY: 2.7 }
+    );
+
+    // Compact reception counter and examination bed; both are solid to the player.
+    box(group, [1.25, 0.82, 0.42], [-1.05, 0.58, 0.72], trim);
+    colliders.push({
+      minX: x - 1.68, maxX: x - 0.42,
+      minZ: z + 0.48, maxZ: z + 0.96,
+      minY: 0, maxY: 1.05
+    });
+    box(group, [1.25, 0.18, 0.62], [0.95, 0.78, -0.78], trim);
+    box(group, [0.12, 0.52, 0.12], [0.45, 0.42, -0.78], roof);
+    box(group, [0.12, 0.52, 0.12], [1.45, 0.42, -0.78], roof);
+    colliders.push({
+      minX: x + 0.3, maxX: x + 1.6,
+      minZ: z - 1.12, maxZ: z - 0.44,
+      minY: 0, maxY: 1.05
+    });
+  } else {
+    box(group, [4.5, 2.7, 4.2], [0, 1.35, 0], wall);
+    box(group, [4.8, 0.22, 4.5], [0, 2.81, 0], roof);
+    box(group, [1.1, 1.15, 0.08], [-1.25, 1.55, 2.14], trim);
+    box(group, [1.1, 1.15, 0.08], [1.25, 1.55, 2.14], trim);
+    box(group, [0.95, 1.95, 0.12], [0, 0.98, 2.15], roof);
+    colliders.push({
+      minX: x - 2.4, maxX: x + 2.4,
+      minZ: z - 2.35, maxZ: z + 2.35,
+      minY: 0, maxY: 3.1
+    });
+  }
+
   const signCanvas = document.createElement('canvas');
   signCanvas.width = 512;
   signCanvas.height = 96;
@@ -127,13 +179,7 @@ function makePublicBuilding(scene, x, z, title, wallColor, colliders, isClinic =
     box(group, [0.12, 0.65, 0.16], [0, 2.25, 2.31], trim);
   }
   scene.add(group);
-  colliders.push({
-    minX: x - 2.4, maxX: x + 2.4,
-    minZ: z - 2.35, maxZ: z + 2.35,
-    minY: 0, maxY: 3.1
-  });
 }
-
 export function createOriyabaExpansion(scene) {
   const colliders = [];
   const pedestrians = [];
@@ -150,7 +196,7 @@ export function createOriyabaExpansion(scene) {
   for (const [z, shirt] of [[16.0, 0x8a4e35], [19.0, 0x3d665c], [22.0, 0x725a35]]) {
     const vendor = makePedestrian(scene, 7.0, z, shirt,
       [{ x: 7.0, z }, { x: 7.0, z }], 1, 'vendor');
-    vendor.group.rotation.y = -Math.PI / 2;
+    vendor.group.rotation.y = Math.PI / 2;
     pedestrians.push(vendor);
   }
 
