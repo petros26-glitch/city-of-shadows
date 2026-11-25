@@ -435,6 +435,12 @@ export function createRecipientResidence(scene) {
     isEnteringInterior() { return entryPending; },
     updateEntry(delta) {
       if (!entryPending) return false;
+      // Re-arm the side exit every time the player re-enters the residence.
+      interiorExitCollider.active = true;
+      leftExitDoor.rotation.y = 0;
+      rightExitDoor.rotation.y = 0;
+      exteriorSideLeft.rotation.y = 0;
+      exteriorSideRight.rotation.y = 0;
       applyMainDoorProgress(mainDoorProgress + delta / 0.85);
       if (mainDoorProgress >= 1) {
         exterior.visible = false;
