@@ -92,7 +92,11 @@ export function createRecipientResidence(scene) {
   // Mansion facade: the doorway is deliberately open so the entry point is obvious.
   addBox(exterior, [9.2, 0.22, 8.4], [17, 0.02, -39.2], dark);
   addSolid(exterior, [0.28, 4.5, 8.4], [12.46, 2.25, -39.2], cream, colliders, 0, 4.5);
-  addSolid(exterior, [0.28, 4.5, 8.4], [21.54, 2.25, -39.2], cream, colliders, 0, 4.5);
+  // East-side mansion exit: split the wall around a wide, walkable doorway.
+  addSolid(exterior, [0.28, 4.5, 2.3], [21.54, 2.25, -42.25], cream, colliders, 0, 4.5);
+  addSolid(exterior, [0.28, 4.5, 2.3], [21.54, 2.25, -36.15], cream, colliders, 0, 4.5);
+  addSolid(exterior, [0.28, 4.5, 0.28], [21.54, 2.25, -41.1], cream, colliders, 0, 4.5);
+  addSolid(exterior, [0.28, 4.5, 0.28], [21.54, 2.25, -37.3], cream, colliders, 0, 4.5);
   addSolid(exterior, [9.35, 4.5, 0.28], [17, 2.25, -43.4], cream, colliders, 0, 4.5);
   addSolid(exterior, [3.55, 4.5, 0.28], [14.15, 2.25, -35], cream, colliders, 0, 4.5);
   addSolid(exterior, [3.55, 4.5, 0.28], [19.85, 2.25, -35], cream, colliders, 0, 4.5);
@@ -114,6 +118,16 @@ export function createRecipientResidence(scene) {
   const rightMainDoor = new THREE.Group();
   rightMainDoor.position.set(18.0, 0, -34.84);
   const doorMaterial = new THREE.MeshStandardMaterial({ color: 0x493021, roughness: 0.82 });
+  // Matching double doors on the mansion's east side open into the estate.
+  const exteriorSideDoors = new THREE.Group();
+  exterior.add(exteriorSideDoors);
+  const exteriorSideLeft = new THREE.Group();
+  exteriorSideLeft.position.set(21.54, 0, -41.1);
+  const exteriorSideRight = new THREE.Group();
+  exteriorSideRight.position.set(21.54, 0, -37.3);
+  addBox(exteriorSideLeft, [0.14, 3.45, 1.9], [0, 1.73, 0.95], doorMaterial);
+  addBox(exteriorSideRight, [0.14, 3.45, 1.9], [0, 1.73, -0.95], doorMaterial);
+  exteriorSideDoors.add(exteriorSideLeft, exteriorSideRight);
   addBox(leftMainDoor, [1.0, 3.45, 0.16], [0.5, 1.73, 0], doorMaterial);
   addBox(rightMainDoor, [1.0, 3.45, 0.16], [-0.5, 1.73, 0], doorMaterial);
   for (const pivot of [leftMainDoor, rightMainDoor]) {
@@ -147,7 +161,9 @@ export function createRecipientResidence(scene) {
 
   // Enclosing ground-floor walls, preserving the wide front entrance.
   addSolid(interior, [0.25, 4.4, 26], [94, 2.2, 2], cream, colliders, 0, 4.4);
-  addSolid(interior, [0.25, 4.4, 26], [118, 2.2, 2], cream, colliders, 0, 4.4);
+  // Leave a six-metre opening in the east lobby wall for the side exit.
+  addSolid(interior, [0.25, 4.4, 10], [118, 2.2, -6], cream, colliders, 0, 4.4);
+  addSolid(interior, [0.25, 4.4, 10], [118, 2.2, 10], cream, colliders, 0, 4.4);
   addSolid(interior, [24, 4.4, 0.25], [106, 2.2, -11], cream, colliders, 0, 4.4);
   addSolid(interior, [6.9, 4.4, 0.25], [97.45, 2.2, 15], cream, colliders, 0, 4.4);
   addSolid(interior, [6.9, 4.4, 0.25], [114.55, 2.2, 15], cream, colliders, 0, 4.4);
@@ -299,18 +315,19 @@ export function createRecipientResidence(scene) {
   privateLamp.position.set(106, 6.55, -9.5);
   interior.add(privateLamp);
 
-  // The inside face of the same main entrance is used when leaving the mansion.
+  // A separate east-side exit leads into the estate instead of back through
+  // the main entrance. The two leaves swing out of the player's path.
   const interiorExitDoors = new THREE.Group();
   interior.add(interiorExitDoors);
   const leftExitDoor = new THREE.Group();
-  leftExitDoor.position.set(104, 0, 12);
+  leftExitDoor.position.set(118, 0, -1);
   const rightExitDoor = new THREE.Group();
-  rightExitDoor.position.set(108, 0, 12);
-  addBox(leftExitDoor, [2, 3.35, 0.16], [1, 1.675, 0], doorMaterial);
-  addBox(rightExitDoor, [2, 3.35, 0.16], [-1, 1.675, 0], doorMaterial);
+  rightExitDoor.position.set(118, 0, 5);
+  addBox(leftExitDoor, [0.16, 3.35, 3], [0, 1.675, 1.5], doorMaterial);
+  addBox(rightExitDoor, [0.16, 3.35, 3], [0, 1.675, -1.5], doorMaterial);
   interiorExitDoors.add(leftExitDoor, rightExitDoor);
   const interiorExitCollider = {
-    minX: 103.9, maxX: 108.1, minZ: 11.86, maxZ: 12.14,
+    minX: 117.86, maxX: 118.14, minZ: -1, maxZ: 5,
     minY: 0, maxY: 3.45, active: true
   };
   colliders.push(interiorExitCollider);
@@ -432,8 +449,9 @@ export function createRecipientResidence(scene) {
     },
     isInterior() { return interior.visible; },
     isExitingInterior() { return exitPending; },
-    isNearExit(x, z) {
-      return interior.visible && x >= 104.2 && x <= 107.8 && z >= 9.1 && z <= 11.6;
+    isNearExit(x, z, floorY = 0) {
+      return interior.visible && floorY < 2.5
+        && x >= 115.0 && x <= 117.4 && z >= -0.8 && z <= 4.8;
     },
     exitInterior(player) {
       if (!interior.visible || exitPending) return false;
@@ -446,17 +464,20 @@ export function createRecipientResidence(scene) {
       if (!exitPending) return false;
       exitDoorProgress = Math.min(1, exitDoorProgress + delta / 0.9);
       const eased = exitDoorProgress * exitDoorProgress * (3 - 2 * exitDoorProgress);
-      leftExitDoor.rotation.y = -eased * 1.18;
-      rightExitDoor.rotation.y = eased * 1.18;
-      applyMainDoorProgress(exitDoorProgress);
+      leftExitDoor.rotation.y = eased * 1.02;
+      rightExitDoor.rotation.y = -eased * 1.02;
+      exteriorSideLeft.rotation.y = eased * 0.92;
+      exteriorSideRight.rotation.y = -eased * 0.92;
       if (exitDoorProgress >= 0.8) interiorExitCollider.active = false;
       if (exitDoorProgress >= 1) {
         interior.visible = false;
         overheadShell.visible = true;
         exterior.visible = true;
-        applyMainDoorProgress(1);
-        exitPlayer.position.set(17, 0, -32.7);
-        exitPlayer.rotation.y = Math.PI;
+        // Close the main entrance behind the player and place them safely in
+        // the side passage between the mansion and estate boundary.
+        applyMainDoorProgress(0);
+        exitPlayer.position.set(22.12, 0, -39.2);
+        exitPlayer.rotation.y = Math.PI / 2;
         exitPlayer = null;
         exitPending = false;
         return false;
