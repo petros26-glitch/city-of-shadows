@@ -148,6 +148,40 @@ export function createStarterDistrict(scene) {
   addBox(scene, [3.2, 0.22, 92], [-8.1, 0.02, 0], sidewalkMaterial);
   addBox(scene, [3.2, 0.22, 92], [8.1, 0.02, 0], sidewalkMaterial);
 
+  // Selected residential access points get patterned stone paving while the
+  // main carriageway remains asphalt. The lightweight canvas texture avoids
+  // hundreds of individual tile meshes on lower-powered Android devices.
+  const pavingCanvas = document.createElement('canvas');
+  pavingCanvas.width = 256;
+  pavingCanvas.height = 256;
+  const pavingContext = pavingCanvas.getContext('2d');
+  pavingContext.fillStyle = '#a79f8e';
+  pavingContext.fillRect(0, 0, 256, 256);
+  const pavingTones = ['#c0b7a5', '#b5ac9a', '#aaa18f', '#c8beaa'];
+  const tileSize = 62;
+  for (let row = 0; row < 4; row += 1) {
+    for (let column = 0; column < 4; column += 1) {
+      pavingContext.fillStyle = pavingTones[(row * 3 + column) % pavingTones.length];
+      pavingContext.fillRect(column * 64 + 2, row * 64 + 2, tileSize, tileSize);
+    }
+  }
+  const pavingTexture = new THREE.CanvasTexture(pavingCanvas);
+  pavingTexture.colorSpace = THREE.SRGBColorSpace;
+  pavingTexture.anisotropy = 1;
+  const pavingMaterial = new THREE.MeshStandardMaterial({
+    map: pavingTexture,
+    color: 0xffffff,
+    roughness: 1
+  });
+  // These short paved aprons lead from the roadside pavement towards selected
+  // residential plots; other plots keep their plain concrete/earth frontage.
+  for (const [side, z] of [[-1, -23], [-1, 11], [-1, 35], [1, -26], [1, 20], [1, 32]]) {
+    const accessPath = new THREE.Mesh(new THREE.PlaneGeometry(2.35, 3.7), pavingMaterial);
+    accessPath.rotation.x = -Math.PI / 2;
+    accessPath.position.set(side * 8.05, 0.145, z);
+    scene.add(accessPath);
+  }
+
   const markingMaterial = new THREE.MeshStandardMaterial({
     color: 0xd9cda7,
     roughness: 1
