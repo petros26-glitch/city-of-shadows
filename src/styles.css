@@ -1255,7 +1255,7 @@ body {
     font-size: 9px;
   }
   .interaction-prompt {
-    bottom: max(104px, calc(env(safe-area-inset-bottom) + 94px));
+    bottom: max(132px, calc(env(safe-area-inset-bottom) + 120px));
     width: max-content;
     max-width: calc(100% - 34px);
     justify-content: center;
@@ -1292,7 +1292,7 @@ body {
 @media (max-height: 360px) and (orientation: landscape) {
   .interaction-prompt,
   .dialogue-panel {
-    bottom: max(82px, calc(env(safe-area-inset-bottom) + 72px));
+    bottom: max(120px, calc(env(safe-area-inset-bottom) + 108px));
   }
   .mission-hud {
     max-height: 34vh;
