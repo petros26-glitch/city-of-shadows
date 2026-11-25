@@ -1309,3 +1309,15 @@ select:focus-visible {
   outline: 2px solid #f0c77f;
   outline-offset: 3px;
 }
+
+
+/* Reduce compositor-heavy blur effects on lower-powered touch devices. */
+@media (pointer: coarse) {
+  .mission-hud,
+  .location-label,
+  .wardrobe-panel,
+  .transport-choice {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
