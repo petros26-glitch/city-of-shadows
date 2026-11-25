@@ -349,7 +349,10 @@ export function createOriyabaExpansion(scene) {
       });
       const blockedByPlayer = playerPosition
         && Math.hypot(nextX - playerPosition.x, nextZ - playerPosition.z) < 0.82;
-      if (blockedByWorld || blockedByPlayer) {
+      const blockedByCrowd = pedestrians.some((other) => other !== pedestrian
+        && Math.hypot(nextX - other.group.position.x, nextZ - other.group.position.z)
+          < 0.34 + (other.group.userData.collisionRadius ?? 0.43));
+      if (blockedByWorld || blockedByPlayer || blockedByCrowd) {
         pedestrian.pause = 0.18;
         pedestrian.legs.forEach((leg) => { leg.rotation.x *= 0.7; });
         pedestrian.arms.forEach((arm) => { arm.rotation.x *= 0.7; });
