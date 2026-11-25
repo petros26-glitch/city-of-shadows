@@ -339,8 +339,24 @@ export function createOriyabaExpansion(scene) {
       }
       const speed = 0.62;
       const step = Math.min(distance, speed * delta);
-      person.position.x += (dx / distance) * step;
-      person.position.z += (dz / distance) * step;
+      const nextX = person.position.x + (dx / distance) * step;
+      const nextZ = person.position.z + (dz / distance) * step;
+      const blockedByWorld = colliders.some((wall) => {
+        if (wall.active === false || wall.maxY <= 0 || wall.minY >= 1.9) return false;
+        const closestX = Math.max(wall.minX, Math.min(nextX, wall.maxX));
+        const closestZ = Math.max(wall.minZ, Math.min(nextZ, wall.maxZ));
+        return (nextX - closestX) ** 2 + (nextZ - closestZ) ** 2 < 0.34 ** 2;
+      });
+      const blockedByPlayer = playerPosition
+        && Math.hypot(nextX - playerPosition.x, nextZ - playerPosition.z) < 0.82;
+      if (blockedByWorld || blockedByPlayer) {
+        pedestrian.pause = 0.18;
+        pedestrian.legs.forEach((leg) => { leg.rotation.x *= 0.7; });
+        pedestrian.arms.forEach((arm) => { arm.rotation.x *= 0.7; });
+        continue;
+      }
+      person.position.x = nextX;
+      person.position.z = nextZ;
       person.rotation.y = Math.atan2(dx, dz);
       pedestrian.walkTime += delta * 6.5;
       const stride = Math.sin(pedestrian.walkTime) * 0.32;
