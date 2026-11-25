@@ -11,7 +11,7 @@ export function createGame(root) {
   if (!root) throw new Error('The game root element was not found.');
 
   const isTouchDevice = window.matchMedia('(pointer: coarse)').matches;
-  const maxPixelRatio = isTouchDevice ? 0.85 : 1.25;
+  const maxPixelRatio = isTouchDevice ? 0.78 : 1.25;
   const frameInterval = isTouchDevice ? 1000 / 30 : 0;
 
   const scene = new THREE.Scene();
@@ -700,7 +700,7 @@ export function createGame(root) {
       if (residence.exitInterior(activeCharacter.group)) {
         resetStick();
         keys.clear();
-        showMissionNotice('MAIN ENTRANCE · EXITING THE MANSION');
+        showMissionNotice('SIDE EXIT · OPENING DOORS');
       }
       return;
     }
@@ -845,7 +845,7 @@ export function createGame(root) {
       nearGatekeeper = gatekeeper.group.visible && Math.hypot(playerPosition.x - gatekeeper.group.position.x, playerPosition.z - gatekeeper.group.position.z) <= 2.8;
       nearMansionDoor = !residence.isInterior() && playerPosition.x >= 16.35 && playerPosition.x <= 17.65 && playerPosition.z >= -34.45 && playerPosition.z <= -32.85;
       nearOfficeDoor = residence.isNearOfficeDoor(playerPosition.x, playerPosition.z);
-      nearExit = residence.isNearExit(playerPosition.x, playerPosition.z);
+      nearExit = residence.isNearExit(playerPosition.x, playerPosition.z, playerFloorY);
             nearLift = residence.isNearLift(playerPosition.x, playerPosition.z);
       const missionState = missionManager.getState();
       if (locationLabel) {
