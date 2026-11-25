@@ -715,7 +715,7 @@ export function createGame(root) {
       return;
     }
 
-    if (nearbyExpansionNpc?.role === 'vendor' || nearbyExpansionNpc?.role === 'style') {
+    if (['vendor', 'style', 'barber'].includes(nearbyExpansionNpc?.role)) {
       openWardrobe(true);
       return;
     }
@@ -828,7 +828,7 @@ export function createGame(root) {
       for (const target of oriyabaExpansion.talkTargets) {
         // Ordinary residents, children, police and clinic staff are ambient
         // pedestrians. Only shopkeepers and the style advisor are interactable.
-        if (!target.group.visible || !['vendor', 'style'].includes(target.role)) continue;
+        if (!target.group.visible || !['vendor', 'style', 'barber'].includes(target.role)) continue;
         const distance = Math.hypot(
           playerPosition.x - target.group.position.x,
           playerPosition.z - target.group.position.z
@@ -867,7 +867,9 @@ export function createGame(root) {
           promptText = 'TALK TO KOLA';
           promptVisible = true;
         } else if (nearbyExpansionNpc) {
-          promptText = nearbyExpansionNpc.role === 'style' ? 'VISIT STYLE HOUSE' : 'BROWSE MARKET';
+          promptText = nearbyExpansionNpc.role === 'style'
+            ? 'VISIT STYLE HOUSE'
+            : nearbyExpansionNpc.role === 'barber' ? 'VISIT BARBER' : 'BROWSE MARKET';
           promptVisible = true;
         } else if (missionState.stage === 'collect-package' && nearPackage) {
           promptText = 'COLLECT PACKAGE';
