@@ -176,7 +176,7 @@ export function createStarterDistrict(scene) {
   // These short paved aprons lead from the roadside pavement towards selected
   // residential plots; other plots keep their plain concrete/earth frontage.
   for (const [side, z] of [[-1, -23], [-1, 11], [-1, 35], [1, -26], [1, 20], [1, 32]]) {
-    const accessPath = new THREE.Mesh(new THREE.PlaneGeometry(2.35, 3.7), pavingMaterial);
+    const accessPath = new THREE.Mesh(new THREE.PlaneGeometry(3.7, 2.35), pavingMaterial);
     accessPath.rotation.x = -Math.PI / 2;
     accessPath.position.set(side * 8.05, 0.145, z);
     scene.add(accessPath);
