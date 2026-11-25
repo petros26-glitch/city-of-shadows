@@ -1,6 +1,17 @@
 name: Build COS Android APK
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'index.html'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'capacitor.config.*'
+      - 'scripts/**'
+      - 'tests/**'
+      - '.github/workflows/build-android.yml'
   workflow_dispatch:
 
 permissions:
@@ -41,6 +52,9 @@ jobs:
 
       - name: Install web dependencies
         run: npm install
+
+      - name: Run gameplay regression tests
+        run: npm test
 
       - name: Build COS web game
         run: npm run build
