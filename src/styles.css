@@ -1168,3 +1168,68 @@ body {
   .wardrobe-fields select { min-height:38px; font-size:10px; }
 }
 @media (max-width:380px) { .wardrobe-fields { grid-template-columns:1fr; } .wardrobe-fields label:nth-child(3) { grid-column:auto; } }
+
+
+/* Gameplay HUD polish: keep the brand out of the active play area and make
+   the remaining prompts clear without competing with the mobile controls. */
+.game-brand {
+  transition: opacity 180ms ease, visibility 180ms ease;
+}
+#game-root.is-playing .game-brand {
+  opacity: 0;
+  visibility: hidden;
+}
+#game-root.is-playing .scene-hint {
+  opacity: 0.72;
+}
+.interaction-prompt {
+  min-height: 46px;
+  padding: 8px 16px 8px 10px;
+  border-color: rgb(214 167 94 / 72%);
+  background: rgb(8 13 23 / 96%);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+}
+.interaction-key {
+  flex: 0 0 30px;
+  width: 30px;
+  height: 30px;
+  font-weight: 900;
+  box-shadow: inset 0 1px 2px rgb(255 255 255 / 25%);
+}
+.mission-hud {
+  backdrop-filter: blur(5px);
+}
+.location-label {
+  backdrop-filter: blur(5px);
+}
+.wardrobe-toggle,
+.wardrobe-actions button,
+.dialogue-panel button,
+.game-control {
+  -webkit-tap-highlight-color: transparent;
+}
+@media (max-width: 700px), (pointer: coarse) {
+  .interaction-prompt {
+    bottom: max(18px, env(safe-area-inset-bottom));
+    max-width: calc(100% - 190px);
+    gap: 8px;
+    padding: 7px 10px 7px 7px;
+    font-size: 8px;
+    letter-spacing: 0.07em;
+  }
+  .interaction-key {
+    flex-basis: 28px;
+    width: 28px;
+    height: 28px;
+  }
+  .mission-hud {
+    width: min(230px, 38vw);
+    border-radius: 5px;
+    backdrop-filter: blur(6px);
+  }
+  .wardrobe-toggle {
+    border-radius: 5px;
+    box-shadow: 0 5px 16px rgb(0 0 0 / 30%);
+  }
+}
