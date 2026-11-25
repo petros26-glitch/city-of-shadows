@@ -440,7 +440,8 @@ export function createGame(root) {
     activeCharacter.applyCustomization({ hairstyle: 'natural', hair: 'black', outfit: 'street', shoes: 'black', accessory: 'none' });
     openWardrobe(wardrobeShopMode);
   }
-  wardrobeToggle?.addEventListener('click', () => openWardrobe(false));
+  const handleWardrobeToggle = () => openWardrobe(false);
+  wardrobeToggle?.addEventListener('click', handleWardrobeToggle);
   wardrobeClose?.addEventListener('click', closeWardrobe);
   wardrobeDone?.addEventListener('click', closeWardrobe);
   wardrobeReset?.addEventListener('click', resetWardrobe);
@@ -846,7 +847,7 @@ export function createGame(root) {
       nearMansionDoor = !residence.isInterior() && playerPosition.x >= 16.35 && playerPosition.x <= 17.65 && playerPosition.z >= -34.45 && playerPosition.z <= -32.85;
       nearOfficeDoor = residence.isNearOfficeDoor(playerPosition.x, playerPosition.z);
       nearExit = residence.isNearExit(playerPosition.x, playerPosition.z, playerFloorY);
-            nearLift = residence.isNearLift(playerPosition.x, playerPosition.z);
+      nearLift = residence.isNearLift(playerPosition.x, playerPosition.z);
       const missionState = missionManager.getState();
       if (locationLabel) {
         if (residence.isInterior()) {
@@ -1204,7 +1205,7 @@ export function createGame(root) {
       jumpButton?.removeEventListener('pointerdown', jump);
       actionButton?.removeEventListener('pointerdown', handleActionDown);
       dialogueNextButton?.removeEventListener('click', handleDialogueNext);
-      wardrobeToggle?.removeEventListener('click', closeWardrobe);
+      wardrobeToggle?.removeEventListener('click', handleWardrobeToggle);
       wardrobeClose?.removeEventListener('click', closeWardrobe);
       wardrobeDone?.removeEventListener('click', closeWardrobe);
       wardrobeReset?.removeEventListener('click', resetWardrobe);
