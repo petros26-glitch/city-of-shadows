@@ -106,6 +106,8 @@ function createCharacter(config) {
   // Keep the playable model close to real human scale (about 1.8 m tall).
   group.position.set(0, 0, 3);
   group.scale.setScalar(0.71);
+  group.userData.collisionRadius = 0.4;
+  group.userData.collisionHeight = 1.9;
   group.visible = false;
 
 
