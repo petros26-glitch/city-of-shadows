@@ -720,39 +720,6 @@ export function createGame(root) {
       return;
     }
 
-    if (nearbyExpansionNpc) {
-      const conversations = {
-        resident: [
-          'Morning, my friend. How you dey?',
-          'This part of Oriyaba is always busy. The market stalls are just down the road.',
-          'Take care of yourself out here.'
-        ],
-        vendor: [
-          'Welcome, my friend. What are you looking for today?',
-          'We have fresh produce, everyday provisions and small snacks here at the Oriyaba market.',
-          'Take your time and have a look around.'
-        ],
-        child: [
-          'Hello! Are you new around here?',
-          'My friends and I play around this part of the street. Watch where you step!',
-          'See you later!'
-        ],
-        police: [
-          'Good day. I am on patrol around this neighbourhood.',
-          'Keep the peace and report trouble at the police outpost.'
-        ],
-        clinic: [
-          'Good afternoon. This is the community clinic.',
-          'If anyone around here needs medical help, come and ask for the clinic staff.'
-        ]
-      };
-      openDialogue(
-        nearbyExpansionNpc.label,
-        'ORIYABA · NEIGHBOURHOOD',
-        conversations[nearbyExpansionNpc.role] || conversations.resident,
-        'neighbour'
-      );
-    }
   }
 
   function handleDialogueNext() {
@@ -800,6 +767,7 @@ export function createGame(root) {
   function confirmCharacterSelection() {
     if (gameStarted) return;
     gameStarted = true;
+    root.classList.add('is-playing');
     missionManager.start();
     showMissionNotice('MISSION STARTED · A FRESH START');
     activeCharacter.group.position.set(0, 0, 3);
@@ -858,7 +826,9 @@ export function createGame(root) {
       nearbyExpansionNpc = null;
       let closestExpansionNpcDistance = 2.5;
       for (const target of oriyabaExpansion.talkTargets) {
-        if (!target.group.visible) continue;
+        // Ordinary residents, children, police and clinic staff are ambient
+        // pedestrians. Only shopkeepers and the style advisor are interactable.
+        if (!target.group.visible || !['vendor', 'style'].includes(target.role)) continue;
         const distance = Math.hypot(
           playerPosition.x - target.group.position.x,
           playerPosition.z - target.group.position.z
@@ -897,7 +867,7 @@ export function createGame(root) {
           promptText = 'TALK TO KOLA';
           promptVisible = true;
         } else if (nearbyExpansionNpc) {
-          promptText = 'TALK TO ' + nearbyExpansionNpc.label;
+          promptText = nearbyExpansionNpc.role === 'style' ? 'VISIT STYLE HOUSE' : 'BROWSE MARKET';
           promptVisible = true;
         } else if (missionState.stage === 'collect-package' && nearPackage) {
           promptText = 'COLLECT PACKAGE';
