@@ -46,7 +46,8 @@ function makePedestrian(scene, x, z, shirtColor, route, scale = 1, role = 'resid
     vendor: 'MARKET VENDOR',
     style: 'STYLE ADVISOR',
     police: 'POLICE OFFICER',
-    clinic: 'CLINIC WORKER'
+    clinic: 'CLINIC WORKER',
+    barber: 'BARBER'
   };
   return { group, legs, arms, route, role, label: labels[role] || labels.resident, routeIndex: 1, walkTime: 1.7, pause: 0.8 };
 }
@@ -241,6 +242,118 @@ function makeStyleShop(scene, x, z, colliders) {
   );
 }
 
+
+function makeResidentialCompound(scene, x, z, colliders) {
+  const wall = new THREE.MeshStandardMaterial({ color: 0xc5b79e, roughness: 0.98 });
+  const trim = new THREE.MeshStandardMaterial({ color: 0x6c5540, roughness: 0.95 });
+  const roof = new THREE.MeshStandardMaterial({ color: 0x35434a, roughness: 0.98 });
+  const floor = new THREE.MeshStandardMaterial({ color: 0x938b7c, roughness: 1 });
+  const compound = new THREE.Group();
+  compound.position.set(x, 0, z);
+  // A modest shared courtyard, with a wide opening facing the main street.
+  box(compound, [6.2, 0.12, 5.0], [0, 0.02, 0], floor);
+  box(compound, [0.18, 1.35, 5.0], [-3.0, 0.68, 0], wall);
+  box(compound, [0.18, 1.35, 5.0], [3.0, 0.68, 0], wall);
+  box(compound, [6.2, 1.35, 0.18], [0, 0.68, -2.4], wall);
+  box(compound, [1.7, 1.35, 0.18], [-2.15, 0.68, 2.4], wall);
+  box(compound, [1.7, 1.35, 0.18], [2.15, 0.68, 2.4], wall);
+  for (const side of [-1, 1]) {
+    box(compound, [0.22, 1.65, 0.22], [side * 2.95, 0.82, 2.38], trim);
+  }
+
+  // Small family home set behind the shared yard, with an obvious front door.
+  box(compound, [3.0, 2.55, 2.35], [0, 1.28, -1.55], wall);
+  box(compound, [3.25, 0.22, 2.6], [0, 2.67, -1.55], roof);
+  box(compound, [0.78, 1.72, 0.09], [0, 0.88, -0.32], trim);
+  for (const side of [-1, 1]) {
+    box(compound, [0.58, 0.58, 0.08], [side * 0.92, 1.72, -0.32], roof);
+  }
+  // Water drum and a bench add familiar shared-compound details.
+  const drum = new THREE.Mesh(new THREE.CylinderGeometry(0.28, 0.3, 0.82, 9),
+    new THREE.MeshStandardMaterial({ color: 0x315d78, roughness: 0.9 }));
+  drum.position.set(-2.15, 0.43, -1.55);
+  compound.add(drum);
+  box(compound, [1.25, 0.12, 0.38], [2.0, 0.52, 1.0], trim);
+  box(compound, [0.1, 0.5, 0.1], [1.55, 0.26, 1.0], trim);
+  box(compound, [0.1, 0.5, 0.1], [2.45, 0.26, 1.0], trim);
+
+  const signCanvas = document.createElement('canvas');
+  signCanvas.width = 512;
+  signCanvas.height = 96;
+  const context = signCanvas.getContext('2d');
+  context.fillStyle = '#354b50';
+  context.fillRect(0, 0, 512, 96);
+  context.fillStyle = '#f4e7cf';
+  context.font = 'bold 34px Arial';
+  context.textAlign = 'center';
+  context.textBaseline = 'middle';
+  context.fillText('FAMILY COMPOUND', 256, 48, 490);
+  const signTexture = new THREE.CanvasTexture(signCanvas);
+  signTexture.colorSpace = THREE.SRGBColorSpace;
+  box(compound, [3.0, 0.42, 0.12], [0, 1.82, 2.48],
+    new THREE.MeshStandardMaterial({ map: signTexture, roughness: 0.95 }));
+  scene.add(compound);
+
+  colliders.push(
+    { minX: x - 3.1, maxX: x - 2.9, minZ: z - 2.5, maxZ: z + 2.5, minY: 0, maxY: 1.45 },
+    { minX: x + 2.9, maxX: x + 3.1, minZ: z - 2.5, maxZ: z + 2.5, minY: 0, maxY: 1.45 },
+    { minX: x - 3.1, maxX: x + 3.1, minZ: z - 2.5, maxZ: z - 2.3, minY: 0, maxY: 1.45 },
+    { minX: x - 3.1, maxX: x - 1.25, minZ: z + 2.3, maxZ: z + 2.5, minY: 0, maxY: 1.45 },
+    { minX: x + 1.25, maxX: x + 3.1, minZ: z + 2.3, maxZ: z + 2.5, minY: 0, maxY: 1.45 },
+    { minX: x - 1.55, maxX: x + 1.55, minZ: z - 2.8, maxZ: z - 0.3, minY: 0, maxY: 2.8 },
+    { minX: x - 2.48, maxX: x - 1.82, minZ: z - 1.9, maxZ: z - 1.2, minY: 0, maxY: 0.95 },
+    { minX: x + 1.35, maxX: x + 2.65, minZ: z + 0.78, maxZ: z + 1.22, minY: 0, maxY: 0.85 }
+  );
+}
+
+function makeBarberShop(scene, x, z, colliders) {
+  const shop = new THREE.Group();
+  shop.position.set(x, 0, z);
+  const wall = new THREE.MeshStandardMaterial({ color: 0xb5a184, roughness: 0.95 });
+  const dark = new THREE.MeshStandardMaterial({ color: 0x263d4b, roughness: 0.9 });
+  const wood = new THREE.MeshStandardMaterial({ color: 0x694832, roughness: 1 });
+  const mirror = new THREE.MeshStandardMaterial({ color: 0x8ba5aa, metalness: 0.25, roughness: 0.28 });
+  box(shop, [4.4, 0.12, 4.5], [0, 0.02, 0], wood);
+  box(shop, [4.4, 2.7, 0.18], [0, 1.35, -2.16], wall);
+  box(shop, [0.18, 2.7, 4.5], [-2.11, 1.35, 0], wall);
+  box(shop, [0.18, 2.7, 4.5], [2.11, 1.35, 0], wall);
+  box(shop, [1.25, 2.7, 0.18], [-1.57, 1.35, 2.16], wall);
+  box(shop, [1.25, 2.7, 0.18], [1.57, 1.35, 2.16], wall);
+  box(shop, [4.55, 0.18, 0.3], [0, 2.75, 2.2], dark);
+  box(shop, [4.55, 0.18, 0.3], [0, 2.75, -2.2], dark);
+  // Barber chair, mirror and a low counter are all represented in the collision map.
+  box(shop, [0.78, 0.18, 0.72], [0, 0.72, -0.45], dark);
+  box(shop, [0.72, 0.72, 0.18], [0, 1.12, -0.78], dark);
+  box(shop, [0.12, 0.12, 0.12], [0, 0.42, -0.45], wood);
+  box(shop, [1.15, 1.25, 0.08], [0, 1.65, -1.92], mirror);
+  box(shop, [1.5, 0.68, 0.42], [1.25, 0.42, -1.35], wood);
+  const canvas = document.createElement('canvas');
+  canvas.width = 512;
+  canvas.height = 96;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#263d4b';
+  ctx.fillRect(0, 0, 512, 96);
+  ctx.fillStyle = '#f4e7cf';
+  ctx.font = 'bold 38px Arial';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('ORIYABA BARBER', 256, 48, 490);
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  box(shop, [3.2, 0.48, 0.1], [0, 2.2, 2.28],
+    new THREE.MeshStandardMaterial({ map: texture, roughness: 0.9 }));
+  scene.add(shop);
+  colliders.push(
+    { minX: x - 2.2, maxX: x + 2.2, minZ: z - 2.25, maxZ: z - 2.07, minY: 0, maxY: 2.7 },
+    { minX: x - 2.2, maxX: x - 1.0, minZ: z - 2.25, maxZ: z + 2.25, minY: 0, maxY: 2.7 },
+    { minX: x + 1.0, maxX: x + 2.2, minZ: z - 2.25, maxZ: z + 2.25, minY: 0, maxY: 2.7 },
+    { minX: x - 2.2, maxX: x - 0.95, minZ: z + 2.07, maxZ: z + 2.25, minY: 0, maxY: 2.7 },
+    { minX: x + 0.95, maxX: x + 2.2, minZ: z + 2.07, maxZ: z + 2.25, minY: 0, maxY: 2.7 },
+    { minX: x - 0.48, maxX: x + 0.48, minZ: z - 1.0, maxZ: z - 0.05, minY: 0, maxY: 1.5 },
+    { minX: x + 0.5, maxX: x + 2.0, minZ: z - 1.65, maxZ: z - 1.05, minY: 0, maxY: 1.0 }
+  );
+}
+
 export function createOriyabaExpansion(scene) {
   const colliders = [];
   const pedestrians = [];
@@ -266,6 +379,10 @@ export function createOriyabaExpansion(scene) {
   makePublicBuilding(scene, 21.0, 39.0, 'COMMUNITY CLINIC', 0xb6b8a9, colliders, true);
   // A walk-in clothing and appearance shop gives Phase 2 a real in-world destination.
   makeStyleShop(scene, 20.5, 19.5, colliders);
+  // One additional family courtyard and a walk-in barber complete this stretch
+  // of the neighbourhood without adding expensive high-poly scenery.
+  makeResidentialCompound(scene, 21.5, -21.0, colliders);
+  makeBarberShop(scene, 21.1, -10.0, colliders);
 
   // Everyday compound details: water drums, laundry lines and benches.
   const drumMaterial = new THREE.MeshStandardMaterial({ color: 0x315d78, roughness: 0.82 });
@@ -318,6 +435,8 @@ export function createOriyabaExpansion(scene) {
     [{ x: 19.0, z: 42.0 }, { x: 23.0, z: 42.0 }], 1, 'clinic'));
   pedestrians.push(makePedestrian(scene, 20.5, 19.6, 0x8b5938,
     [{ x: 20.5, z: 19.6 }, { x: 20.5, z: 19.6 }], 1, 'style'));
+  pedestrians.push(makePedestrian(scene, 21.1, -8.65, 0x3e5367,
+    [{ x: 21.1, z: -8.65 }, { x: 21.1, z: -8.65 }], 1, 'barber'));
 
   function update(delta, playerPosition) {
     for (const pedestrian of pedestrians) {
