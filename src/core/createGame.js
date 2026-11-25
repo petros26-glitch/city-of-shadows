@@ -1010,7 +1010,8 @@ export function createGame(root) {
           movement.z * speed * delta,
           activeCharacter.group.position.y,
           collisionActors,
-          activeCharacter.group
+          activeCharacter.group,
+          activeCharacter.group.userData.collisionRadius ?? 0.4
         );
         const insideMansion = residence.isInterior();
         activeCharacter.group.position.x = insideMansion
