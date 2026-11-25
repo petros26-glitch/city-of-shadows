@@ -437,6 +437,8 @@ export function createOriyabaExpansion(scene) {
     [{ x: 20.5, z: 19.6 }, { x: 20.5, z: 19.6 }], 1, 'style'));
   pedestrians.push(makePedestrian(scene, 21.1, -8.65, 0x3e5367,
     [{ x: 21.1, z: -8.65 }, { x: 21.1, z: -8.65 }], 1, 'barber'));
+  pedestrians.push(makePedestrian(scene, 21.5, -18.9, 0x8a694e,
+    [{ x: 20.5, z: -18.9 }, { x: 22.3, z: -18.9 }], 1, 'resident'));
 
   function update(delta, playerPosition) {
     for (const pedestrian of pedestrians) {
